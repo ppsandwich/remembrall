@@ -1,0 +1,87 @@
+@import "tailwindcss";
+
+@theme {
+  --color-bg: #FAFAF8;
+  --color-surface: #FFFFFF;
+  --color-surface-subtle: #F2F2EF;
+  --color-border: #D9D9D4;
+  --color-text: #181818;
+  --color-text-secondary: #666661;
+  --color-text-muted: #999991;
+  --color-accent: #111111;
+  --color-danger: #111111;
+
+  --color-dark-bg: #111111;
+  --color-dark-surface: #181818;
+  --color-dark-surface-subtle: #222222;
+  --color-dark-border: #333333;
+  --color-dark-text: #F5F5F0;
+  --color-dark-text-secondary: #B8B8B0;
+  --color-dark-text-muted: #888880;
+  --color-dark-accent: #F5F5F0;
+  --color-dark-danger: #F5F5F0;
+}
+
+:root {
+  --bg: var(--color-bg);
+  --surface: var(--color-surface);
+  --surface-subtle: var(--color-surface-subtle);
+  --border: var(--color-border);
+  --text: var(--color-text);
+  --text-secondary: var(--color-text-secondary);
+  --text-muted: var(--color-text-muted);
+  --accent: var(--color-accent);
+  --danger: var(--color-danger);
+}
+
+.dark {
+  --bg: var(--color-dark-bg);
+  --surface: var(--color-dark-surface);
+  --surface-subtle: var(--color-dark-surface-subtle);
+  --border: var(--color-dark-border);
+  --text: var(--color-dark-text);
+  --text-secondary: var(--color-dark-text-secondary);
+  --text-muted: var(--color-dark-text-muted);
+  --accent: var(--color-dark-accent);
+  --danger: var(--color-dark-danger);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  height: 100%;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: var(--accent);
+  color: var(--surface);
+}
+
+button {
+  cursor: pointer;
+  font: inherit;
+}
+
+textarea {
+  font: inherit;
+  resize: none;
+}
+
+input {
+  font: inherit;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+    animation: none !important;
+  }
+}

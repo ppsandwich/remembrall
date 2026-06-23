@@ -1,0 +1,33 @@
+{
+  "name": "@remembrall/web",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@remembrall/core": "workspace:*",
+    "@remembrall/crypto": "workspace:*",
+    "@remembrall/export": "workspace:*",
+    "@remembrall/supabase": "workspace:*",
+    "@supabase/supabase-js": "^2.50.0",
+    "@supabase/ssr": "^0.6.1",
+    "next": "^15.5.19",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "zustand": "^5.0.5",
+    "zod": "^3.25.67"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.1.10",
+    "@types/node": "^22.15.21",
+    "@types/react": "^19.1.6",
+    "@types/react-dom": "^19.1.6",
+    "tailwindcss": "^4.1.10",
+    "typescript": "^5.8.3"
+  }
+}

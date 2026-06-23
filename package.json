@@ -1,0 +1,13 @@
+{
+  "name": "remembrall",
+  "private": true,
+  "scripts": {
+    "dev": "pnpm --filter @remembrall/web dev",
+    "build": "pnpm --filter @remembrall/web build",
+    "lint": "pnpm --filter @remembrall/web lint",
+    "typecheck": "pnpm run -r typecheck"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
