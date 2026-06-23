@@ -67,8 +67,9 @@ export const useEncryptionStore = create<EncryptionState>((set, get) => ({
 
       set({ isSetup: true, isUnlocked: true, cryptoKey: key, saltId: salt, keyVersion: 1, error: null });
       return {};
-    } catch {
-      return { error: "Could not set up encryption." };
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : "Could not set up encryption.";
+      return { error: msg };
     }
   },
 
