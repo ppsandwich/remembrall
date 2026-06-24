@@ -86,27 +86,78 @@ function dist(x1: number, y1: number, x2: number, y2: number): number {
   return Math.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2);
 }
 
+// Distance from point to a circular arc defined by center, radius, and angle range
+function distToArc(px: number, py: number, cx: number, cy: number, r: number, startAngle: number, endAngle: number): number {
+  const dx = px - cx;
+  const dy = py - cy;
+  const d = Math.sqrt(dx * dx + dy * dy);
+  let angle = Math.atan2(dy, dx);
+  
+  // Normalize angles
+  while (angle < startAngle) angle += Math.PI * 2;
+  while (angle > endAngle) angle -= Math.PI * 2;
+  
+  if (angle >= startAngle && angle <= endAngle) {
+    return Math.abs(d - r);
+  }
+  
+  // Check endpoints
+  const ex1 = cx + r * Math.cos(startAngle);
+  const ey1 = cy + r * Math.sin(startAngle);
+  const ex2 = cx + r * Math.cos(endAngle);
+  const ey2 = cy + r * Math.sin(endAngle);
+  
+  return Math.min(dist(px, py, ex1, ey1), dist(px, py, ex2, ey2));
+}
+
+// Lucide volleyball icon: circle + 3 curved lines
+// The icon is drawn at 24x24 viewBox, we scale to our size
 function generateVolleyballIcon(size: number, isTemplate: boolean = false): Buffer {
   const data = Buffer.alloc(size * size * 4);
-  const cx = size / 2;
-  const cy = size / 2;
-  const radius = size / 2 - 1;
-  const lineWidth = Math.max(1, size / 16);
+  const s = size / 24; // scale factor
+  const lineWidth = Math.max(1.5 * s, 1);
 
   for (let y = 0; y < size; y++) {
     for (let x = 0; x < size; x++) {
       const idx = (y * size + x) * 4;
-      const d = dist(x, y, cx, cy);
-
-      if (d <= radius) {
+      
+      // Scale to 24x24 coordinate space
+      const px = x / s;
+      const py = y / s;
+      
+      // Circle: center (12,12), radius 10 (from Lucide)
+      const circleDist = dist(px, py, 12, 12);
+      const onCircle = Math.abs(circleDist - 10) < lineWidth;
+      
+      // Line 1: path "M11.1 7.1a16.55 16.55 0 0 1 10.9 4" (top right curve)
+      // Approximate as arc from ~(11.1,7.1) curving to ~(22,11.1)
+      // Simplified: curve from top going right
+      const line1Dist = distToArc(px, py, 16, 14, 9, -1.8, -0.2);
+      
+      // Line 2: path "M5.9 16.9a16.55 16.55 0 0 1-2.8-7.5" (bottom left curve)
+      // Approximate as arc
+      const line2Dist = distToArc(px, py, 8, 10, 8, 2.5, 3.8);
+      
+      // Line 3: path "M18.4 12.4a16.55 16.55 0 0 1 2.7 7.5" (right to bottom)
+      const line3Dist = distToArc(px, py, 14, 14, 9, -0.2, 1.2);
+      
+      // Line 4: path "M4.2 10.2a16.55 16.55 0 0 1 6.9-3.1" (left to top)
+      const line4Dist = distToArc(px, py, 10, 12, 8, -2.5, -1.0);
+      
+      const isStroke = onCircle || line1Dist < lineWidth || line2Dist < lineWidth || line3Dist < lineWidth || line4Dist < lineWidth;
+      
+      // Check if point is inside circle for fill
+      const insideCircle = circleDist <= 10;
+      
+      if (isStroke) {
         if (isTemplate) {
           data[idx] = 0;
           data[idx + 1] = 0;
           data[idx + 2] = 0;
           data[idx + 3] = 255;
         } else {
-          // Gold gradient: top #D4AF37 -> middle #B8860B -> bottom #996515
-          const t = y / size;
+          // Gold gradient stroke
+          const t = py / 24;
           let r: number, g: number, b: number;
           if (t < 0.5) {
             const lt = t * 2;
@@ -119,37 +170,36 @@ function generateVolleyballIcon(size: number, isTemplate: boolean = false): Buff
             g = lerp(134, 101, lt);
             b = lerp(11, 21, lt);
           }
-
-          // Volleyball lines: 3 curved lines meeting at top and bottom
-          // Normalize coordinates to [-1, 1]
-          const nx = (x - cx) / radius;
-          const ny = (y - cy) / radius;
-
-          // Line 1: vertical center line (slightly curved)
-          const line1 = Math.abs(nx - Math.sin(ny * Math.PI) * 0.15);
-
-          // Line 2: left curve
-          const line2 = Math.abs(nx - (-0.5 + Math.sin(ny * Math.PI + 0.5) * 0.4));
-
-          // Line 3: right curve
-          const line3 = Math.abs(nx - (0.5 - Math.sin(ny * Math.PI - 0.5) * 0.4));
-
-          const isLine = line1 < lineWidth / radius ||
-                         line2 < lineWidth / radius ||
-                         line3 < lineWidth / radius;
-
-          if (isLine) {
-            // Darker gold for lines
-            data[idx] = Math.round(r * 0.6);
-            data[idx + 1] = Math.round(g * 0.6);
-            data[idx + 2] = Math.round(b * 0.6);
-            data[idx + 3] = 255;
+          data[idx] = Math.round(r);
+          data[idx + 1] = Math.round(g);
+          data[idx + 2] = Math.round(b);
+          data[idx + 3] = 255;
+        }
+      } else if (insideCircle) {
+        // Fill inside the circle with a slightly darker shade
+        if (isTemplate) {
+          data[idx] = 0;
+          data[idx + 1] = 0;
+          data[idx + 2] = 0;
+          data[idx + 3] = 255;
+        } else {
+          const t = py / 24;
+          let r: number, g: number, b: number;
+          if (t < 0.5) {
+            const lt = t * 2;
+            r = lerp(190, 165, lt);
+            g = lerp(155, 120, lt);
+            b = lerp(45, 10, lt);
           } else {
-            data[idx] = Math.round(r);
-            data[idx + 1] = Math.round(g);
-            data[idx + 2] = Math.round(b);
-            data[idx + 3] = 255;
+            const lt = (t - 0.5) * 2;
+            r = lerp(165, 140, lt);
+            g = lerp(120, 90, lt);
+            b = lerp(10, 18, lt);
           }
+          data[idx] = Math.round(r);
+          data[idx + 1] = Math.round(g);
+          data[idx + 2] = Math.round(b);
+          data[idx + 3] = 255;
         }
       } else {
         data[idx] = 0;
