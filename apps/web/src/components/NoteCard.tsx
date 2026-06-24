@@ -67,7 +67,8 @@ export default function NoteCard({ note, index, highlighted, onHighlightEnd }: P
   const colorHex = colors.find((c) => c.name === note.color)?.hex || "";
 
   const handleCopy = async () => {
-    const ok = await writeClipboard(cleanPreview);
+    const fullText = stripTags(note.body);
+    const ok = await writeClipboard(fullText);
     showToast(ok ? "Copied." : "Could not copy.");
   };
 
