@@ -7,29 +7,45 @@ import * as api from "@/lib/notesApi";
 
 export const NOTE_COLORS = [
   { name: "none", hex: "" },
-  { name: "red", hex: "#FEE2E2" },
-  { name: "orange", hex: "#FFEDD5" },
-  { name: "amber", hex: "#FEF3C7" },
-  { name: "yellow", hex: "#FEF9C3" },
-  { name: "teal", hex: "#CCFBF1" },
-  { name: "blue", hex: "#DBEAFE" },
-  { name: "green", hex: "#DCFCE7" },
-  { name: "purple", hex: "#F3E8FF" },
-  { name: "pink", hex: "#FCE7F3" },
+  { name: "red", hex: "#FECACA" },
+  { name: "orange", hex: "#FED7AA" },
+  { name: "yellow", hex: "#FDE68A" },
+  { name: "teal", hex: "#99F6E4" },
+  { name: "blue", hex: "#BFDBFE" },
+  { name: "green", hex: "#BBF7D0" },
+  { name: "purple", hex: "#E9D5FF" },
+  { name: "pink", hex: "#FBCFE8" },
 ];
 
 export const DARK_NOTE_COLORS = [
   { name: "none", hex: "" },
   { name: "red", hex: "#451A1A" },
   { name: "orange", hex: "#431407" },
-  { name: "amber", hex: "#422006" },
-  { name: "yellow", hex: "#3F3707" },
+  { name: "yellow", hex: "#422006" },
   { name: "teal", hex: "#134E4A" },
   { name: "blue", hex: "#1E3A5F" },
   { name: "green", hex: "#14361D" },
   { name: "purple", hex: "#3B1F6E" },
   { name: "pink", hex: "#6B1D4A" },
 ];
+
+export const DEFAULT_COLOR_NAMES: Record<string, string> = {
+  none: "none",
+  red: "red",
+  orange: "orange",
+  yellow: "yellow",
+  teal: "teal",
+  blue: "blue",
+  green: "green",
+  purple: "purple",
+  pink: "pink",
+};
+
+export const DEFAULT_COLOR_ORDER = ["red", "orange", "yellow", "teal", "blue", "green", "purple", "pink"];
+
+export function getColorDisplayName(name: string, customNames: Record<string, string>): string {
+  return customNames[name] || DEFAULT_COLOR_NAMES[name] || name;
+}
 
 interface UndoEntry {
   note: DecryptedNote;
@@ -49,6 +65,8 @@ interface NotesState {
   frozenOrderIds: string[] | null;
   colorChangeFrozenIds: string[] | null;
   lastRecoloredId: string | null;
+  colorNames: Record<string, string>;
+  colorOrder: string[];
 
   fetchAll: () => Promise<void>;
   createNote: (body: string, source?: NoteSource) => Promise<void>;
@@ -66,6 +84,9 @@ interface NotesState {
   setDragging: (isDragging: boolean) => void;
   freezeColorChange: () => void;
   clearLastRecoloredId: () => void;
+  setColorName: (name: string, displayName: string) => void;
+  resetColorName: (name: string) => void;
+  setColorOrder: (order: string[]) => void;
   toggleSelect: (id: string) => void;
   selectAll: () => void;
   clearSelection: () => void;
@@ -90,6 +111,8 @@ export const useNotesStore = create<NotesState>((set, get) => ({
   frozenOrderIds: null,
   colorChangeFrozenIds: null,
   lastRecoloredId: null,
+  colorNames: { ...DEFAULT_COLOR_NAMES },
+  colorOrder: [...DEFAULT_COLOR_ORDER],
 
   fetchAll: async () => {
     const user = useAuthStore.getState().user;
@@ -351,6 +374,23 @@ export const useNotesStore = create<NotesState>((set, get) => ({
 
   clearLastRecoloredId: () => set({ lastRecoloredId: null }),
 
+  setColorName: (name: string, displayName: string) => {
+    const names = { ...get().colorNames, [name]: displayName };
+    localStorage.setItem("remembrall-color-names", JSON.stringify(names));
+    set({ colorNames: names });
+  },
+
+  resetColorName: (name: string) => {
+    const names = { ...get().colorNames, [name]: DEFAULT_COLOR_NAMES[name] };
+    localStorage.setItem("remembrall-color-names", JSON.stringify(names));
+    set({ colorNames: names });
+  },
+
+  setColorOrder: (order: string[]) => {
+    localStorage.setItem("remembrall-color-order", JSON.stringify(order));
+    set({ colorOrder: order });
+  },
+
   toggleSelect: (id: string) => {
     set((s) => {
       const next = new Set(s.selectedIds);
@@ -422,7 +462,7 @@ export const useNotesStore = create<NotesState>((set, get) => ({
     }
 
     if (clusterMode) {
-      return clusterNotes(filtered);
+      return clusterNotes(filtered, get().colorOrder);
     }
 
     return filtered.sort((a, b) => {
@@ -444,8 +484,7 @@ export const useNotesStore = create<NotesState>((set, get) => ({
   },
 }));
 
-function clusterNotes(notes: DecryptedNote[]): DecryptedNote[] {
-  const colorOrder = ["red", "orange", "amber", "yellow", "teal", "blue", "green", "purple", "pink"];
+function clusterNotes(notes: DecryptedNote[], colorOrder: string[]): DecryptedNote[] {
   const colorGroups = new Map<string, DecryptedNote[]>();
   const noColor: DecryptedNote[] = [];
 
@@ -468,4 +507,23 @@ function clusterNotes(notes: DecryptedNote[]): DecryptedNote[] {
   }
   result.push(...noColor);
   return result;
+}
+
+export function initColorSettings() {
+  try {
+    const storedNames = localStorage.getItem("remembrall-color-names");
+    if (storedNames) {
+      const parsed = JSON.parse(storedNames);
+      useNotesStore.setState({ colorNames: { ...DEFAULT_COLOR_NAMES, ...parsed } });
+    }
+  } catch {}
+  try {
+    const storedOrder = localStorage.getItem("remembrall-color-order");
+    if (storedOrder) {
+      const parsed = JSON.parse(storedOrder);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        useNotesStore.setState({ colorOrder: parsed });
+      }
+    }
+  } catch {}
 }

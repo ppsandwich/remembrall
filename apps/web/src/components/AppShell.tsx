@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useNotesStore } from "@/state/useNotesStore";
+import { useNotesStore, initColorSettings } from "@/state/useNotesStore";
 import { useUIStore, initTheme } from "@/state/useUIStore";
 import { readClipboard } from "@/lib/clipboard";
 import { registerShortcut, initShortcuts } from "@/lib/shortcuts";
@@ -23,6 +23,7 @@ export default function AppShell() {
 
   useEffect(() => {
     initTheme();
+    initColorSettings();
   }, []);
 
   useEffect(() => {

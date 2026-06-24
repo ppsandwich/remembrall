@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useCallback, useState } from "react";
 import { createPortal } from "react-dom";
-import { NOTE_COLORS, DARK_NOTE_COLORS } from "@/state/useNotesStore";
+import { NOTE_COLORS, DARK_NOTE_COLORS, useNotesStore, getColorDisplayName } from "@/state/useNotesStore";
 import { useUIStore } from "@/state/useUIStore";
 
 interface Props {
@@ -18,8 +18,13 @@ const SWATCH_SIZE = 28;
 
 export default function RadialColorPicker({ centerX, centerY, currentColor, onSelect, onCancel }: Props) {
   const { resolvedTheme } = useUIStore();
+  const colorNames = useNotesStore((s) => s.colorNames);
+  const storeColorOrder = useNotesStore((s) => s.colorOrder);
   const colors = resolvedTheme === "dark" ? DARK_NOTE_COLORS : NOTE_COLORS;
-  const pickerColors = colors.filter((c) => c.name !== "none");
+  const colorHexMap = new Map(colors.map((c) => [c.name, c.hex]));
+  const pickerColors = storeColorOrder
+    .filter((name) => name !== "none")
+    .map((name) => ({ name, hex: colorHexMap.get(name) || "" }));
 
   const [hoveredColor, setHoveredColor] = useState<string | null>(null);
   const hoveredRef = useRef<string | null>(null);
@@ -94,6 +99,19 @@ export default function RadialColorPicker({ centerX, centerY, currentColor, onSe
         zIndex: 10000,
       }}
     >
+      <div
+        style={{
+          position: "absolute",
+          left: centerX - RADIUS - SWATCH_SIZE,
+          top: centerY - RADIUS - SWATCH_SIZE,
+          width: (RADIUS + SWATCH_SIZE) * 2,
+          height: (RADIUS + SWATCH_SIZE) * 2,
+          borderRadius: "50%",
+          backdropFilter: "blur(6px)",
+          WebkitBackdropFilter: "blur(6px)",
+          background: "color-mix(in srgb, var(--surface) 30%, transparent)",
+        }}
+      />
       {pickerColors.map((color, i) => {
         const angle = -Math.PI / 2 + i * step;
         const x = centerX + Math.cos(angle) * RADIUS - SWATCH_SIZE / 2;
@@ -124,6 +142,23 @@ export default function RadialColorPicker({ centerX, centerY, currentColor, onSe
           />
         );
       })}
+      {hoveredColor && (
+        <div
+          style={{
+            position: "absolute",
+            left: centerX,
+            top: centerY,
+            transform: "translate(-50%, -50%)",
+            fontSize: 11,
+            fontWeight: 600,
+            color: "var(--text)",
+            pointerEvents: "none",
+            whiteSpace: "nowrap",
+          }}
+        >
+          {getColorDisplayName(hoveredColor, colorNames)}
+        </div>
+      )}
     </div>,
     document.body,
   );

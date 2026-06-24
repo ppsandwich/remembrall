@@ -21,6 +21,7 @@ export default function NoteEditor() {
   const { editingId, notes, setEditingId, updateNote, deleteNote, duplicateNote, togglePin } =
     useNotesStore();
   const showToast = useUIStore((s) => s.showToast);
+  const enterToSave = useUIStore((s) => s.enterToSave);
   const note = notes.find((n) => n.id === editingId);
   const [cleanBody, setCleanBody] = useState("");
   const [tags, setTags] = useState<string[]>([]);
@@ -96,7 +97,11 @@ export default function NoteEditor() {
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+    if (enterToSave && e.key === "Enter" && !e.metaKey && !e.ctrlKey && !e.shiftKey) {
+      e.preventDefault();
+      handleSaveNow().then(() => setEditingId(null));
+    }
+    if (!enterToSave && (e.metaKey || e.ctrlKey) && e.key === "Enter") {
       e.preventDefault();
       handleSaveNow().then(() => setEditingId(null));
     }
@@ -179,7 +184,7 @@ export default function NoteEditor() {
           style={{ borderTop: "1px solid var(--border)", color: "var(--text-muted)" }}
         >
           <span>{new Date(note.updated_at).toLocaleString()}</span>
-          <span>Esc to close · Cmd+Enter to save</span>
+          <span>Esc to close · {enterToSave ? "Enter" : "Cmd+Enter"} to save</span>
         </div>
       </div>
     </div>

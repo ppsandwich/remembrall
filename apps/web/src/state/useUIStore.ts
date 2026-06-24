@@ -7,11 +7,13 @@ interface UIState {
   showSettings: boolean;
   selectMode: boolean;
   toastMessage: string | null;
+  enterToSave: boolean;
 
   setTheme: (theme: "light" | "dark") => void;
   setShowShortcuts: (show: boolean) => void;
   setShowSettings: (show: boolean) => void;
   setSelectMode: (on: boolean) => void;
+  setEnterToSave: (on: boolean) => void;
   showToast: (message: string) => void;
   clearToast: () => void;
 }
@@ -23,6 +25,7 @@ export const useUIStore = create<UIState>((set) => ({
   showSettings: false,
   selectMode: false,
   toastMessage: null,
+  enterToSave: true,
 
   setTheme: (theme) => {
     document.documentElement.classList.toggle("dark", theme === "dark");
@@ -33,6 +36,10 @@ export const useUIStore = create<UIState>((set) => ({
   setShowShortcuts: (show) => set({ showShortcuts: show }),
   setShowSettings: (show) => set({ showSettings: show }),
   setSelectMode: (on) => set({ selectMode: on }),
+  setEnterToSave: (on) => {
+    localStorage.setItem("remembrall-enter-to-save", on ? "1" : "0");
+    set({ enterToSave: on });
+  },
 
   showToast: (message) => {
     set({ toastMessage: message });
@@ -46,5 +53,9 @@ export function initTheme() {
   const stored = localStorage.getItem("remembrall-theme") as "light" | "dark" | null;
   const theme = stored || "dark";
   document.documentElement.classList.toggle("dark", theme === "dark");
-  useUIStore.setState({ theme, resolvedTheme: theme });
+
+  const storedEnter = localStorage.getItem("remembrall-enter-to-save");
+  const enterToSave = storedEnter === null ? true : storedEnter === "1";
+
+  useUIStore.setState({ theme, resolvedTheme: theme, enterToSave });
 }

@@ -14,6 +14,8 @@ export default function QuickCapture() {
   const [loading, setLoading] = useState(false);
   const createNote = useNotesStore((s) => s.createNote);
   const showToast = useUIStore((s) => s.showToast);
+  const enterToSave = useUIStore((s) => s.enterToSave);
+  const setEnterToSave = useUIStore((s) => s.setEnterToSave);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const handleSave = async () => {
@@ -43,7 +45,11 @@ export default function QuickCapture() {
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+    if (enterToSave && e.key === "Enter" && !e.metaKey && !e.ctrlKey && !e.shiftKey) {
+      e.preventDefault();
+      handleSave();
+    }
+    if (!enterToSave && (e.metaKey || e.ctrlKey) && e.key === "Enter") {
       e.preventDefault();
       handleSave();
     }
@@ -101,9 +107,18 @@ export default function QuickCapture() {
         >
           <Clipboard />
         </button>
-        <span className="text-xs ml-auto" style={{ color: "var(--text-muted)" }}>
-          Cmd+Enter
-        </span>
+        <button
+          type="button"
+          onClick={() => setEnterToSave(!enterToSave)}
+          className="ml-auto flex items-center gap-1.5 text-xs px-2 py-1 rounded transition-colors"
+          style={{ color: "var(--text-muted)", background: "var(--surface-subtle)" }}
+          title={enterToSave ? "Enter to save" : "Cmd+Enter to save"}
+        >
+          <span style={{ fontWeight: enterToSave ? 600 : 400, color: enterToSave ? "var(--text-secondary)" : undefined }}>Enter</span>
+          <span style={{ color: "var(--text-muted)" }}>/</span>
+          <span style={{ fontWeight: !enterToSave ? 600 : 400, color: !enterToSave ? "var(--text-secondary)" : undefined }}>⌘↵</span>
+          <span>to save</span>
+        </button>
       </div>
     </div>
   );

@@ -2,7 +2,7 @@
 
 import type { DecryptedNote } from "@remembrall/core";
 import { extractTags, stripTags } from "@remembrall/core";
-import { useNotesStore, NOTE_COLORS, DARK_NOTE_COLORS } from "@/state/useNotesStore";
+import { useNotesStore, NOTE_COLORS, DARK_NOTE_COLORS, getColorDisplayName } from "@/state/useNotesStore";
 import { writeClipboard } from "@/lib/clipboard";
 import { useUIStore } from "@/state/useUIStore";
 import { exportSingleNote, downloadMarkdown, singleNoteFilename } from "@remembrall/export";
@@ -19,7 +19,7 @@ interface Props {
 }
 
 export default function NoteCard({ note, index, highlighted, onHighlightEnd }: Props) {
-  const { toggleSelect, selectedIds, setEditingId, deleteNote, togglePin, updateNoteColor, clusterMode, setDragging } =
+  const { toggleSelect, selectedIds, setEditingId, deleteNote, togglePin, updateNoteColor, clusterMode, setDragging, colorNames } =
     useNotesStore();
   const { showToast, selectMode, resolvedTheme } = useUIStore();
   const isSelected = selectedIds.has(note.id);
@@ -272,7 +272,7 @@ export default function NoteCard({ note, index, highlighted, onHighlightEnd }: P
                     borderColor: note.color === color.name ? "var(--accent)" : "var(--border)",
                     borderWidth: note.color === color.name ? "2px" : "1px",
                   }}
-                  title={color.name}
+                  title={getColorDisplayName(color.name, colorNames)}
                 />
               ))}
             </div>
