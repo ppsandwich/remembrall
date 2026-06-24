@@ -215,13 +215,13 @@ export default function NoteEditor() {
               <EditorButton onClick={handleClose} title="Close">
                 <X />
               </EditorButton>
-              <div className="w-px h-4 mx-0.5" style={{ background: "var(--border)" }} />
-              <span className="text-xs" style={{ color: "var(--text-muted)" }}>
+              <div className="w-px h-4 mx-0.5 hidden md:block" style={{ background: "var(--border)" }} />
+              <span className="text-xs hidden md:inline" style={{ color: "var(--text-muted)" }}>
                 {saving ? "Saving…" : "Saved"}
               </span>
               {note?.pinned && (
                 <span
-                  className="text-xs px-1.5 py-0.5 rounded"
+                  className="text-xs px-1.5 py-0.5 rounded hidden md:inline"
                   style={{ background: "var(--surface-subtle)", color: "var(--text-muted)" }}
                 >
                   Pinned
@@ -238,7 +238,7 @@ export default function NoteEditor() {
               <EditorButton onClick={() => note && duplicateNote(note.id)} title="Duplicate">
                 <Duplicate />
               </EditorButton>
-              <EditorButton onClick={handleExport} title="Export">
+              <EditorButton onClick={handleExport} title="Export" className="hidden md:flex">
                 <Download />
               </EditorButton>
               <div className="w-px h-4 mx-1" style={{ background: "var(--border)" }} />
@@ -278,6 +278,7 @@ export default function NoteEditor() {
           onKeyDown={handleKeyDown}
           placeholder="Start typing…"
           autoFocus={isNewNote}
+          compact={isNewNote}
         />
 
         <div
@@ -359,11 +360,11 @@ export default function NoteEditor() {
   );
 }
 
-function EditorButton({ onClick, title, danger, children }: { onClick: () => void; title: string; danger?: boolean; children: React.ReactNode }) {
+function EditorButton({ onClick, title, danger, children, className }: { onClick: () => void; title: string; danger?: boolean; children: React.ReactNode; className?: string }) {
   return (
     <button
       onClick={onClick}
-      className="p-2 rounded-md transition-colors"
+      className={`p-2 rounded-md transition-colors ${className ?? ""}`}
       style={{ color: danger ? "var(--danger)" : "var(--text-muted)" }}
       title={title}
       aria-label={title}

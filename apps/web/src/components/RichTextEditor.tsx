@@ -10,6 +10,7 @@ interface Props {
   onKeyDown?: (e: React.KeyboardEvent) => void;
   placeholder?: string;
   autoFocus?: boolean;
+  compact?: boolean;
 }
 
 function ToolbarButton({
@@ -43,7 +44,7 @@ function ToolbarButton({
   );
 }
 
-export default function RichTextEditor({ body, onChange, onKeyDown, placeholder, autoFocus }: Props) {
+export default function RichTextEditor({ body, onChange, onKeyDown, placeholder, autoFocus, compact }: Props) {
   const editorRef = useRef<HTMLDivElement>(null);
   const initializedRef = useRef(false);
 
@@ -161,9 +162,8 @@ export default function RichTextEditor({ body, onChange, onKeyDown, placeholder,
         onInput={handleInput}
         onKeyDown={handleKeyDown}
         onPaste={handlePaste}
-        className="w-full px-5 py-4 text-sm outline-none leading-relaxed"
+        className={`w-full px-5 py-4 text-sm outline-none leading-relaxed ${compact ? "min-h-[7.5rem] md:min-h-[50vh]" : "min-h-[50vh]"}`}
         style={{
-          minHeight: "50vh",
           maxHeight: "70vh",
           overflowY: "auto",
           background: "transparent",
