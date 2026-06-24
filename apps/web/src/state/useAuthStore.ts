@@ -17,8 +17,13 @@ export const useAuthStore = create<AuthState>((set) => ({
   loading: true,
 
   init: async () => {
-    const { data: { session } } = await getSupabase().auth.getSession();
-    set({ user: session?.user ?? null, loading: false });
+    try {
+      const { data: { session } } = await getSupabase().auth.getSession();
+      set({ user: session?.user ?? null, loading: false });
+    } catch (err) {
+      console.error("Auth init failed:", err);
+      set({ user: null, loading: false });
+    }
 
     getSupabase().auth.onAuthStateChange((_event, session) => {
       set({ user: session?.user ?? null });

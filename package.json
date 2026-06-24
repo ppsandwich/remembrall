@@ -8,6 +8,7 @@
     "build:desktop": "pnpm --filter @remembrall/desktop build",
     "build:desktop:mac": "pnpm --filter @remembrall/desktop build:mac",
     "build:desktop:win": "pnpm --filter @remembrall/desktop build:win",
+    "build:extension": "npx tsx scripts/build-extension.ts",
     "lint": "pnpm --filter @remembrall/web lint",
     "typecheck": "pnpm run -r typecheck"
   },

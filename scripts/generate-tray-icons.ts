@@ -155,5 +155,18 @@ console.log("Created tray-icon.png");
 fs.writeFileSync(path.join(assetsDir, "tray-iconTemplate.png"), templateIconPng);
 console.log("Created tray-iconTemplate.png");
 
-console.log("\nDone! Icons saved to:", assetsDir);
+// Generate Chrome extension icons
+const extIconsDir = path.join(__dirname, "../apps/extension/icons");
+if (!fs.existsSync(extIconsDir)) {
+  fs.mkdirSync(extIconsDir, { recursive: true });
+}
+
+for (const size of [16, 32, 48, 128]) {
+  const data = generateIconData(size, false);
+  const png = createMinimalPng(size, size, data);
+  fs.writeFileSync(path.join(extIconsDir, `icon-${size}.png`), png);
+  console.log(`Created icon-${size}.png`);
+}
+
+console.log("\nDone! Icons saved to:", assetsDir, "and", extIconsDir);
 console.log("For production, replace these with proper designed icons.");

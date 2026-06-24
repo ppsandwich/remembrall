@@ -45,6 +45,24 @@ export default function AppShell() {
     }
   }, [createNote, showToast]);
 
+  // Handle ?clip= param from Chrome extension
+  useEffect(() => {
+    if (!ready) return;
+    const params = new URLSearchParams(window.location.search);
+    const clip = params.get("clip");
+    if (clip && clip.trim()) {
+      const decoded = decodeURIComponent(clip);
+      createNote(decoded, "extension").then(() => {
+        showToast("Saved.");
+        params.delete("clip");
+        const newUrl = params.toString()
+          ? `${window.location.pathname}?${params}`
+          : window.location.pathname;
+        window.history.replaceState({}, "", newUrl);
+      });
+    }
+  }, [ready, createNote, showToast]);
+
   useEffect(() => {
     const cleanups = [
       registerShortcut({ key: "/", handler: () => document.querySelector<HTMLInputElement>("[aria-label='Search notes']")?.focus(), allowInInput: false }),

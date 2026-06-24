@@ -106,6 +106,8 @@ function createPopoverWindow(): BrowserWindow {
     win.setPosition(width - 420, 40);
   }
 
+  win.webContents.openDevTools({ mode: "detach" });
+
   win.on("blur", () => {
     if (!win.webContents.isDevToolsOpened()) {
       win.hide();
