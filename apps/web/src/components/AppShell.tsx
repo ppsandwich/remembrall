@@ -32,6 +32,19 @@ export default function AppShell() {
     fetchPages();
   }, [fetchAll, fetchPages]);
 
+  // Listen for notes created from desktop app (Electron IPC)
+  useEffect(() => {
+    const electronAPI = (window as any).electronAPI;
+    if (electronAPI?.onCreateNote) {
+      electronAPI.onCreateNote(async (text: string) => {
+        if (text && text.trim()) {
+          await createNote(text, "desktop");
+          showToast("Saved.");
+        }
+      });
+    }
+  }, [createNote, showToast]);
+
   useEffect(() => {
     const cleanups = [
       registerShortcut({ key: "/", handler: () => document.querySelector<HTMLInputElement>("[aria-label='Search notes']")?.focus(), allowInInput: false }),

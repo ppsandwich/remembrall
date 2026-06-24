@@ -3,7 +3,11 @@
   "private": true,
   "scripts": {
     "dev": "pnpm --filter @remembrall/web dev",
+    "dev:desktop": "pnpm --filter @remembrall/desktop dev",
     "build": "pnpm --filter @remembrall/web build",
+    "build:desktop": "pnpm --filter @remembrall/desktop build",
+    "build:desktop:mac": "pnpm --filter @remembrall/desktop build:mac",
+    "build:desktop:win": "pnpm --filter @remembrall/desktop build:win",
     "lint": "pnpm --filter @remembrall/web lint",
     "typecheck": "pnpm run -r typecheck"
   },
