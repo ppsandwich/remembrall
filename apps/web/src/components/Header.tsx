@@ -204,7 +204,7 @@ export default function Header() {
               </HeaderButton>
               {searchOpen && (
                 <div
-                  className="absolute right-0 top-full mt-1 w-64 rounded-lg shadow-lg z-50 p-2"
+                  className="fixed top-12 right-2 w-64 rounded-lg shadow-lg z-50 p-2"
                   style={{ background: "var(--surface)", border: "1px solid var(--border)" }}
                 >
                   <input

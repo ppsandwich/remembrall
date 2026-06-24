@@ -11,7 +11,6 @@ export const NOTE_COLORS = [
   { name: "none", hex: "" },
   { name: "red", hex: "#FECACA" },
   { name: "orange", hex: "#FED7AA" },
-  { name: "yellow", hex: "#FDE68A" },
   { name: "teal", hex: "#99F6E4" },
   { name: "blue", hex: "#BFDBFE" },
   { name: "green", hex: "#BBF7D0" },
@@ -23,7 +22,6 @@ export const DARK_NOTE_COLORS = [
   { name: "none", hex: "" },
   { name: "red", hex: "#451A1A" },
   { name: "orange", hex: "#422006" },
-  { name: "yellow", hex: "#422006" },
   { name: "teal", hex: "#134E4A" },
   { name: "blue", hex: "#1E3A5F" },
   { name: "green", hex: "#14361D" },
@@ -35,7 +33,6 @@ export const DEFAULT_COLOR_NAMES: Record<string, string> = {
   none: "None",
   red: "Red",
   orange: "Orange",
-  yellow: "Yellow",
   teal: "Teal",
   blue: "Blue",
   green: "Green",
@@ -43,7 +40,7 @@ export const DEFAULT_COLOR_NAMES: Record<string, string> = {
   pink: "Pink",
 };
 
-export const DEFAULT_COLOR_ORDER = ["red", "orange", "yellow", "teal", "blue", "green", "purple", "pink"];
+export const DEFAULT_COLOR_ORDER = ["red", "orange", "teal", "blue", "green", "purple", "pink"];
 
 function detectColorFromTags(body: string): { color: string; cleanedBody: string } {
   const tags = extractTags(body);
