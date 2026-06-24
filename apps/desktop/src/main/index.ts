@@ -79,8 +79,8 @@ function createPopoverWindow(): BrowserWindow {
   const { width, height } = screen.getPrimaryDisplay().workAreaSize;
 
   const win = new BrowserWindow({
-    width: 400,
-    height: 500,
+    width: 320,
+    height: 400,
     show: false,
     frame: false,
     resizable: false,
@@ -99,14 +99,12 @@ function createPopoverWindow(): BrowserWindow {
   // Position near the tray icon
   const trayBounds = tray?.getBounds();
   if (trayBounds) {
-    const x = Math.round(trayBounds.x + trayBounds.width / 2 - 200);
-    const y = isMac ? Math.round(trayBounds.y + trayBounds.height + 4) : Math.round(trayBounds.y - 504);
+    const x = Math.round(trayBounds.x + trayBounds.width / 2 - 160);
+    const y = isMac ? Math.round(trayBounds.y + trayBounds.height + 4) : Math.round(trayBounds.y - 404);
     win.setPosition(x, y);
   } else {
-    win.setPosition(width - 420, 40);
+    win.setPosition(width - 340, 40);
   }
-
-  win.webContents.openDevTools({ mode: "detach" });
 
   win.on("blur", () => {
     if (!win.webContents.isDevToolsOpened()) {

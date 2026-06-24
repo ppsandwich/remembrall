@@ -243,6 +243,11 @@ export default function Header() {
               <HeaderButton onClick={() => setShowSettings(true)} title="Settings">
                 <Settings />
               </HeaderButton>
+              {(window as any).electronAPI && (
+                <HeaderButton onClick={() => (window as any).electronAPI.hidePopover()} title="Close">
+                  <X size={16} />
+                </HeaderButton>
+              )}
             </nav>
           </div>
         </div>
