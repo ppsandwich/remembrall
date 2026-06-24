@@ -31,6 +31,7 @@ export interface Note {
   position: number;
   color: string;
   page_id: string | null;
+  title: string;
   created_at: string;
   updated_at: string;
 }
@@ -48,6 +49,7 @@ export interface DecryptedNote {
   position: number;
   color: string;
   page_id: string | null;
+  title: string;
   created_at: string;
   updated_at: string;
 }

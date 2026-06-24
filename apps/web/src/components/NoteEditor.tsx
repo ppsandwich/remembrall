@@ -20,11 +20,12 @@ function buildBody(htmlBody: string, tags: string[]): string {
 }
 
 export default function NoteEditor() {
-  const { editingId, notes, setEditingId, updateNote, deleteNote, duplicateNote, togglePin } =
+  const { editingId, notes, setEditingId, updateNote, updateNoteTitle, deleteNote, duplicateNote, togglePin } =
     useNotesStore();
   const showToast = useUIStore((s) => s.showToast);
   const enterToSave = useUIStore((s) => s.enterToSave);
   const note = notes.find((n) => n.id === editingId);
+  const [title, setTitle] = useState("");
   const [bodyHtml, setBodyHtml] = useState("");
   const [tags, setTags] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
@@ -32,6 +33,7 @@ export default function NoteEditor() {
 
   useEffect(() => {
     if (note) {
+      setTitle(note.title || "");
       const fullBody = note.body;
       const extractedTags = extractTags(fullBody);
       const cleanBody = stripTagsFromHtml(fullBody);
@@ -55,6 +57,18 @@ export default function NoteEditor() {
     }, 600);
   }, [note, tags, updateNote]);
 
+  const handleTitleChange = useCallback((newTitle: string) => {
+    setTitle(newTitle);
+    if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+    saveTimeoutRef.current = setTimeout(async () => {
+      if (note && newTitle !== note.title) {
+        setSaving(true);
+        await updateNoteTitle(note.id, newTitle);
+        setSaving(false);
+      }
+    }, 600);
+  }, [note, updateNoteTitle]);
+
   const handleTagsChange = useCallback((newTags: string[]) => {
     setTags(newTags);
     if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
@@ -73,6 +87,11 @@ export default function NoteEditor() {
   const handleSaveNow = useCallback(async () => {
     if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
     if (note) {
+      if (title !== note.title) {
+        setSaving(true);
+        await updateNoteTitle(note.id, title);
+        setSaving(false);
+      }
       const fullBody = buildBody(bodyHtml, tags);
       if (fullBody !== note.body) {
         setSaving(true);
@@ -80,7 +99,7 @@ export default function NoteEditor() {
         setSaving(false);
       }
     }
-  }, [note, bodyHtml, tags, updateNote]);
+  }, [note, title, bodyHtml, tags, updateNote, updateNoteTitle]);
 
   const handleClose = useCallback(async () => {
     await handleSaveNow();
@@ -166,6 +185,17 @@ export default function NoteEditor() {
               <Trash />
             </EditorButton>
           </div>
+        </div>
+
+        <div className="px-5 py-3" style={{ borderBottom: "1px solid var(--border)" }}>
+          <input
+            type="text"
+            value={title}
+            onChange={(e) => handleTitleChange(e.target.value)}
+            placeholder="Title (optional)"
+            className="w-full text-sm font-medium outline-none bg-transparent"
+            style={{ color: "var(--text)" }}
+          />
         </div>
 
         <div className="px-5 py-3" style={{ borderBottom: "1px solid var(--border)" }}>

@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { useNotesStore } from "@/state/useNotesStore";
-import { Plus, Minus, ChevronDown } from "./Icons";
+import { Plus, Minus, ChevronDown, Pencil } from "./Icons";
 
 const MAX_INLINE_TABS = 3;
 
@@ -17,6 +18,8 @@ export default function TabBar() {
   const [dropdownPos, setDropdownPos] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [dropIndex, setDropIndex] = useState<number | null>(null);
+  const dragIndexRef = useRef<number | null>(null);
+  const dropIndexRef = useRef<number | null>(null);
   const newInputRef = useRef<HTMLInputElement>(null);
   const editInputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -86,6 +89,7 @@ export default function TabBar() {
       if (!isDragging && (Math.abs(dx) > 5 || Math.abs(dy) > 5)) {
         isDragging = true;
         setDragIndex(index);
+        dragIndexRef.current = index;
       }
 
       if (isDragging) {
@@ -105,6 +109,7 @@ export default function TabBar() {
         }
 
         setDropIndex(newDropIndex);
+        dropIndexRef.current = newDropIndex;
       }
     };
 
@@ -112,18 +117,23 @@ export default function TabBar() {
       document.removeEventListener("mousemove", handleMouseMove);
       document.removeEventListener("mouseup", handleMouseUp);
 
-      if (isDragging && dragIndex !== null && dropIndex !== null && dragIndex !== dropIndex) {
-        const adjustedTarget = dropIndex > dragIndex ? dropIndex - 1 : dropIndex;
-        reorderPages(pages[dragIndex].id, adjustedTarget);
+      const currentDragIndex = dragIndexRef.current;
+      const currentDropIndex = dropIndexRef.current;
+
+      if (isDragging && currentDragIndex !== null && currentDropIndex !== null && currentDragIndex !== currentDropIndex) {
+        const adjustedTarget = currentDropIndex > currentDragIndex ? currentDropIndex - 1 : currentDropIndex;
+        reorderPages(pages[currentDragIndex].id, adjustedTarget);
       }
 
       setDragIndex(null);
       setDropIndex(null);
+      dragIndexRef.current = null;
+      dropIndexRef.current = null;
     };
 
     document.addEventListener("mousemove", handleMouseMove);
     document.addEventListener("mouseup", handleMouseUp);
-  }, [editingId, pages, dragIndex, dropIndex, reorderPages]);
+  }, [editingId, pages, reorderPages]);
 
   const activePage = pages.find((p) => p.id === activePageId);
 
@@ -220,7 +230,7 @@ export default function TabBar() {
 
   return (
     <>
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2" style={{ transform: "scale(0.8)", transformOrigin: "left center" }}>
         <div
           className="flex items-center rounded-md overflow-hidden"
           style={{ border: "1px solid var(--border)", background: "var(--surface-subtle)" }}
@@ -250,7 +260,7 @@ export default function TabBar() {
             >
               <ChevronDown size={14} />
             </button>
-            {showDropdown && (
+            {showDropdown && createPortal(
               <div
                 className="fixed rounded-lg shadow-lg z-50 py-1 min-w-[8rem]"
                 style={{ background: "var(--surface)", border: "1px solid var(--border)", top: dropdownPos.top, left: dropdownPos.left }}
@@ -273,7 +283,8 @@ export default function TabBar() {
                     {page.name}
                   </button>
                 ))}
-              </div>
+              </div>,
+              document.body
             )}
           </div>
         )}
@@ -308,6 +319,25 @@ export default function TabBar() {
             onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--text-muted)"; }}
           >
             <Plus size={14} />
+          </button>
+        )}
+        {activePageId && (
+          <button
+            onClick={() => {
+              const page = pages.find((p) => p.id === activePageId);
+              if (page) {
+                setEditingId(page.id);
+                setEditName(page.name);
+              }
+            }}
+            className="p-1 rounded-md transition-colors"
+            style={{ color: "var(--text-muted)", border: "1px solid var(--border)" }}
+            title="Rename active page"
+            aria-label="Rename active page"
+            onMouseEnter={(e) => { e.currentTarget.style.background = "var(--surface-subtle)"; e.currentTarget.style.color = "var(--text-secondary)"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--text-muted)"; }}
+          >
+            <Pencil size={14} />
           </button>
         )}
         {pages.length > 1 && (

@@ -31,6 +31,7 @@ import {
   Minus as LucideMinus,
   ChevronDown as LucideChevronDown,
   TableOfContents as LucideTableOfContents,
+  Pencil as LucidePencil,
   type LucideProps,
 } from "lucide-react";
 
@@ -69,3 +70,4 @@ export const Plus = (props: LucideProps) => <LucidePlus {...p} {...props} />;
 export const Minus = (props: LucideProps) => <LucideMinus {...p} {...props} />;
 export const ChevronDown = (props: LucideProps) => <LucideChevronDown {...p} {...props} />;
 export const TableOfContents = (props: LucideProps) => <LucideTableOfContents {...p} {...props} />;
+export const Pencil = (props: LucideProps) => <LucidePencil {...p} {...props} />;

@@ -21,7 +21,7 @@ interface Props {
 export default function NoteCard({ note, index, highlighted, onHighlightEnd }: Props) {
   const { toggleSelect, selectedIds, setEditingId, deleteNote, togglePin, updateNoteColor, moveNoteToPage, clusterMode, setDragging, colorNames } =
     useNotesStore();
-  const { showToast, selectMode, resolvedTheme } = useUIStore();
+  const { showToast, selectMode, resolvedTheme, setDragHint } = useUIStore();
   const isSelected = selectedIds.has(note.id);
   const { startDrag, updateDrag, setTargetIndex, endDrag, getCardStyle, getCardClassName, dragState } = useDragContext();
   const cardRef = useRef<HTMLDivElement>(null);
@@ -32,7 +32,9 @@ export default function NoteCard({ note, index, highlighted, onHighlightEnd }: P
   const originalColorRef = useRef(note.color);
   const [showColors, setShowColors] = useState(false);
   const [radialOrigin, setRadialOrigin] = useState<{ x: number; y: number } | null>(null);
+  const radialOriginRef = useRef<{ x: number; y: number } | null>(null);
   const [hoveredTabName, setHoveredTabName] = useState<string | null>(null);
+  const [mousePos, setMousePos] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const radialColorRef = useRef<string | null>(null);
 
   useEffect(() => {
@@ -107,7 +109,11 @@ export default function NoteCard({ note, index, highlighted, onHighlightEnd }: P
           clientX: mouseDownRef.current.x,
           clientY: mouseDownRef.current.y,
         } as React.MouseEvent, rect?.width || 0, rect?.height || 0);
-        if (clusterMode) setRadialOrigin({ x: mouseDownRef.current.x, y: mouseDownRef.current.y });
+        if (clusterMode) {
+          const origin = { x: mouseDownRef.current.x, y: mouseDownRef.current.y };
+          setRadialOrigin(origin);
+          radialOriginRef.current = origin;
+        }
       }
 
       if (isDraggingRef.current) {
@@ -115,6 +121,19 @@ export default function NoteCard({ note, index, highlighted, onHighlightEnd }: P
           clientX: moveEvent.clientX,
           clientY: moveEvent.clientY,
         } as React.MouseEvent);
+
+        setMousePos({ x: moveEvent.clientX, y: moveEvent.clientY });
+
+        if (radialOriginRef.current) {
+          const dx = moveEvent.clientX - radialOriginRef.current.x;
+          const dy = moveEvent.clientY - radialOriginRef.current.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist > 250) {
+            setDragHint("Turn off Sort by Colour to drag and drop notes");
+          } else {
+            setDragHint(null);
+          }
+        }
 
         const draggedEl = cardRef.current;
         if (draggedEl) draggedEl.style.pointerEvents = "none";
@@ -145,23 +164,32 @@ export default function NoteCard({ note, index, highlighted, onHighlightEnd }: P
       }
     };
 
-    const handleMouseUp = () => {
+    const handleMouseUp = (upEvent: MouseEvent) => {
       document.removeEventListener("mousemove", handleMouseMove);
       document.removeEventListener("mouseup", handleMouseUp);
+      setDragHint(null);
 
       if (isDraggingRef.current) {
         const droppedOnTab = hoveredTab;
         const targetPageId = droppedOnTab?.getAttribute("data-tab-id");
         clearTabHighlight();
 
+        const dropX = upEvent.clientX;
+        const dropY = upEvent.clientY;
+        const originX = radialOriginRef.current?.x ?? 0;
+        const originY = radialOriginRef.current?.y ?? 0;
+        const dropDist = Math.sqrt((dropX - originX) ** 2 + (dropY - originY) ** 2);
+        const isOutOfRange = dropDist > 250;
+
         setTimeout(() => {
-          if (radialColorRef.current) {
-            updateNoteColor(note.id, radialColorRef.current);
+          if (radialColorRef.current && !isOutOfRange) {
+            updateNoteColor(note.id, radialColorRef.current === "none" ? "" : radialColorRef.current);
           }
           radialColorRef.current = null;
           setDragging(false);
           endDrag();
           setRadialOrigin(null);
+          radialOriginRef.current = null;
 
           if (targetPageId && targetPageId !== note.page_id) {
             moveNoteToPage(note.id, targetPageId);
@@ -219,6 +247,14 @@ export default function NoteCard({ note, index, highlighted, onHighlightEnd }: P
         style={{ filter: isDragged && hoveredTabName ? "blur(4px)" : "none", transition: "filter 150ms" }}
       >
         <div className="flex-1 min-w-0">
+          {note.title && (
+            <p
+              className="text-xs font-medium mb-1 uppercase tracking-wider"
+              style={{ color: "var(--text-muted)" }}
+            >
+              {note.title}
+            </p>
+          )}
           <p
             className="text-sm whitespace-pre-wrap break-words leading-relaxed"
             style={{
@@ -333,6 +369,8 @@ export default function NoteCard({ note, index, highlighted, onHighlightEnd }: P
           centerX={radialOrigin.x}
           centerY={radialOrigin.y}
           currentColor={note.color}
+          mouseX={mousePos.x}
+          mouseY={mousePos.y}
           onSelect={(color) => { radialColorRef.current = color; }}
           onCancel={() => { radialColorRef.current = null; }}
         />

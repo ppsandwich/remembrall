@@ -21,6 +21,7 @@ export async function createNote(params: {
   pinned: boolean;
   color?: string;
   pageId?: string;
+  title?: string;
 }): Promise<Note> {
   const { data, error } = await getSupabase()
     .from("notes")
@@ -32,6 +33,7 @@ export async function createNote(params: {
       pinned: params.pinned,
       color: params.color || "",
       page_id: params.pageId || null,
+      title: params.title || "",
     })
     .select()
     .single();
@@ -49,6 +51,7 @@ export async function updateNote(
     archived?: boolean;
     color?: string;
     page_id?: string | null;
+    title?: string;
   }
 ): Promise<Note> {
   const { data, error } = await getSupabase()

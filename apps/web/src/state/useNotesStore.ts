@@ -87,8 +87,9 @@ interface NotesState {
   deletePage: (id: string) => Promise<void>;
   reorderPages: (pageId: string, targetIndex: number) => Promise<void>;
   setActivePage: (id: string) => void;
-  createNote: (body: string, source?: NoteSource) => Promise<void>;
+  createNote: (body: string, source?: NoteSource, title?: string) => Promise<void>;
   updateNote: (id: string, body: string) => Promise<void>;
+  updateNoteTitle: (id: string, title: string) => Promise<void>;
   updateNoteColor: (id: string, color: string) => Promise<void>;
   moveNoteToPage: (noteId: string, pageId: string) => Promise<void>;
   deleteNote: (id: string) => Promise<void>;
@@ -160,6 +161,7 @@ export const useNotesStore = create<NotesState>((set, get) => ({
             position: note.position ?? 0,
             color: note.color || "",
             page_id: note.page_id,
+            title: note.title || "",
             created_at: note.created_at,
             updated_at: note.updated_at,
           });
@@ -177,6 +179,7 @@ export const useNotesStore = create<NotesState>((set, get) => ({
             position: note.position ?? 0,
             color: note.color || "",
             page_id: note.page_id,
+            title: note.title || "",
             created_at: note.created_at,
             updated_at: note.updated_at,
           });
@@ -251,7 +254,7 @@ export const useNotesStore = create<NotesState>((set, get) => ({
     set({ activePageId: id, selectedIds: new Set() });
   },
 
-  createNote: async (body: string, source: NoteSource = "web") => {
+  createNote: async (body: string, source: NoteSource = "web", title: string = "") => {
     const user = useAuthStore.getState().user;
     const { encryptText } = useEncryptionStore.getState();
     if (!user || !body.trim()) return;
@@ -270,6 +273,7 @@ export const useNotesStore = create<NotesState>((set, get) => ({
       pinned: false,
       color,
       pageId: activePageId || undefined,
+      title,
     });
 
     const maxPosition = Math.max(0, ...get().notes.map((n) => n.position));
@@ -287,6 +291,7 @@ export const useNotesStore = create<NotesState>((set, get) => ({
       position: maxPosition + 1,
       color,
       page_id: activePageId,
+      title,
       created_at: created.created_at,
       updated_at: created.updated_at,
     };
@@ -329,6 +334,15 @@ export const useNotesStore = create<NotesState>((set, get) => ({
     } catch {
       // Color column may not exist yet - local state is already updated
     }
+  },
+
+  updateNoteTitle: async (id: string, title: string) => {
+    set((s) => ({
+      notes: s.notes.map((n) => (n.id === id ? { ...n, title } : n)),
+    }));
+    try {
+      await api.updateNote(id, { title });
+    } catch {}
   },
 
   moveNoteToPage: async (noteId: string, pageId: string) => {
@@ -394,6 +408,7 @@ export const useNotesStore = create<NotesState>((set, get) => ({
         position: original.position,
         color: original.color,
         page_id: original.page_id,
+        title: original.title,
         created_at: original.created_at,
         updated_at: original.updated_at,
       },
@@ -416,6 +431,7 @@ export const useNotesStore = create<NotesState>((set, get) => ({
       position: maxPosition + 1,
       color: original.color,
       page_id: original.page_id,
+      title: original.title,
       created_at: created.created_at,
       updated_at: created.updated_at,
     };
@@ -631,6 +647,7 @@ function clusterNotes(notes: DecryptedNote[], colorOrder: string[]): DecryptedNo
 }
 
 export async function initColorSettings(userId?: string) {
+  const validColorNames = new Set(NOTE_COLORS.filter((c) => c.name !== "none").map((c) => c.name));
   let localNames: Record<string, string> = {};
   let localOrder: string[] = [];
 
@@ -638,7 +655,13 @@ export async function initColorSettings(userId?: string) {
     const storedNames = localStorage.getItem("remembrall-color-names");
     if (storedNames) {
       const parsed = JSON.parse(storedNames);
-      localNames = { ...DEFAULT_COLOR_NAMES, ...parsed };
+      const filtered: Record<string, string> = {};
+      for (const key of Object.keys(parsed)) {
+        if (validColorNames.has(key)) {
+          filtered[key] = parsed[key];
+        }
+      }
+      localNames = { ...DEFAULT_COLOR_NAMES, ...filtered };
       useNotesStore.setState({ colorNames: localNames });
     }
   } catch {}
@@ -647,7 +670,7 @@ export async function initColorSettings(userId?: string) {
     if (storedOrder) {
       const parsed = JSON.parse(storedOrder);
       if (Array.isArray(parsed) && parsed.length > 0) {
-        localOrder = parsed;
+        localOrder = parsed.filter((c: string) => validColorNames.has(c));
         useNotesStore.setState({ colorOrder: localOrder });
       }
     }
@@ -658,12 +681,21 @@ export async function initColorSettings(userId?: string) {
   try {
     const prefs = await prefApi.fetchPreferences(userId);
     if (prefs) {
-      const serverNames = prefs.color_names && Object.keys(prefs.color_names).length > 0
-        ? { ...DEFAULT_COLOR_NAMES, ...prefs.color_names }
+      const serverNamesRaw = prefs.color_names && Object.keys(prefs.color_names).length > 0
+        ? prefs.color_names
         : localNames;
-      const serverOrder = prefs.color_order && prefs.color_order.length > 0
+      const filteredServerNames: Record<string, string> = {};
+      for (const key of Object.keys(serverNamesRaw)) {
+        if (validColorNames.has(key)) {
+          filteredServerNames[key] = serverNamesRaw[key];
+        }
+      }
+      const serverNames = { ...DEFAULT_COLOR_NAMES, ...filteredServerNames };
+
+      const serverOrderRaw = prefs.color_order && prefs.color_order.length > 0
         ? prefs.color_order
         : localOrder;
+      const serverOrder = serverOrderRaw.filter((c: string) => validColorNames.has(c));
 
       useNotesStore.setState({
         colorNames: serverNames,

@@ -105,7 +105,7 @@ export default function Header() {
             </h1>
           </div>
 
-          <div className="flex items-center gap-0.5 flex-1 min-w-0 mx-4">
+          <div className="flex items-center gap-0.5 flex-1 min-w-0 ml-[30px]">
             <div className="hidden md:flex flex-1 min-w-0 overflow-x-auto">
               <TabBar />
             </div>
@@ -320,7 +320,7 @@ function HeaderButton({ onClick, title, active, children, className, style }: { 
     <button
       onClick={onClick}
       className={`p-2 rounded-md transition-colors ${className ?? ""}`}
-      style={{ color: active ? "var(--text)" : "var(--text-muted)", background: active ? "var(--surface-subtle)" : "transparent", ...style }}
+      style={{ color: active ? "#3B82F6" : "var(--text-muted)", background: active ? "var(--surface-subtle)" : "transparent", ...style }}
       title={title}
       aria-label={title}
       onMouseEnter={(e) => {

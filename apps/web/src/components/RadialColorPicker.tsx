@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useCallback, useState } from "react";
+import { useEffect, useRef, useCallback, useState, useMemo } from "react";
 import { createPortal } from "react-dom";
 import { useNotesStore, getColorDisplayName } from "@/state/useNotesStore";
 
@@ -8,29 +8,34 @@ interface Props {
   centerX: number;
   centerY: number;
   currentColor: string;
+  mouseX: number;
+  mouseY: number;
   onSelect: (color: string) => void;
   onCancel: () => void;
 }
 
 const RADIUS = 80;
 const SWATCH_SIZE = 28;
+const FADE_RADIUS = 250;
 
-export default function RadialColorPicker({ centerX, centerY, currentColor, onSelect, onCancel }: Props) {
+export default function RadialColorPicker({ centerX, centerY, currentColor, mouseX, mouseY, onSelect, onCancel }: Props) {
   const colorNames = useNotesStore((s) => s.colorNames);
   const storeColorOrder = useNotesStore((s) => s.colorOrder);
-  const PICKER_COLORS: Record<string, string> = {
+  const PICKER_COLORS: Record<string, string> = useMemo(() => ({
     red: "#F87171",
     orange: "#FB923C",
-    yellow: "#FACC15",
     teal: "#2DD4BF",
     blue: "#60A5FA",
     green: "#4ADE80",
     purple: "#C084FC",
     pink: "#F472B6",
-  };
-  const pickerColors = storeColorOrder
-    .filter((name) => name !== "none")
-    .map((name) => ({ name, hex: PICKER_COLORS[name] || "" }));
+  }), []);
+  const pickerColors = useMemo(() => [
+    { name: "none", hex: "" },
+    ...storeColorOrder
+      .filter((name) => name !== "none")
+      .map((name) => ({ name, hex: PICKER_COLORS[name] || "" })),
+  ], [storeColorOrder, PICKER_COLORS]);
 
   const [hoveredColor, setHoveredColor] = useState<string | null>(null);
   const hoveredRef = useRef<string | null>(null);
@@ -39,13 +44,21 @@ export default function RadialColorPicker({ centerX, centerY, currentColor, onSe
   const onCancelRef = useRef(onCancel);
   onCancelRef.current = onCancel;
 
+  const dx = mouseX - centerX;
+  const dy = mouseY - centerY;
+  const distFromCenter = Math.sqrt(dx * dx + dy * dy);
+  const isOutOfRange = distFromCenter > FADE_RADIUS;
+
   const getHoveredColor = useCallback(
     (clientX: number, clientY: number): string | null => {
       const dx = clientX - centerX;
       const dy = clientY - centerY;
       const dist = Math.sqrt(dx * dx + dy * dy);
 
-      if (dist < SWATCH_SIZE / 2) return null;
+      if (dist < SWATCH_SIZE / 2) {
+        console.log("getHoveredColor: too close to center", { dist, threshold: SWATCH_SIZE / 2 });
+        return null;
+      }
 
       const angle = Math.atan2(dy, dx);
       const step = (2 * Math.PI) / pickerColors.length;
@@ -59,6 +72,7 @@ export default function RadialColorPicker({ centerX, centerY, currentColor, onSe
           return pickerColors[i].name;
         }
       }
+      console.log("getHoveredColor: no match", { angle, step, pickerColorsLength: pickerColors.length, dist });
       return null;
     },
     [centerX, centerY, pickerColors],
@@ -67,6 +81,7 @@ export default function RadialColorPicker({ centerX, centerY, currentColor, onSe
   useEffect(() => {
     const handleMove = (e: MouseEvent) => {
       const color = getHoveredColor(e.clientX, e.clientY);
+      console.log("RadialColorPicker handleMove", { clientX: e.clientX, clientY: e.clientY, centerX, centerY, color, pickerColorsLength: pickerColors.length });
       if (color !== hoveredRef.current) {
         hoveredRef.current = color;
         setHoveredColor(color);
@@ -76,6 +91,7 @@ export default function RadialColorPicker({ centerX, centerY, currentColor, onSe
     const handleUp = () => {
       document.removeEventListener("mousemove", handleMove);
       document.removeEventListener("mouseup", handleUp);
+      console.log("RadialColorPicker handleUp", { hoveredRef: hoveredRef.current });
       if (hoveredRef.current) {
         onReleaseRef.current(hoveredRef.current);
       } else {
@@ -92,6 +108,7 @@ export default function RadialColorPicker({ centerX, centerY, currentColor, onSe
   }, [getHoveredColor]);
 
   const step = (2 * Math.PI) / pickerColors.length;
+  const swatchOpacity = isOutOfRange ? 0 : 1;
 
   return createPortal(
     <div
@@ -116,6 +133,8 @@ export default function RadialColorPicker({ centerX, centerY, currentColor, onSe
           backdropFilter: "blur(6px)",
           WebkitBackdropFilter: "blur(6px)",
           background: "color-mix(in srgb, var(--surface) 30%, transparent)",
+          opacity: swatchOpacity,
+          transition: "opacity 150ms ease-out",
         }}
       />
       {pickerColors.map((color, i) => {
@@ -123,7 +142,8 @@ export default function RadialColorPicker({ centerX, centerY, currentColor, onSe
         const x = centerX + Math.cos(angle) * RADIUS - SWATCH_SIZE / 2;
         const y = centerY + Math.sin(angle) * RADIUS - SWATCH_SIZE / 2;
         const isHovered = hoveredColor === color.name;
-        const isCurrent = currentColor === color.name;
+        const isCurrent = color.name === "none" ? !currentColor : currentColor === color.name;
+        const isNone = color.name === "none";
 
         return (
           <div
@@ -135,20 +155,37 @@ export default function RadialColorPicker({ centerX, centerY, currentColor, onSe
               width: SWATCH_SIZE,
               height: SWATCH_SIZE,
               borderRadius: "50%",
-              background: color.hex,
+              background: isNone ? "var(--surface-subtle)" : color.hex,
+              border: isNone ? "2px dashed var(--text-muted)" : undefined,
               transform: isHovered ? "scale(1.4)" : isCurrent ? "scale(1.15)" : "scale(1)",
               boxShadow: isHovered
                 ? `0 0 0 3px var(--accent), 0 4px 12px rgba(0,0,0,0.3)`
                 : isCurrent
                   ? `0 0 0 2px var(--accent)`
                   : `0 2px 8px rgba(0,0,0,0.2)`,
-              transition: "transform 100ms ease-out, box-shadow 100ms ease-out",
+              transition: "transform 100ms ease-out, box-shadow 100ms ease-out, opacity 150ms ease-out",
               pointerEvents: "none",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              opacity: swatchOpacity,
             }}
-          />
+          >
+            {isNone && (
+              <div
+                style={{
+                  width: 14,
+                  height: 2,
+                  background: "var(--text-muted)",
+                  transform: "rotate(-45deg)",
+                  position: "absolute",
+                }}
+              />
+            )}
+          </div>
         );
       })}
-      {hoveredColor && (
+      {hoveredColor && !isOutOfRange && (
         <div
           style={{
             position: "absolute",
@@ -162,7 +199,7 @@ export default function RadialColorPicker({ centerX, centerY, currentColor, onSe
             whiteSpace: "nowrap",
           }}
         >
-          {getColorDisplayName(hoveredColor, colorNames)}
+          {hoveredColor === "none" ? "None" : getColorDisplayName(hoveredColor, colorNames)}
         </div>
       )}
     </div>,

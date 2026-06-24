@@ -8,6 +8,7 @@ interface UIState {
   showQuickCapture: boolean;
   selectMode: boolean;
   toastMessage: string | null;
+  dragHint: string | null;
   enterToSave: boolean;
 
   setTheme: (theme: "light" | "dark") => void;
@@ -16,6 +17,7 @@ interface UIState {
   setShowQuickCapture: (show: boolean) => void;
   setSelectMode: (on: boolean) => void;
   setEnterToSave: (on: boolean) => void;
+  setDragHint: (message: string | null) => void;
   showToast: (message: string) => void;
   clearToast: () => void;
 }
@@ -28,6 +30,7 @@ export const useUIStore = create<UIState>((set) => ({
   showQuickCapture: false,
   selectMode: false,
   toastMessage: null,
+  dragHint: null,
   enterToSave: true,
 
   setTheme: (theme) => {
@@ -40,6 +43,7 @@ export const useUIStore = create<UIState>((set) => ({
   setShowSettings: (show) => set({ showSettings: show }),
   setShowQuickCapture: (show) => set({ showQuickCapture: show }),
   setSelectMode: (on) => set({ selectMode: on }),
+  setDragHint: (message) => set({ dragHint: message }),
   setEnterToSave: (on) => {
     localStorage.setItem("remembrall-enter-to-save", on ? "1" : "0");
     set({ enterToSave: on });

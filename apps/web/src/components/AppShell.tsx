@@ -18,7 +18,7 @@ import SettingsPanel from "./SettingsPanel";
 export default function AppShell() {
   const { fetchAll, fetchPages, createNote, editingId, selectedIds, deleteNote, duplicateNote, clearSelection, selectAll } =
     useNotesStore();
-  const { showSettings, setShowSettings, setShowShortcuts, setShowQuickCapture, showToast, setSelectMode } = useUIStore();
+  const { showSettings, setShowSettings, setShowShortcuts, setShowQuickCapture, showToast, setSelectMode, dragHint } = useUIStore();
   const { user } = useAuthStore();
   const [ready, setReady] = useState(false);
 
@@ -112,6 +112,14 @@ export default function AppShell() {
       </footer>
       <NoteEditor />
       <UndoToast />
+      {dragHint && (
+        <div
+          className="fixed bottom-4 left-1/2 -translate-x-1/2 px-4 py-2 rounded-lg shadow-lg text-sm"
+          style={{ zIndex: 10001, background: "var(--surface)", border: "1px solid var(--border)", color: "var(--text-muted)", pointerEvents: "none" }}
+        >
+          {dragHint}
+        </div>
+      )}
       <ShortcutsPanel />
       {showSettings && <SettingsPanel onClose={() => setShowSettings(false)} />}
     </div>
