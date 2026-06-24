@@ -111,6 +111,8 @@ export default function AppShell() {
     };
   }, [createNote, deleteNote, duplicateNote, selectedIds, editingId, clearSelection, selectAll, setShowShortcuts, setShowQuickCapture, showToast, setSelectMode]);
 
+  const isDesktop = typeof window !== "undefined" && !!(window as any).electronAPI;
+
   if (!ready) {
     return (
       <div className="flex items-center justify-center h-screen" style={{ background: "var(--bg)" }}>
@@ -120,7 +122,10 @@ export default function AppShell() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: "var(--bg)" }}>
+    <div
+      className="min-h-screen flex flex-col"
+      style={{ background: "var(--bg)", ...(isDesktop ? { zoom: 0.8 } : {}) }}
+    >
       <Header />
       <main className="flex-1 max-w-7xl w-full mx-auto px-8 py-6 flex flex-col gap-4">
         <TagFilter />

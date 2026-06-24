@@ -111,7 +111,10 @@ export default function RichTextEditor({ body, onChange, onKeyDown, placeholder 
   }, [onChange]);
 
   const setRef = useCallback((node: HTMLDivElement | null) => {
-    if (!node) return;
+    if (!node) {
+      initializedRef.current = false;
+      return;
+    }
     (editorRef as React.MutableRefObject<HTMLDivElement | null>).current = node;
     if (!initializedRef.current && body) {
       const html = isHtml(body) ? body : plainTextToHtml(body);

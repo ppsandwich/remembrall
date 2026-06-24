@@ -3,7 +3,7 @@
 import { useNotesStore } from "@/state/useNotesStore";
 import { writeClipboard } from "@/lib/clipboard";
 import { useUIStore } from "@/state/useUIStore";
-import { exportNotes, downloadMarkdown, exportFilename } from "@remembrall/export";
+import { exportNotes, downloadMarkdown, exportFilename } from "@brall/export";
 import { Copy, Duplicate, Download, Trash, X } from "./Icons";
 
 export default function BulkToolbar() {

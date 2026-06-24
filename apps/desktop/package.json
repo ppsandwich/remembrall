@@ -1,7 +1,7 @@
 {
-  "name": "@remembrall/desktop",
+  "name": "@brall/desktop",
   "version": "0.0.4",
-  "description": "Remembrall - Capture and organize your thoughts",
+  "description": "Brall - Capture and organize your thoughts",
   "author": "Sandwich Codes",
   "private": true,
   "main": "dist/main/index.js",
@@ -25,7 +25,7 @@
   },
   "build": {
     "appId": "codes.sandwich.remembrall",
-    "productName": "Remembrall",
+    "productName": "Brall",
     "directories": {
       "output": "release"
     },

@@ -1,11 +1,11 @@
 "use client";
 
-import type { DecryptedNote } from "@remembrall/core";
-import { extractTags, stripTags } from "@remembrall/core";
+import type { DecryptedNote } from "@brall/core";
+import { extractTags, stripTags } from "@brall/core";
 import { useNotesStore, NOTE_COLORS, DARK_NOTE_COLORS, getColorDisplayName } from "@/state/useNotesStore";
 import { writeClipboard } from "@/lib/clipboard";
 import { useUIStore } from "@/state/useUIStore";
-import { exportSingleNote, downloadMarkdown, singleNoteFilename } from "@remembrall/export";
+import { exportSingleNote, downloadMarkdown, singleNoteFilename } from "@brall/export";
 import { Copy, Pin, PinOff, Download, Trash, Palette } from "./Icons";
 import { useDragContext } from "./DragContext";
 import RadialColorPicker from "./RadialColorPicker";
@@ -19,7 +19,7 @@ interface Props {
 }
 
 export default function NoteCard({ note, index, highlighted, onHighlightEnd }: Props) {
-  const { toggleSelect, selectedIds, setEditingId, deleteNote, togglePin, updateNoteColor, moveNoteToPage, clusterMode, setDragging, colorNames } =
+  const { toggleSelect, selectedIds, setEditingId, deleteNote, togglePin, updateNoteColor, moveNoteToPage, clusterMode, setDragging, colorNames, pages, activePageId } =
     useNotesStore();
   const { showToast, selectMode, resolvedTheme, setDragHint } = useUIStore();
   const isSelected = selectedIds.has(note.id);
@@ -65,6 +65,9 @@ export default function NoteCard({ note, index, highlighted, onHighlightEnd }: P
 
   const colors = resolvedTheme === "dark" ? DARK_NOTE_COLORS : NOTE_COLORS;
   const colorHex = colors.find((c) => c.name === note.color)?.hex || "";
+  const eyebrowColor = colorHex
+    ? `color-mix(in srgb, ${colorHex} 70%, ${resolvedTheme === "dark" ? "white" : "black"})`
+    : "var(--text-muted)";
 
   const handleCopy = async () => {
     const fullText = stripTags(note.body);
@@ -149,8 +152,12 @@ export default function NoteCard({ note, index, highlighted, onHighlightEnd }: P
             hoveredTab = tabBelow;
             hoveredTab.style.outline = "2px solid var(--accent)";
             hoveredTab.style.outlineOffset = "-2px";
-            const tabName = tabBelow.textContent?.trim() || null;
-            setHoveredTabName(tabName);
+            if (tabBelow.hasAttribute("data-move-to-item")) {
+              setHoveredTabName(null);
+            } else {
+              const tabName = tabBelow.getAttribute("data-tab-name") || tabBelow.textContent?.trim() || null;
+              setHoveredTabName(tabName);
+            }
           } else {
             clearTabHighlight();
             const cardBelow = elemBelow.closest("[data-note-card]");
@@ -251,7 +258,7 @@ export default function NoteCard({ note, index, highlighted, onHighlightEnd }: P
           {note.title && (
             <p
               className="text-xs font-bold mb-1 uppercase tracking-wider"
-              style={{ color: "var(--text)" }}
+              style={{ color: eyebrowColor }}
             >
               {note.title}
             </p>
@@ -374,6 +381,8 @@ export default function NoteCard({ note, index, highlighted, onHighlightEnd }: P
           mouseY={mousePos.y}
           onSelect={(color) => { radialColorRef.current = color; }}
           onCancel={() => { radialColorRef.current = null; }}
+          pages={pages}
+          activePageId={activePageId}
         />
       )}
     </div>
@@ -385,16 +394,16 @@ function CardButton({ onClick, title, danger, children }: { onClick: () => void;
     <button
       onClick={onClick}
       className="p-1.5 rounded transition-colors"
-      style={{ color: danger ? "var(--danger)" : "var(--text-muted)" }}
+      style={{ color: danger ? "var(--danger)" : "var(--text-secondary)" }}
       title={title}
       aria-label={title}
       onMouseEnter={(e) => {
         e.currentTarget.style.background = danger ? "var(--danger)" : "var(--surface-subtle)";
-        e.currentTarget.style.color = danger ? "var(--surface)" : "var(--text-secondary)";
+        e.currentTarget.style.color = danger ? "var(--surface)" : "var(--text)";
       }}
       onMouseLeave={(e) => {
         e.currentTarget.style.background = "transparent";
-        e.currentTarget.style.color = danger ? "var(--danger)" : "var(--text-muted)";
+        e.currentTarget.style.color = danger ? "var(--danger)" : "var(--text-secondary)";
       }}
     >
       {children}

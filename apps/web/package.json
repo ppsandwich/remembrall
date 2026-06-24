@@ -1,5 +1,5 @@
 {
-  "name": "@remembrall/web",
+  "name": "@brall/web",
   "version": "0.0.1",
   "private": true,
   "scripts": {
@@ -10,10 +10,10 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@remembrall/core": "workspace:*",
-    "@remembrall/crypto": "workspace:*",
-    "@remembrall/export": "workspace:*",
-    "@remembrall/supabase": "workspace:*",
+    "@brall/core": "workspace:*",
+    "@brall/crypto": "workspace:*",
+    "@brall/export": "workspace:*",
+    "@brall/supabase": "workspace:*",
     "@supabase/ssr": "^0.6.1",
     "@supabase/supabase-js": "^2.50.0",
     "lucide-react": "^1.21.0",

@@ -1,5 +1,5 @@
 import { getSupabase } from "./supabaseClient";
-import type { Note, EncryptedPayload, NoteSource } from "@remembrall/core";
+import type { Note, EncryptedPayload, NoteSource } from "@brall/core";
 
 export async function fetchNotes(userId: string): Promise<Note[]> {
   const { data, error } = await getSupabase()

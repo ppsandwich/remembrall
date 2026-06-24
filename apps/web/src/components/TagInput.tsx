@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, useMemo } from "react";
 import { useNotesStore } from "@/state/useNotesStore";
-import { extractTags } from "@remembrall/core";
+import { extractTags } from "@brall/core";
 import { Tag, X } from "./Icons";
 
 interface Props {

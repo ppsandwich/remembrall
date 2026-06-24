@@ -167,7 +167,7 @@ export default function SettingsPanel({ onClose }: { onClose: () => void }) {
           </div>
 
           <p className="text-xs leading-relaxed" style={{ color: "var(--text-muted)" }}>
-            Your note text is encrypted before it leaves your device. Remembrall stores the locked box, not the thought inside it.
+            Your note text is encrypted before it leaves your device. Brall stores the locked box, not the thought inside it.
           </p>
         </div>
       </div>

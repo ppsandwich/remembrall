@@ -1,7 +1,7 @@
 "use client";
 
 import { useNotesStore } from "@/state/useNotesStore";
-import { exportNotes, downloadMarkdown, exportFilename } from "@remembrall/export";
+import { exportNotes, downloadMarkdown, exportFilename } from "@brall/export";
 import { useUIStore } from "@/state/useUIStore";
 
 export default function ExportMenu({ onClose }: { onClose: () => void }) {

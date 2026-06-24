@@ -12,13 +12,15 @@ interface Props {
   mouseY: number;
   onSelect: (color: string) => void;
   onCancel: () => void;
+  pages: { id: string; name: string }[];
+  activePageId: string | null;
 }
 
 const RADIUS = 80;
 const SWATCH_SIZE = 28;
 const FADE_RADIUS = 250;
 
-export default function RadialColorPicker({ centerX, centerY, currentColor, mouseX, mouseY, onSelect, onCancel }: Props) {
+export default function RadialColorPicker({ centerX, centerY, currentColor, mouseX, mouseY, onSelect, onCancel, pages, activePageId }: Props) {
   const colorNames = useNotesStore((s) => s.colorNames);
   const storeColorOrder = useNotesStore((s) => s.colorOrder);
   const PICKER_COLORS: Record<string, string> = useMemo(() => ({
@@ -55,8 +57,7 @@ export default function RadialColorPicker({ centerX, centerY, currentColor, mous
       const dy = clientY - centerY;
       const dist = Math.sqrt(dx * dx + dy * dy);
 
-      if (dist < SWATCH_SIZE / 2) {
-        console.log("getHoveredColor: too close to center", { dist, threshold: SWATCH_SIZE / 2 });
+      if (dist < 25) {
         return null;
       }
 
@@ -202,6 +203,36 @@ export default function RadialColorPicker({ centerX, centerY, currentColor, mous
           {hoveredColor === "none" ? "None" : getColorDisplayName(hoveredColor, colorNames)}
         </div>
       )}
+      {!isOutOfRange && pages.filter((p) => p.id !== activePageId).map((page, i) => {
+        const itemY = centerY + RADIUS + SWATCH_SIZE + 16 + i * 32;
+        return (
+          <div
+            key={page.id}
+            data-tab-id={page.id}
+            data-tab-name={page.name}
+            data-move-to-item
+            style={{
+              position: "absolute",
+              left: centerX,
+              top: itemY,
+              transform: "translateX(-50%)",
+              padding: "4px 12px",
+              fontSize: 11,
+              fontWeight: 500,
+              color: "var(--text-secondary)",
+              background: "var(--surface)",
+              border: "1px solid var(--border)",
+              borderRadius: 6,
+              whiteSpace: "nowrap",
+              pointerEvents: "auto",
+              opacity: swatchOpacity,
+              transition: "opacity 150ms ease-out",
+            }}
+          >
+            Move to {page.name}
+          </div>
+        );
+      })}
     </div>,
     document.body,
   );

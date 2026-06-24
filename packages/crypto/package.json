@@ -1,5 +1,5 @@
 {
-  "name": "@remembrall/crypto",
+  "name": "@brall/crypto",
   "version": "0.0.1",
   "private": true,
   "type": "module",
@@ -9,8 +9,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@remembrall/core": "workspace:*",
-    "@remembrall/supabase": "workspace:*"
+    "@brall/core": "workspace:*",
+    "@brall/supabase": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^22.15.21",

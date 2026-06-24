@@ -34,7 +34,7 @@ function createTrayIcon(): Electron.NativeImage {
   const size = 16;
   const canvas = Buffer.alloc(size * size * 4);
 
-  // Draw a simple "R" shape (Remembrall)
+  // Draw a simple "R" shape (Brall)
   // This is a basic bitmap - replace with a proper icon for production
   for (let y = 0; y < size; y++) {
     for (let x = 0; x < size; x++) {
@@ -153,7 +153,7 @@ function createTray(): void {
 
   const contextMenu = Menu.buildFromTemplate([
     {
-      label: "Show Remembrall",
+      label: "Show Brall",
       click: () => togglePopover(),
     },
     { type: "separator" },
@@ -171,7 +171,7 @@ function createTray(): void {
     },
   ]);
 
-  tray.setToolTip("Remembrall");
+  tray.setToolTip("Brall");
   tray.setContextMenu(contextMenu);
   tray.on("click", () => togglePopover());
 }
@@ -257,7 +257,7 @@ function createNoteWithText(text: string): void {
 function registerMacOSServices(): void {
   if (isMac) {
     app.setAboutPanelOptions({
-      applicationName: "Remembrall",
+      applicationName: "Brall",
       applicationVersion: "0.0.1",
       copyright: "Sandwich Codes",
     });
@@ -266,7 +266,7 @@ function registerMacOSServices(): void {
 
 function registerWindowsContextMenu(): void {
   if (!isMac && app.isPackaged) {
-    // Add "Send to Remembrall" to Windows context menu for text files
+    // Add "Send to Brall" to Windows context menu for text files
     // This uses the Windows Registry via Electron's app.setAsDefaultProtocolClient
     // For a full context menu extension, a native addon would be required
 

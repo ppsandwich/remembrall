@@ -1,6 +1,6 @@
 import { create } from "zustand";
-import type { DecryptedNote, NoteSource, EncryptedPayload, NotePage } from "@remembrall/core";
-import { derivePreview, searchNotes as filterNotes, extractTags, addTag, removeTag, stripTags } from "@remembrall/core";
+import type { DecryptedNote, NoteSource, EncryptedPayload, NotePage } from "@brall/core";
+import { derivePreview, searchNotes as filterNotes, extractTags, addTag, removeTag, stripTags } from "@brall/core";
 import { useEncryptionStore } from "./useEncryptionStore";
 import { useAuthStore } from "./useAuthStore";
 import * as api from "@/lib/notesApi";

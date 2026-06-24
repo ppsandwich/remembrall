@@ -1,5 +1,5 @@
-import type { UserEncryptionKey } from "@remembrall/core";
-import { getSupabase } from "@remembrall/supabase";
+import type { UserEncryptionKey } from "@brall/core";
+import { getSupabase } from "@brall/supabase";
 
 const SALT_STORAGE_KEY = "remembrall-salt";
 const KEY_STORAGE_KEY = "remembrall-key";

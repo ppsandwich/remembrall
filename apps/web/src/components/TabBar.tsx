@@ -57,7 +57,9 @@ export default function TabBar() {
     if (btn) {
       const containerRect = tabContainerRef.current.getBoundingClientRect();
       const btnRect = btn.getBoundingClientRect();
-      setIndicatorStyle({ left: btnRect.left - containerRect.left, width: btnRect.width });
+      const border = parseFloat(getComputedStyle(tabContainerRef.current).borderLeftWidth) || 0;
+      const scale = containerRect.width / tabContainerRef.current.offsetWidth || 1;
+      setIndicatorStyle({ left: (btnRect.left - containerRect.left - border) / scale, width: btnRect.width / scale });
     }
   }, [activePageId, pages]);
 
@@ -206,6 +208,7 @@ export default function TabBar() {
             onClick={() => setActivePage(page.id)}
             onMouseDown={(e) => handleMouseDown(e, isGlobalIndex)}
             data-tab-id={page.id}
+            data-tab-name={page.name}
             data-tab-index={isGlobalIndex}
             className="px-3 py-1.5 text-xs transition-colors relative whitespace-nowrap cursor-grab active:cursor-grabbing"
             style={{
@@ -245,16 +248,18 @@ export default function TabBar() {
           className="flex items-center rounded-md overflow-hidden relative"
           style={{ border: "1px solid var(--border)", background: "var(--surface-subtle)" }}
         >
-          <div
-            className="absolute top-[2px] bottom-[2px] rounded transition-all duration-200 ease-in-out"
-            style={{
-              left: indicatorStyle.left,
-              width: indicatorStyle.width,
-              background: "var(--surface)",
-              boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
-              pointerEvents: "none",
-            }}
-          />
+          {!editingId && (
+            <div
+              className="absolute top-[2px] bottom-[2px] rounded transition-all duration-200 ease-in-out"
+              style={{
+                left: indicatorStyle.left,
+                width: indicatorStyle.width,
+                background: "var(--surface)",
+                boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+                pointerEvents: "none",
+              }}
+            />
+          )}
           {visiblePages.map((page, i) => {
             const globalIndex = pages.findIndex((p) => p.id === page.id);
             return renderTab(page, i, globalIndex);

@@ -1,4 +1,4 @@
-import type { EncryptedPayload } from "@remembrall/core";
+import type { EncryptedPayload } from "@brall/core";
 
 export async function encrypt(
   plaintext: string,

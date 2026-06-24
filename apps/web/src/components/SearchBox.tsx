@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import { useNotesStore } from "@/state/useNotesStore";
-import { extractTags } from "@remembrall/core";
+import { extractTags } from "@brall/core";
 
 export default function TagFilter() {
   const filterTag = useNotesStore((s) => s.filterTag);

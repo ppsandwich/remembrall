@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { useAuthStore } from "@/state/useAuthStore";
 import { useUIStore } from "@/state/useUIStore";
 import { useNotesStore } from "@/state/useNotesStore";
-import { Sun, Moon, HelpCircle, Settings, LogOut, CheckSquare, Square, Layers, Volleyball, Search, X, Plus, Minus, ChevronDown, TableOfContents } from "./Icons";
+import { Sun, Moon, HelpCircle, Settings, LogOut, CheckSquare, Square, Layers, Volleyball, Search, X, Plus, Minus, ChevronDown, TableOfContents, Pencil } from "./Icons";
 import QuickCapture from "./QuickCapture";
 import TabBar from "./TabBar";
 
@@ -20,14 +20,18 @@ export default function Header() {
   const setActivePage = useNotesStore((s) => s.setActivePage);
   const createPage = useNotesStore((s) => s.createPage);
   const deletePage = useNotesStore((s) => s.deletePage);
+  const updatePage = useNotesStore((s) => s.updatePage);
   const { theme, setTheme, setShowShortcuts, setShowSettings, selectMode, setSelectMode, showQuickCapture, setShowQuickCapture } = useUIStore();
 
   const [searchOpen, setSearchOpen] = useState(false);
   const [pagesMenuOpen, setPagesMenuOpen] = useState(false);
   const [showMobileDeleteConfirm, setShowMobileDeleteConfirm] = useState(false);
+  const [editingPageId, setEditingPageId] = useState<string | null>(null);
+  const [editPageName, setEditPageName] = useState("");
   const searchRef = useRef<HTMLDivElement>(null);
   const mobileInputRef = useRef<HTMLInputElement>(null);
   const pagesMenuRef = useRef<HTMLDivElement>(null);
+  const renameInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!searchOpen) return;
@@ -57,6 +61,13 @@ export default function Header() {
     }
   }, [searchOpen]);
 
+  useEffect(() => {
+    if (editingPageId && renameInputRef.current) {
+      renameInputRef.current.focus();
+      renameInputRef.current.select();
+    }
+  }, [editingPageId]);
+
   const cycleTheme = () => {
     setTheme(theme === "light" ? "dark" : "light");
   };
@@ -80,37 +91,41 @@ export default function Header() {
       >
         <div className="max-w-7xl w-full mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3 shrink-0">
-            <svg width="0" height="0" style={{ position: "absolute" }}>
-              <defs>
-                <linearGradient id="header-gold" x1="0%" y1="0%" x2="0%" y2="100%">
-                  <stop offset="0%" stopColor="#D4AF37" />
-                  <stop offset="50%" stopColor="#B8860B" />
-                  <stop offset="100%" stopColor="#996515" />
-                </linearGradient>
-              </defs>
-            </svg>
-            <Volleyball size={24} strokeWidth={1.5} style={{ stroke: "url(#header-gold)", fill: "none" }} />
-            <h1
-              className="text-lg font-bold tracking-tight hidden sm:block"
-              style={{
-                letterSpacing: "-0.01em",
-                fontFamily: "var(--font-almendra), serif",
-                background: "linear-gradient(to bottom, #D4AF37, #B8860B, #996515)",
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
-                backgroundClip: "text",
-              }}
-            >
-              Remembrall
-            </h1>
+            {!(window as any).electronAPI && (
+              <>
+                <svg width="0" height="0" style={{ position: "absolute" }}>
+                  <defs>
+                    <linearGradient id="header-gold" x1="0%" y1="0%" x2="0%" y2="100%">
+                      <stop offset="0%" stopColor="#D4AF37" />
+                      <stop offset="50%" stopColor="#B8860B" />
+                      <stop offset="100%" stopColor="#996515" />
+                    </linearGradient>
+                  </defs>
+                </svg>
+                <Volleyball size={24} strokeWidth={1.5} style={{ stroke: "url(#header-gold)", fill: "none" }} />
+                <h1
+                  className="text-lg font-bold tracking-tight hidden sm:block"
+                  style={{
+                    letterSpacing: "-0.01em",
+                    fontFamily: "var(--font-almendra), serif",
+                    background: "linear-gradient(to bottom, #D4AF37, #B8860B, #996515)",
+                    WebkitBackgroundClip: "text",
+                    WebkitTextFillColor: "transparent",
+                    backgroundClip: "text",
+                  }}
+                >
+                  Brall
+                </h1>
+              </>
+            )}
           </div>
 
           <div className="flex items-center gap-0.5 flex-1 min-w-0 ml-[30px]">
-            <div className="hidden md:flex flex-1 min-w-0 overflow-x-auto">
+            <div className="hidden lg:flex flex-1 min-w-0 overflow-x-auto">
               <TabBar />
             </div>
 
-            <div className="relative md:hidden" ref={pagesMenuRef}>
+            <div className="relative flex-1 lg:hidden" ref={pagesMenuRef}>
               <HeaderButton
                 onClick={() => setPagesMenuOpen(!pagesMenuOpen)}
                 title="Pages"
@@ -124,40 +139,93 @@ export default function Header() {
                   style={{ background: "var(--surface)", border: "1px solid var(--border)" }}
                 >
                   {pages.map((page) => (
-                    <button
-                      key={page.id}
-                      onClick={() => {
-                        setActivePage(page.id);
-                        setPagesMenuOpen(false);
-                      }}
-                      className="w-full text-left px-3 py-1.5 text-xs transition-colors"
-                      style={{
-                        color: activePageId === page.id ? "var(--text)" : "var(--text-muted)",
-                        background: activePageId === page.id ? "var(--surface-subtle)" : "transparent",
-                      }}
-                      onMouseEnter={(e) => { e.currentTarget.style.background = "var(--surface-subtle)"; e.currentTarget.style.color = "var(--text-secondary)"; }}
-                      onMouseLeave={(e) => { e.currentTarget.style.background = activePageId === page.id ? "var(--surface-subtle)" : "transparent"; e.currentTarget.style.color = activePageId === page.id ? "var(--text)" : "var(--text-muted)"; }}
-                    >
-                      {page.name}
-                    </button>
+                    editingPageId === page.id ? (
+                      <div key={page.id} className="px-2 py-1">
+                        <input
+                          ref={renameInputRef}
+                          type="text"
+                          value={editPageName}
+                          onChange={(e) => setEditPageName(e.target.value)}
+                          onBlur={() => {
+                            if (editPageName.trim()) {
+                              updatePage(editingPageId, editPageName.trim());
+                            }
+                            setEditingPageId(null);
+                            setEditPageName("");
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              if (editPageName.trim()) {
+                                updatePage(editingPageId, editPageName.trim());
+                              }
+                              setEditingPageId(null);
+                              setEditPageName("");
+                            }
+                            if (e.key === "Escape") {
+                              setEditingPageId(null);
+                              setEditPageName("");
+                            }
+                          }}
+                          className="w-full px-2 py-1 text-xs outline-none rounded"
+                          style={{
+                            background: "var(--surface-subtle)",
+                            color: "var(--text)",
+                            border: "1px solid var(--border)",
+                          }}
+                        />
+                      </div>
+                    ) : (
+                      <button
+                        key={page.id}
+                        onClick={() => {
+                          setActivePage(page.id);
+                          setPagesMenuOpen(false);
+                        }}
+                        className="w-full text-left px-3 py-1.5 text-xs transition-colors"
+                        style={{
+                          color: activePageId === page.id ? "var(--text)" : "var(--text-muted)",
+                          background: activePageId === page.id ? "var(--surface-subtle)" : "transparent",
+                        }}
+                        onMouseEnter={(e) => { e.currentTarget.style.background = "var(--surface-subtle)"; e.currentTarget.style.color = "var(--text-secondary)"; }}
+                        onMouseLeave={(e) => { e.currentTarget.style.background = activePageId === page.id ? "var(--surface-subtle)" : "transparent"; e.currentTarget.style.color = activePageId === page.id ? "var(--text)" : "var(--text-muted)"; }}
+                      >
+                        {page.name}
+                      </button>
+                    )
                   ))}
-                  {pages.length > 1 && (
-                    <div style={{ borderTop: "1px solid var(--border)" }} className="mt-1 pt-1">
+                  <div style={{ borderTop: "1px solid var(--border)" }} className="mt-1 pt-1">
+                    <button
+                      onClick={() => {
+                        const page = pages.find((p) => p.id === activePageId);
+                        if (page) {
+                          setEditingPageId(page.id);
+                          setEditPageName(page.name);
+                        }
+                      }}
+                      className="w-full text-left px-3 py-1.5 text-xs transition-colors flex items-center gap-2"
+                      style={{ color: "var(--text-muted)" }}
+                      onMouseEnter={(e) => { e.currentTarget.style.background = "var(--surface-subtle)"; e.currentTarget.style.color = "var(--text-secondary)"; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--text-muted)"; }}
+                    >
+                      <Pencil size={12} />
+                      Rename this page
+                    </button>
+                    {pages.length > 1 && (
                       <button
                         onClick={() => {
                           setPagesMenuOpen(false);
                           setShowMobileDeleteConfirm(true);
                         }}
                         className="w-full text-left px-3 py-1.5 text-xs transition-colors flex items-center gap-2"
-                        style={{ color: "var(--text-muted)" }}
-                        onMouseEnter={(e) => { e.currentTarget.style.background = "var(--surface-subtle)"; e.currentTarget.style.color = "var(--text-secondary)"; }}
-                        onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--text-muted)"; }}
+                        style={{ color: "#EF4444" }}
+                        onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(239, 68, 68, 0.1)"; e.currentTarget.style.color = "#EF4444"; }}
+                        onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "#EF4444"; }}
                       >
                         <Minus size={12} />
-                        Delete active page
+                        Delete this page
                       </button>
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </div>
               )}
             </div>
@@ -248,6 +316,7 @@ export default function Header() {
                   onClick={() => (window as any).electronAPI.hidePopover()}
                   title="Close"
                   style={{ color: "#EF4444", background: "rgba(239, 68, 68, 0.1)" }}
+                  hoverStyle={{ background: "#EF4444", color: "#fff" }}
                 >
                   <X size={16} />
                 </HeaderButton>
@@ -333,7 +402,7 @@ export default function Header() {
   );
 }
 
-function HeaderButton({ onClick, title, active, children, className, style }: { onClick: () => void; title: string; active?: boolean; children: React.ReactNode; className?: string; style?: React.CSSProperties }) {
+function HeaderButton({ onClick, title, active, children, className, style, hoverStyle }: { onClick: () => void; title: string; active?: boolean; children: React.ReactNode; className?: string; style?: React.CSSProperties; hoverStyle?: React.CSSProperties }) {
   return (
     <button
       onClick={onClick}
@@ -343,8 +412,8 @@ function HeaderButton({ onClick, title, active, children, className, style }: { 
       aria-label={title}
       onMouseEnter={(e) => {
         if (!active) {
-          e.currentTarget.style.background = "var(--surface-subtle)";
-          e.currentTarget.style.color = "var(--text-secondary)";
+          e.currentTarget.style.background = (hoverStyle?.background as string) || "var(--surface-subtle)";
+          e.currentTarget.style.color = (hoverStyle?.color as string) || "var(--text-secondary)";
         }
       }}
       onMouseLeave={(e) => {

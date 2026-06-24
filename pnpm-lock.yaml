@@ -35,16 +35,16 @@ importers:
 
   apps/web:
     dependencies:
-      '@remembrall/core':
+      '@brall/core':
         specifier: workspace:*
         version: link:../../packages/core
-      '@remembrall/crypto':
+      '@brall/crypto':
         specifier: workspace:*
         version: link:../../packages/crypto
-      '@remembrall/export':
+      '@brall/export':
         specifier: workspace:*
         version: link:../../packages/export
-      '@remembrall/supabase':
+      '@brall/supabase':
         specifier: workspace:*
         version: link:../../packages/supabase
       '@supabase/ssr':
@@ -102,10 +102,10 @@ importers:
 
   packages/crypto:
     dependencies:
-      '@remembrall/core':
+      '@brall/core':
         specifier: workspace:*
         version: link:../core
-      '@remembrall/supabase':
+      '@brall/supabase':
         specifier: workspace:*
         version: link:../supabase
     devDependencies:
@@ -118,7 +118,7 @@ importers:
 
   packages/export:
     dependencies:
-      '@remembrall/core':
+      '@brall/core':
         specifier: workspace:*
         version: link:../core
     devDependencies:

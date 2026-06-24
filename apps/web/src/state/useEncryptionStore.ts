@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import type { EncryptedPayload } from "@remembrall/core";
+import type { EncryptedPayload } from "@brall/core";
 
 interface EncryptionState {
   isReady: boolean;

@@ -1,5 +1,5 @@
 import { getSupabase } from "./supabaseClient";
-import type { UserPreferences } from "@remembrall/core";
+import type { UserPreferences } from "@brall/core";
 
 export async function fetchPreferences(userId: string): Promise<UserPreferences | null> {
   const { data, error } = await getSupabase()

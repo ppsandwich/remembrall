@@ -1,5 +1,5 @@
 {
-  "name": "@remembrall/export",
+  "name": "@brall/export",
   "version": "0.0.1",
   "private": true,
   "type": "module",
@@ -9,7 +9,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@remembrall/core": "workspace:*"
+    "@brall/core": "workspace:*"
   },
   "devDependencies": {
     "typescript": "^5.8.3"

@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { useNotesStore } from "@/state/useNotesStore";
 import { readClipboard } from "@/lib/clipboard";
 import { useUIStore } from "@/state/useUIStore";
-import { addTag } from "@remembrall/core";
+import { addTag } from "@brall/core";
 import { Save, Clipboard } from "./Icons";
 import TagInput from "./TagInput";
 

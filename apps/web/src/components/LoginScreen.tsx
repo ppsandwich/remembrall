@@ -42,7 +42,7 @@ export default function LoginScreen() {
           className="text-xl font-semibold tracking-tight mb-1.5"
           style={{ color: "var(--text)", letterSpacing: "-0.02em" }}
         >
-          Remembrall
+          Brall
         </h1>
         <p className="text-sm mb-8" style={{ color: "var(--text-muted)" }}>
           Sign in to sync your notes.

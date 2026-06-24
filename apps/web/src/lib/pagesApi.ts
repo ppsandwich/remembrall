@@ -1,5 +1,5 @@
 import { getSupabase } from "./supabaseClient";
-import type { NotePage } from "@remembrall/core";
+import type { NotePage } from "@brall/core";
 
 export async function fetchPages(userId: string): Promise<NotePage[]> {
   const { data, error } = await getSupabase()

@@ -1,4 +1,4 @@
-import type { DecryptedNote } from "@remembrall/core";
+import type { DecryptedNote } from "@brall/core";
 
 function formatDate(iso: string): string {
   const d = new Date(iso);
@@ -30,7 +30,7 @@ function htmlToPlainText(html: string): string {
 
 export function exportSingleNote(note: DecryptedNote): string {
   const body = htmlToPlainText(note.body);
-  return `# Remembrall Export\n\nExported: ${formatDate(new Date().toISOString())}\n\n---\n\n## Note\n\nCreated: ${formatDateTime(note.created_at)}\nUpdated: ${formatDateTime(note.updated_at)}\nSource: ${note.source}\n\n\`\`\`text\n${body}\n\`\`\`\n`;
+  return `# Brall Export\n\nExported: ${formatDate(new Date().toISOString())}\n\n---\n\n## Note\n\nCreated: ${formatDateTime(note.created_at)}\nUpdated: ${formatDateTime(note.updated_at)}\nSource: ${note.source}\n\n\`\`\`text\n${body}\n\`\`\`\n`;
 }
 
 export function exportNotes(notes: DecryptedNote[]): string {
@@ -44,7 +44,7 @@ export function exportNotes(notes: DecryptedNote[]): string {
     )
     .join("\n\n---\n\n");
 
-  return `# Remembrall Export\n\nExported: ${date}\n\n---\n\n${noteBlocks}\n`;
+  return `# Brall Export\n\nExported: ${date}\n\n---\n\n${noteBlocks}\n`;
 }
 
 export function downloadMarkdown(content: string, filename: string): void {

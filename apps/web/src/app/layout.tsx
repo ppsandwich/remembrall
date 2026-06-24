@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "../styles/globals.css";
 
 export const metadata: Metadata = {
-  title: "Remembrall",
+  title: "Brall",
   description: "Open. Type or paste. Done.",
   manifest: "/manifest.json",
   icons: {
