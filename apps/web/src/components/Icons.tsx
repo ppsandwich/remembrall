@@ -27,6 +27,7 @@ import {
   List as LucideList,
   ListOrdered as LucideListOrdered,
   Volleyball as LucideVolleyball,
+  Plus as LucidePlus,
   type LucideProps,
 } from "lucide-react";
 
@@ -61,3 +62,4 @@ export const UnderlineIcon = (props: LucideProps) => <LucideUnderline {...p} {..
 export const ListUnordered = (props: LucideProps) => <LucideList {...p} {...props} />;
 export const ListOrdered = (props: LucideProps) => <LucideListOrdered {...p} {...props} />;
 export const Volleyball = (props: LucideProps) => <LucideVolleyball {...p} {...props} />;
+export const Plus = (props: LucideProps) => <LucidePlus {...p} {...props} />;

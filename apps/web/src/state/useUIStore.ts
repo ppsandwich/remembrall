@@ -5,6 +5,7 @@ interface UIState {
   resolvedTheme: "light" | "dark";
   showShortcuts: boolean;
   showSettings: boolean;
+  showQuickCapture: boolean;
   selectMode: boolean;
   toastMessage: string | null;
   enterToSave: boolean;
@@ -12,6 +13,7 @@ interface UIState {
   setTheme: (theme: "light" | "dark") => void;
   setShowShortcuts: (show: boolean) => void;
   setShowSettings: (show: boolean) => void;
+  setShowQuickCapture: (show: boolean) => void;
   setSelectMode: (on: boolean) => void;
   setEnterToSave: (on: boolean) => void;
   showToast: (message: string) => void;
@@ -23,6 +25,7 @@ export const useUIStore = create<UIState>((set) => ({
   resolvedTheme: "dark",
   showShortcuts: false,
   showSettings: false,
+  showQuickCapture: false,
   selectMode: false,
   toastMessage: null,
   enterToSave: true,
@@ -35,6 +38,7 @@ export const useUIStore = create<UIState>((set) => ({
 
   setShowShortcuts: (show) => set({ showShortcuts: show }),
   setShowSettings: (show) => set({ showSettings: show }),
+  setShowQuickCapture: (show) => set({ showQuickCapture: show }),
   setSelectMode: (on) => set({ selectMode: on }),
   setEnterToSave: (on) => {
     localStorage.setItem("remembrall-enter-to-save", on ? "1" : "0");

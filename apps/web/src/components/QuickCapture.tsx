@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useNotesStore } from "@/state/useNotesStore";
 import { readClipboard } from "@/lib/clipboard";
 import { useUIStore } from "@/state/useUIStore";
@@ -8,7 +8,7 @@ import { addTag } from "@remembrall/core";
 import { Save, Clipboard } from "./Icons";
 import TagInput from "./TagInput";
 
-export default function QuickCapture() {
+export default function QuickCapture({ onClose }: { onClose?: () => void }) {
   const [body, setBody] = useState("");
   const [tags, setTags] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
@@ -17,6 +17,10 @@ export default function QuickCapture() {
   const enterToSave = useUIStore((s) => s.enterToSave);
   const setEnterToSave = useUIStore((s) => s.setEnterToSave);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    textareaRef.current?.focus();
+  }, []);
 
   const handleSave = async () => {
     if (!body.trim()) return;
@@ -29,7 +33,11 @@ export default function QuickCapture() {
     setBody("");
     setTags([]);
     setLoading(false);
-    textareaRef.current?.focus();
+    if (onClose) {
+      onClose();
+    } else {
+      textareaRef.current?.focus();
+    }
   };
 
   const handleDumpClipboard = async () => {
@@ -42,6 +50,7 @@ export default function QuickCapture() {
     await createNote(text);
     setLoading(false);
     showToast("Saved.");
+    if (onClose) onClose();
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -53,12 +62,15 @@ export default function QuickCapture() {
       e.preventDefault();
       handleSave();
     }
+    if (e.key === "Escape" && onClose) {
+      onClose();
+    }
   };
 
   return (
     <div
       className="rounded-lg p-4"
-      style={{ background: "var(--surface)", border: "1px solid var(--border)" }}
+      style={{ background: "var(--surface)", border: onClose ? "none" : "1px solid var(--border)" }}
     >
       <textarea
         ref={textareaRef}
