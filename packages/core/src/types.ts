@@ -29,6 +29,7 @@ export interface Note {
   encryption_version: number;
   key_version: number;
   position: number;
+  color: string;
   created_at: string;
   updated_at: string;
 }
@@ -44,6 +45,7 @@ export interface DecryptedNote {
   duplicated_from: string | null;
   source: NoteSource;
   position: number;
+  color: string;
   created_at: string;
   updated_at: string;
 }

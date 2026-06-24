@@ -2,12 +2,13 @@
 
 import type { DecryptedNote } from "@remembrall/core";
 import { extractTags, stripTags } from "@remembrall/core";
-import { useNotesStore } from "@/state/useNotesStore";
+import { useNotesStore, NOTE_COLORS, DARK_NOTE_COLORS } from "@/state/useNotesStore";
 import { writeClipboard } from "@/lib/clipboard";
 import { useUIStore } from "@/state/useUIStore";
 import { exportSingleNote, downloadMarkdown, singleNoteFilename } from "@remembrall/export";
-import { Copy, Pin, PinOff, Duplicate, Download, Trash, GripVertical } from "./Icons";
-import { useRef } from "react";
+import { Copy, Pin, PinOff, Duplicate, Download, Trash } from "./Icons";
+import { useDragContext } from "./DragContext";
+import { useRef, useCallback, useState } from "react";
 
 interface Props {
   note: DecryptedNote;
@@ -15,11 +16,17 @@ interface Props {
 }
 
 export default function NoteCard({ note, index }: Props) {
-  const { toggleSelect, selectedIds, setEditingId, deleteNote, duplicateNote, togglePin, reorderNote } =
+  const { toggleSelect, selectedIds, setEditingId, deleteNote, duplicateNote, togglePin, updateNoteColor } =
     useNotesStore();
-  const { showToast, selectMode } = useUIStore();
+  const { showToast, selectMode, resolvedTheme } = useUIStore();
   const isSelected = selectedIds.has(note.id);
-  const dragRef = useRef<HTMLDivElement>(null);
+  const { startDrag, updateDrag, setTargetIndex, endDrag, getCardStyle, getCardClassName, dragState } = useDragContext();
+  const cardRef = useRef<HTMLDivElement>(null);
+  const isDraggingRef = useRef(false);
+  const mouseDownRef = useRef<{ x: number; y: number } | null>(null);
+  const [showColors, setShowColors] = useState(false);
+
+  const colors = resolvedTheme === "dark" ? DARK_NOTE_COLORS : NOTE_COLORS;
 
   const handleCopy = async () => {
     const ok = await writeClipboard(cleanPreview);
@@ -31,75 +38,97 @@ export default function NoteCard({ note, index }: Props) {
     downloadMarkdown(md, singleNoteFilename());
   };
 
-  const handleClick = () => {
-    if (selectMode) {
-      toggleSelect(note.id);
-    } else {
-      setEditingId(note.id);
-    }
-  };
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    if (e.button !== 0) return;
+    const target = e.target as HTMLElement;
+    if (target.closest("button") || target.closest("input") || target.closest("[data-color-picker]") || target.closest("[data-color-dropdown]")) return;
 
-  const handleDragStart = (e: React.DragEvent) => {
-    e.dataTransfer.setData("text/plain", note.id);
-    e.dataTransfer.effectAllowed = "move";
-    if (dragRef.current) {
-      dragRef.current.style.opacity = "0.5";
-    }
-  };
+    mouseDownRef.current = { x: e.clientX, y: e.clientY };
+    isDraggingRef.current = false;
 
-  const handleDragEnd = () => {
-    if (dragRef.current) {
-      dragRef.current.style.opacity = "1";
-    }
-  };
+    const handleMouseMove = (moveEvent: MouseEvent) => {
+      if (!mouseDownRef.current) return;
 
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = "move";
-  };
+      const dx = moveEvent.clientX - mouseDownRef.current.x;
+      const dy = moveEvent.clientY - mouseDownRef.current.y;
 
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    const draggedId = e.dataTransfer.getData("text/plain");
-    if (draggedId && draggedId !== note.id) {
-      reorderNote(draggedId, index);
-    }
-  };
+      if (!isDraggingRef.current && (Math.abs(dx) > 5 || Math.abs(dy) > 5)) {
+        isDraggingRef.current = true;
+        startDrag(note.id, index, {
+          clientX: mouseDownRef.current.x,
+          clientY: mouseDownRef.current.y,
+        } as React.MouseEvent);
+      }
+
+      if (isDraggingRef.current) {
+        updateDrag({
+          clientX: moveEvent.clientX,
+          clientY: moveEvent.clientY,
+        } as React.MouseEvent);
+
+        const elemBelow = document.elementFromPoint(moveEvent.clientX, moveEvent.clientY);
+        if (elemBelow) {
+          const cardBelow = elemBelow.closest("[data-note-card]");
+          if (cardBelow) {
+            const belowIndex = parseInt(cardBelow.getAttribute("data-note-index") || "-1", 10);
+            if (belowIndex >= 0) {
+              setTargetIndex(belowIndex);
+            }
+          }
+        }
+      }
+    };
+
+    const handleMouseUp = () => {
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleMouseUp);
+
+      if (isDraggingRef.current) {
+        endDrag();
+      } else {
+        if (selectMode) {
+          toggleSelect(note.id);
+        } else {
+          setEditingId(note.id);
+        }
+      }
+
+      mouseDownRef.current = null;
+      isDraggingRef.current = false;
+    };
+
+    document.addEventListener("mousemove", handleMouseMove);
+    document.addEventListener("mouseup", handleMouseUp);
+  }, [note.id, index, startDrag, updateDrag, endDrag, selectMode, toggleSelect, setEditingId, dragState]);
 
   const timeAgo = formatTimeAgo(note.updated_at);
   const noteTags = extractTags(note.body);
   const cleanPreview = stripTags(note.preview);
   const isPinned = note.pinned;
+  const colorHex = colors.find((c) => c.name === note.color)?.hex || "";
+
+  const style: React.CSSProperties = {
+    ...getCardStyle(note.id, index),
+    background: colorHex || (isPinned ? "rgba(34, 197, 94, 0.06)" : "var(--surface)"),
+    border: isSelected ? "2px solid var(--accent)" : "1px solid var(--border)",
+    cursor: dragState.isDragging && dragState.draggedId === note.id ? "grabbing" : "pointer",
+  };
 
   return (
     <div
-      ref={dragRef}
-      className="rounded-lg p-5 cursor-pointer group relative transition-colors break-inside-avoid"
-      style={{
-        background: isPinned ? "rgba(34, 197, 94, 0.06)" : "var(--surface)",
-        border: isSelected ? "2px solid var(--accent)" : "1px solid var(--border)",
-      }}
-      onClick={handleClick}
-      onDragOver={handleDragOver}
-      onDrop={handleDrop}
+      ref={cardRef}
+      data-note-card
+      data-note-index={index}
+      className={`rounded-lg p-5 group relative ${getCardClassName(note.id)}`}
+      style={style}
+      onMouseDown={handleMouseDown}
       onMouseEnter={(e) => {
-        if (!isSelected) e.currentTarget.style.borderColor = "var(--border-strong)";
+        if (!isSelected && !dragState.isDragging) e.currentTarget.style.borderColor = "var(--border-strong)";
       }}
       onMouseLeave={(e) => {
-        if (!isSelected) e.currentTarget.style.borderColor = "var(--border)";
+        if (!isSelected && !dragState.isDragging) e.currentTarget.style.borderColor = "var(--border)";
       }}
     >
-      <div
-        className="absolute left-1.5 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing"
-        style={{ color: "var(--text-muted)" }}
-        draggable
-        onDragStart={handleDragStart}
-        onDragEnd={handleDragEnd}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <GripVertical />
-      </div>
-
       <div className="flex items-start gap-3">
         <div className="flex-1 min-w-0">
           <p
@@ -152,6 +181,38 @@ export default function NoteCard({ note, index }: Props) {
         className="absolute top-1.5 right-1.5 flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
         onClick={(e) => e.stopPropagation()}
       >
+        <div className="relative" data-color-picker>
+          <button
+            onClick={() => setShowColors(!showColors)}
+            className="w-4 h-4 rounded-full border border-gray-300 dark:border-gray-600"
+            style={{ background: colorHex || "var(--surface-subtle)" }}
+            title="Set color"
+            aria-label="Set color"
+          />
+          {showColors && (
+            <div
+              className="absolute right-0 top-full mt-1 p-2 rounded-lg shadow-lg z-50 flex gap-1.5 flex-wrap w-[140px]"
+              style={{ background: "var(--surface)", border: "1px solid var(--border)" }}
+            >
+              {colors.map((color) => (
+                <button
+                  key={color.name}
+                  onClick={() => {
+                    updateNoteColor(note.id, color.name === "none" ? "" : color.name);
+                    setShowColors(false);
+                  }}
+                  className="w-6 h-6 rounded-full border hover:scale-110 transition-transform"
+                  style={{
+                    background: color.hex || "var(--surface-subtle)",
+                    borderColor: note.color === color.name ? "var(--accent)" : "var(--border)",
+                    borderWidth: note.color === color.name ? "2px" : "1px",
+                  }}
+                  title={color.name}
+                />
+              ))}
+            </div>
+          )}
+        </div>
         <CardButton onClick={handleCopy} title="Copy">
           <Copy />
         </CardButton>

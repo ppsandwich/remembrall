@@ -4,13 +4,15 @@ import { useAuthStore } from "@/state/useAuthStore";
 import { useEncryptionStore } from "@/state/useEncryptionStore";
 import { useUIStore } from "@/state/useUIStore";
 import { useNotesStore } from "@/state/useNotesStore";
-import { Sun, Moon, Monitor, HelpCircle, Settings, Lock, LogOut, CheckSquare, Square } from "./Icons";
+import { Sun, Moon, Monitor, HelpCircle, Settings, Lock, LogOut, CheckSquare, Square, Layers } from "./Icons";
 
 export default function Header() {
   const user = useAuthStore((s) => s.user);
   const signOut = useAuthStore((s) => s.signOut);
   const lock = useEncryptionStore((s) => s.lock);
   const clearSelection = useNotesStore((s) => s.clearSelection);
+  const clusterMode = useNotesStore((s) => s.clusterMode);
+  const setClusterMode = useNotesStore((s) => s.setClusterMode);
   const { theme, setTheme, setShowShortcuts, setShowSettings, selectMode, setSelectMode } = useUIStore();
 
   const cycleTheme = () => {
@@ -62,6 +64,9 @@ export default function Header() {
           </HeaderButton>
           <HeaderButton onClick={toggleSelectMode} title={selectMode ? "Exit select mode" : "Select mode"} active={selectMode}>
             {selectMode ? <CheckSquare /> : <Square />}
+          </HeaderButton>
+          <HeaderButton onClick={() => setClusterMode(!clusterMode)} title={clusterMode ? "Disable clustering" : "Cluster by color"} active={clusterMode}>
+            <Layers />
           </HeaderButton>
           <HeaderButton onClick={() => setShowSettings(true)} title="Settings">
             <Settings />

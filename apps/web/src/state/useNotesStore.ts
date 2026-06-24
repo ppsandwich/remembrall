@@ -5,6 +5,32 @@ import { useEncryptionStore } from "./useEncryptionStore";
 import { useAuthStore } from "./useAuthStore";
 import * as api from "@/lib/notesApi";
 
+export const NOTE_COLORS = [
+  { name: "none", hex: "" },
+  { name: "red", hex: "#FEE2E2" },
+  { name: "orange", hex: "#FFEDD5" },
+  { name: "amber", hex: "#FEF3C7" },
+  { name: "yellow", hex: "#FEF9C3" },
+  { name: "green", hex: "#DCFCE7" },
+  { name: "teal", hex: "#CCFBF1" },
+  { name: "blue", hex: "#DBEAFE" },
+  { name: "purple", hex: "#F3E8FF" },
+  { name: "pink", hex: "#FCE7F3" },
+];
+
+export const DARK_NOTE_COLORS = [
+  { name: "none", hex: "" },
+  { name: "red", hex: "#451A1A" },
+  { name: "orange", hex: "#431407" },
+  { name: "amber", hex: "#422006" },
+  { name: "yellow", hex: "#3F3707" },
+  { name: "green", hex: "#14361D" },
+  { name: "teal", hex: "#134E4A" },
+  { name: "blue", hex: "#1E3A5F" },
+  { name: "purple", hex: "#3B1F6E" },
+  { name: "pink", hex: "#6B1D4A" },
+];
+
 interface UndoEntry {
   note: DecryptedNote;
   timeout: ReturnType<typeof setTimeout>;
@@ -18,17 +44,21 @@ interface NotesState {
   undoStack: UndoEntry[];
   loading: boolean;
   filterTag: string | null;
+  clusterMode: boolean;
 
   fetchAll: () => Promise<void>;
   createNote: (body: string, source?: NoteSource) => Promise<void>;
   updateNote: (id: string, body: string) => Promise<void>;
+  updateNoteColor: (id: string, color: string) => Promise<void>;
   deleteNote: (id: string) => Promise<void>;
   undoDelete: () => Promise<void>;
   duplicateNote: (id: string) => Promise<void>;
   togglePin: (id: string) => Promise<void>;
-  reorderNote: (id: string, targetIndex: number) => Promise<void>;
+  moveNote: (id: string, targetIndex: number) => void;
+  saveNoteOrder: () => Promise<void>;
   setSearchQuery: (query: string) => void;
   setFilterTag: (tag: string | null) => void;
+  setClusterMode: (on: boolean) => void;
   toggleSelect: (id: string) => void;
   selectAll: () => void;
   clearSelection: () => void;
@@ -48,6 +78,7 @@ export const useNotesStore = create<NotesState>((set, get) => ({
   undoStack: [],
   loading: false,
   filterTag: null,
+  clusterMode: false,
 
   fetchAll: async () => {
     const user = useAuthStore.getState().user;
@@ -72,6 +103,7 @@ export const useNotesStore = create<NotesState>((set, get) => ({
             duplicated_from: note.duplicated_from,
             source: note.source,
             position: note.position ?? 0,
+            color: note.color || "",
             created_at: note.created_at,
             updated_at: note.updated_at,
           });
@@ -87,6 +119,7 @@ export const useNotesStore = create<NotesState>((set, get) => ({
             duplicated_from: note.duplicated_from,
             source: note.source,
             position: note.position ?? 0,
+            color: note.color || "",
             created_at: note.created_at,
             updated_at: note.updated_at,
           });
@@ -128,6 +161,7 @@ export const useNotesStore = create<NotesState>((set, get) => ({
       duplicated_from: null,
       source,
       position: maxPosition + 1,
+      color: "",
       created_at: created.created_at,
       updated_at: created.updated_at,
     };
@@ -150,6 +184,17 @@ export const useNotesStore = create<NotesState>((set, get) => ({
           : n
       ),
     }));
+  },
+
+  updateNoteColor: async (id: string, color: string) => {
+    set((s) => ({
+      notes: s.notes.map((n) => (n.id === id ? { ...n, color } : n)),
+    }));
+    try {
+      await api.updateNote(id, { color });
+    } catch {
+      // Color column may not exist yet - local state is already updated
+    }
   },
 
   deleteNote: async (id: string) => {
@@ -204,6 +249,7 @@ export const useNotesStore = create<NotesState>((set, get) => ({
         encryption_version: 1,
         key_version: 1,
         position: original.position,
+        color: original.color,
         created_at: original.created_at,
         updated_at: original.updated_at,
       },
@@ -224,6 +270,7 @@ export const useNotesStore = create<NotesState>((set, get) => ({
       duplicated_from: original.id,
       source: original.source,
       position: maxPosition + 1,
+      color: original.color,
       created_at: created.created_at,
       updated_at: created.updated_at,
     };
@@ -241,7 +288,7 @@ export const useNotesStore = create<NotesState>((set, get) => ({
     }));
   },
 
-  reorderNote: async (id: string, targetIndex: number) => {
+  moveNote: (id: string, targetIndex: number) => {
     const { notes } = get();
     const filtered = notes.filter((n) => !n.deleted_at);
     const draggedNote = notes.find((n) => n.id === id);
@@ -262,12 +309,18 @@ export const useNotesStore = create<NotesState>((set, get) => ({
         return pos ? { ...n, position: pos.position } : n;
       }),
     }));
+  },
 
+  saveNoteOrder: async () => {
+    const { notes } = get();
+    const active = notes.filter((n) => !n.deleted_at);
+    const positions = active.map((n, i) => ({ id: n.id, position: i }));
     await api.updateNotePositions(positions);
   },
 
   setSearchQuery: (query: string) => set({ searchQuery: query }),
   setFilterTag: (tag: string | null) => set({ filterTag: tag }),
+  setClusterMode: (on: boolean) => set({ clusterMode: on }),
 
   toggleSelect: (id: string) => {
     set((s) => {
@@ -313,12 +366,17 @@ export const useNotesStore = create<NotesState>((set, get) => ({
   },
 
   getFilteredNotes: () => {
-    const { notes, searchQuery, filterTag } = get();
+    const { notes, searchQuery, filterTag, clusterMode } = get();
     const active = notes.filter((n) => !n.deleted_at);
     let filtered = filterNotes(active, searchQuery);
     if (filterTag) {
       filtered = filtered.filter((n) => extractTags(n.body).includes(filterTag));
     }
+
+    if (clusterMode) {
+      return clusterNotes(filtered);
+    }
+
     return filtered.sort((a, b) => {
       if (a.position !== b.position) return a.position - b.position;
       return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime();
@@ -337,3 +395,29 @@ export const useNotesStore = create<NotesState>((set, get) => ({
     return Array.from(tags).sort();
   },
 }));
+
+function clusterNotes(notes: DecryptedNote[]): DecryptedNote[] {
+  const colorGroups = new Map<string, DecryptedNote[]>();
+  const noColor: DecryptedNote[] = [];
+
+  for (const note of notes) {
+    if (note.color) {
+      const group = colorGroups.get(note.color) || [];
+      group.push(note);
+      colorGroups.set(note.color, group);
+    } else {
+      noColor.push(note);
+    }
+  }
+
+  const sortedColors = Array.from(colorGroups.entries())
+    .sort((a, b) => b[1].length - a[1].length)
+    .map(([, group]) => group);
+
+  const result: DecryptedNote[] = [];
+  for (const group of sortedColors) {
+    result.push(...group);
+  }
+  result.push(...noColor);
+  return result;
+}

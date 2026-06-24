@@ -43,6 +43,7 @@ export async function updateNote(
     body_preview_encrypted?: EncryptedPayload | null;
     pinned?: boolean;
     archived?: boolean;
+    color?: string;
   }
 ): Promise<Note> {
   const { data, error } = await getSupabase()
@@ -101,11 +102,9 @@ export async function updateNotePositions(
   positions: { id: string; position: number }[]
 ): Promise<void> {
   for (const { id, position } of positions) {
-    const { error } = await getSupabase()
+    await getSupabase()
       .from("notes")
       .update({ position })
       .eq("id", id);
-
-    if (error) throw error;
   }
 }

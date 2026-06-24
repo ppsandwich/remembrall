@@ -139,13 +139,10 @@ export const Tag = () => (
   </svg>
 );
 
-export const GripVertical = () => (
-  <svg width="12" height="16" viewBox="0 0 12 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
-    <circle cx="4" cy="3" r="1" fill="currentColor" stroke="none" />
-    <circle cx="8" cy="3" r="1" fill="currentColor" stroke="none" />
-    <circle cx="4" cy="8" r="1" fill="currentColor" stroke="none" />
-    <circle cx="8" cy="8" r="1" fill="currentColor" stroke="none" />
-    <circle cx="4" cy="13" r="1" fill="currentColor" stroke="none" />
-    <circle cx="8" cy="13" r="1" fill="currentColor" stroke="none" />
+export const Layers = () => (
+  <svg {...s} viewBox="0 0 24 24">
+    <path d="M12 2L2 7l10 5 10-5-10-5z" />
+    <path d="M2 17l10 5 10-5" />
+    <path d="M2 12l10 5 10-5" />
   </svg>
 );
