@@ -11,9 +11,9 @@ export const NOTE_COLORS = [
   { name: "orange", hex: "#FFEDD5" },
   { name: "amber", hex: "#FEF3C7" },
   { name: "yellow", hex: "#FEF9C3" },
-  { name: "green", hex: "#DCFCE7" },
   { name: "teal", hex: "#CCFBF1" },
   { name: "blue", hex: "#DBEAFE" },
+  { name: "green", hex: "#DCFCE7" },
   { name: "purple", hex: "#F3E8FF" },
   { name: "pink", hex: "#FCE7F3" },
 ];
@@ -24,9 +24,9 @@ export const DARK_NOTE_COLORS = [
   { name: "orange", hex: "#431407" },
   { name: "amber", hex: "#422006" },
   { name: "yellow", hex: "#3F3707" },
-  { name: "green", hex: "#14361D" },
   { name: "teal", hex: "#134E4A" },
   { name: "blue", hex: "#1E3A5F" },
+  { name: "green", hex: "#14361D" },
   { name: "purple", hex: "#3B1F6E" },
   { name: "pink", hex: "#6B1D4A" },
 ];
@@ -45,6 +45,8 @@ interface NotesState {
   loading: boolean;
   filterTag: string | null;
   clusterMode: boolean;
+  isDragging: boolean;
+  frozenOrderIds: string[] | null;
 
   fetchAll: () => Promise<void>;
   createNote: (body: string, source?: NoteSource) => Promise<void>;
@@ -59,6 +61,7 @@ interface NotesState {
   setSearchQuery: (query: string) => void;
   setFilterTag: (tag: string | null) => void;
   setClusterMode: (on: boolean) => void;
+  setDragging: (isDragging: boolean) => void;
   toggleSelect: (id: string) => void;
   selectAll: () => void;
   clearSelection: () => void;
@@ -78,7 +81,9 @@ export const useNotesStore = create<NotesState>((set, get) => ({
   undoStack: [],
   loading: false,
   filterTag: null,
-  clusterMode: false,
+  clusterMode: true,
+  isDragging: false,
+  frozenOrderIds: null,
 
   fetchAll: async () => {
     const user = useAuthStore.getState().user;
@@ -321,6 +326,14 @@ export const useNotesStore = create<NotesState>((set, get) => ({
   setSearchQuery: (query: string) => set({ searchQuery: query }),
   setFilterTag: (tag: string | null) => set({ filterTag: tag }),
   setClusterMode: (on: boolean) => set({ clusterMode: on }),
+  setDragging: (isDragging: boolean) => {
+    if (isDragging) {
+      const currentOrder = get().getFilteredNotes();
+      set({ isDragging: true, frozenOrderIds: currentOrder.map(n => n.id) });
+    } else {
+      set({ isDragging: false, frozenOrderIds: null });
+    }
+  },
 
   toggleSelect: (id: string) => {
     set((s) => {
@@ -366,11 +379,21 @@ export const useNotesStore = create<NotesState>((set, get) => ({
   },
 
   getFilteredNotes: () => {
-    const { notes, searchQuery, filterTag, clusterMode } = get();
+    const { notes, searchQuery, filterTag, clusterMode, isDragging, frozenOrderIds } = get();
+    
     const active = notes.filter((n) => !n.deleted_at);
     let filtered = filterNotes(active, searchQuery);
     if (filterTag) {
       filtered = filtered.filter((n) => extractTags(n.body).includes(filterTag));
+    }
+
+    if (isDragging && frozenOrderIds) {
+      const orderMap = new Map(frozenOrderIds.map((id, i) => [id, i]));
+      return filtered.sort((a, b) => {
+        const aIdx = orderMap.get(a.id) ?? Infinity;
+        const bIdx = orderMap.get(b.id) ?? Infinity;
+        return aIdx - bIdx;
+      });
     }
 
     if (clusterMode) {
@@ -397,6 +420,7 @@ export const useNotesStore = create<NotesState>((set, get) => ({
 }));
 
 function clusterNotes(notes: DecryptedNote[]): DecryptedNote[] {
+  const colorOrder = ["red", "orange", "amber", "yellow", "teal", "blue", "green", "purple", "pink"];
   const colorGroups = new Map<string, DecryptedNote[]>();
   const noColor: DecryptedNote[] = [];
 
@@ -410,13 +434,12 @@ function clusterNotes(notes: DecryptedNote[]): DecryptedNote[] {
     }
   }
 
-  const sortedColors = Array.from(colorGroups.entries())
-    .sort((a, b) => b[1].length - a[1].length)
-    .map(([, group]) => group);
-
   const result: DecryptedNote[] = [];
-  for (const group of sortedColors) {
-    result.push(...group);
+  for (const color of colorOrder) {
+    const group = colorGroups.get(color);
+    if (group) {
+      result.push(...group);
+    }
   }
   result.push(...noColor);
   return result;

@@ -1,133 +1,49 @@
 import { create } from "zustand";
-import {
-  deriveKey,
-  createVerifier,
-  verifyPassphrase,
-  generateSalt,
-  encrypt,
-  decrypt,
-  fetchEncryptionKey,
-  saveEncryptionKey,
-  getLocalSalt,
-  setLocalSalt,
-  getStoredKey,
-  setStoredKey,
-  clearStoredKey,
-  exportKey,
-  importKey,
-} from "@remembrall/crypto";
 import type { EncryptedPayload } from "@remembrall/core";
 
 interface EncryptionState {
-  isSetup: boolean;
-  isUnlocked: boolean;
-  cryptoKey: CryptoKey | null;
-  saltId: string | null;
-  keyVersion: number;
-  error: string | null;
+  isReady: boolean;
 
-  checkSetup: (userId: string) => Promise<void>;
-  setupPassphrase: (userId: string, passphrase: string) => Promise<{ error?: string }>;
-  unlock: (userId: string, passphrase: string) => Promise<{ error?: string }>;
-  lock: () => void;
+  initialize: () => Promise<void>;
   encryptText: (plaintext: string) => Promise<EncryptedPayload>;
   decryptPayload: (payload: EncryptedPayload) => Promise<string>;
 }
 
-export const useEncryptionStore = create<EncryptionState>((set, get) => ({
-  isSetup: false,
-  isUnlocked: false,
-  cryptoKey: null,
-  saltId: null,
-  keyVersion: 1,
-  error: null,
+function wrapText(text: string): EncryptedPayload {
+  return {
+    version: 1,
+    algorithm: "AES-GCM",
+    kdf: "PBKDF2",
+    ciphertext: btoa(unescape(encodeURIComponent(text))),
+    iv: "",
+    saltId: "none",
+    keyVersion: 1,
+  };
+}
 
-  checkSetup: async (userId: string) => {
+function unwrapText(payload: EncryptedPayload): string {
+  if (payload.ciphertext) {
     try {
-      const keyData = await fetchEncryptionKey(userId);
-      if (keyData) {
-        set({ isSetup: true, saltId: keyData.salt, keyVersion: keyData.key_version });
-        const localSalt = getLocalSalt();
-        if (!localSalt) setLocalSalt(keyData.salt);
-
-        const storedKeyJwk = getStoredKey();
-        if (storedKeyJwk) {
-          try {
-            const key = await importKey(storedKeyJwk);
-            set({ isUnlocked: true, cryptoKey: key, error: null });
-          } catch {
-            set({ isUnlocked: false, cryptoKey: null });
-          }
-        } else {
-          set({ isUnlocked: false, cryptoKey: null });
-        }
-      } else {
-        set({ isSetup: false, isUnlocked: false, cryptoKey: null });
-      }
+      return decodeURIComponent(escape(atob(payload.ciphertext)));
     } catch {
-      set({ error: "Could not check encryption setup." });
+      return payload.ciphertext;
     }
-  },
+  }
+  return "";
+}
 
-  setupPassphrase: async (userId: string, passphrase: string) => {
-    try {
-      const salt = generateSalt();
-      const key = await deriveKey(passphrase, salt);
-      const verifier = await createVerifier(passphrase, salt);
+export const useEncryptionStore = create<EncryptionState>((set) => ({
+  isReady: false,
 
-      await saveEncryptionKey({
-        userId,
-        kdf: "PBKDF2",
-        salt,
-        verifier,
-      });
-
-      const keyJwk = await exportKey(key);
-      setStoredKey(keyJwk);
-
-      set({ isSetup: true, isUnlocked: true, cryptoKey: key, saltId: salt, keyVersion: 1, error: null });
-      return {};
-    } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : "Could not set up encryption.";
-      return { error: msg };
-    }
-  },
-
-  unlock: async (userId: string, passphrase: string) => {
-    try {
-      const keyData = await fetchEncryptionKey(userId);
-      if (!keyData) return { error: "Encryption not set up." };
-
-      const valid = await verifyPassphrase(passphrase, keyData.salt, keyData.verifier);
-      if (!valid) return { error: "Could not unlock notes. Check your passphrase." };
-
-      const key = await deriveKey(passphrase, keyData.salt);
-      setLocalSalt(keyData.salt);
-
-      const keyJwk = await exportKey(key);
-      setStoredKey(keyJwk);
-
-      set({ isUnlocked: true, cryptoKey: key, saltId: keyData.salt, keyVersion: keyData.key_version, error: null });
-      return {};
-    } catch {
-      return { error: "Could not unlock notes." };
-    }
-  },
-
-  lock: () => {
-    clearStoredKey();
-    set({ isUnlocked: false, cryptoKey: null });
+  initialize: async () => {
+    set({ isReady: true });
   },
 
   encryptText: async (plaintext: string) => {
-    const { cryptoKey, saltId, keyVersion } = get();
-    if (!cryptoKey) throw new Error("Not unlocked");
-    return encrypt(plaintext, cryptoKey, saltId ?? "default", keyVersion);
+    return wrapText(plaintext);
   },
 
   decryptPayload: async (payload: EncryptedPayload) => {
-    const { cryptoKey } = get();
-    if (!cryptoKey) throw new Error("Not unlocked");
-    return decrypt(payload, cryptoKey);
+    return unwrapText(payload);
   },
 }));

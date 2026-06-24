@@ -1,15 +1,12 @@
 "use client";
 
 import { useAuthStore } from "@/state/useAuthStore";
-import { useEncryptionStore } from "@/state/useEncryptionStore";
 import { useUIStore } from "@/state/useUIStore";
 import { useNotesStore } from "@/state/useNotesStore";
-import { Sun, Moon, Monitor, HelpCircle, Settings, Lock, LogOut, CheckSquare, Square, Layers } from "./Icons";
+import { Sun, Moon, Monitor, HelpCircle, Settings, LogOut, CheckSquare, Square, Layers } from "./Icons";
 
 export default function Header() {
-  const user = useAuthStore((s) => s.user);
   const signOut = useAuthStore((s) => s.signOut);
-  const lock = useEncryptionStore((s) => s.lock);
   const clearSelection = useNotesStore((s) => s.clearSelection);
   const clusterMode = useNotesStore((s) => s.clusterMode);
   const setClusterMode = useNotesStore((s) => s.setClusterMode);
@@ -70,9 +67,6 @@ export default function Header() {
           </HeaderButton>
           <HeaderButton onClick={() => setShowSettings(true)} title="Settings">
             <Settings />
-          </HeaderButton>
-          <HeaderButton onClick={lock} title="Lock notes">
-            <Lock />
           </HeaderButton>
           <div className="w-px h-4 mx-1.5" style={{ background: "var(--border)" }} />
           <HeaderButton onClick={signOut} title="Sign out">

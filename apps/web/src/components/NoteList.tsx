@@ -7,7 +7,7 @@ import NoteCard from "./NoteCard";
 import EmptyState from "./EmptyState";
 
 export default function NoteList() {
-  const { loading, getFilteredNotes, moveNote, saveNoteOrder } = useNotesStore();
+  const { loading, getFilteredNotes, moveNote, saveNoteOrder, clusterMode } = useNotesStore();
   const notes = getFilteredNotes();
 
   const handleReorder = useCallback((id: string, targetIndex: number) => {
@@ -28,8 +28,8 @@ export default function NoteList() {
   }
 
   return (
-    <DragProvider onReorder={handleReorder}>
-      <div className="columns-1 sm:columns-2 lg:columns-3 xl:columns-4 2xl:columns-5 3xl:columns-6 gap-3 space-y-3">
+    <DragProvider onReorder={handleReorder} deferReflow={clusterMode}>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 3xl:grid-cols-6 gap-3">
         {notes.map((note, index) => (
           <NoteCard key={note.id} note={note} index={index} />
         ))}

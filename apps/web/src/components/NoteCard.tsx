@@ -16,7 +16,7 @@ interface Props {
 }
 
 export default function NoteCard({ note, index }: Props) {
-  const { toggleSelect, selectedIds, setEditingId, deleteNote, duplicateNote, togglePin, updateNoteColor, clusterMode } =
+  const { toggleSelect, selectedIds, setEditingId, deleteNote, duplicateNote, togglePin, updateNoteColor, clusterMode, setDragging } =
     useNotesStore();
   const { showToast, selectMode, resolvedTheme } = useUIStore();
   const isSelected = selectedIds.has(note.id);
@@ -26,9 +26,11 @@ export default function NoteCard({ note, index }: Props) {
   const mouseDownRef = useRef<{ x: number; y: number } | null>(null);
   const noteColorRef = useRef(note.color);
   noteColorRef.current = note.color;
+  const originalColorRef = useRef(note.color);
   const [showColors, setShowColors] = useState(false);
 
   const colors = resolvedTheme === "dark" ? DARK_NOTE_COLORS : NOTE_COLORS;
+  const colorHex = colors.find((c) => c.name === note.color)?.hex || "";
 
   const handleCopy = async () => {
     const ok = await writeClipboard(cleanPreview);
@@ -56,6 +58,8 @@ export default function NoteCard({ note, index }: Props) {
 
       if (!isDraggingRef.current && (Math.abs(dx) > 5 || Math.abs(dy) > 5)) {
         isDraggingRef.current = true;
+        originalColorRef.current = noteColorRef.current;
+        setDragging(true);
         startDrag(note.id, index, {
           clientX: mouseDownRef.current.x,
           clientY: mouseDownRef.current.y,
@@ -68,19 +72,26 @@ export default function NoteCard({ note, index }: Props) {
           clientY: moveEvent.clientY,
         } as React.MouseEvent);
 
+        const draggedEl = cardRef.current;
+        if (draggedEl) draggedEl.style.pointerEvents = "none";
         const elemBelow = document.elementFromPoint(moveEvent.clientX, moveEvent.clientY);
+        if (draggedEl) draggedEl.style.pointerEvents = "";
+
         if (elemBelow) {
-          const cardBelow = elemBelow.closest("[data-note-card]");
-          if (cardBelow) {
-            const belowIndex = parseInt(cardBelow.getAttribute("data-note-index") || "-1", 10);
-            const belowColor = cardBelow.getAttribute("data-note-color") || "";
-            if (belowIndex >= 0) {
-              setTargetIndex(belowIndex);
-              if (clusterMode && belowColor && belowColor !== noteColorRef.current) {
-                updateNoteColor(note.id, belowColor);
-              }
+          const swatchBelow = elemBelow.closest("[data-color-swatch]");
+          if (swatchBelow) {
+            const swatchColor = swatchBelow.getAttribute("data-color-swatch") || "";
+            if (swatchColor && swatchColor !== noteColorRef.current) {
+              updateNoteColor(note.id, swatchColor);
+              noteColorRef.current = swatchColor;
             }
+            return;
           }
+        }
+
+        if (noteColorRef.current !== originalColorRef.current) {
+          updateNoteColor(note.id, originalColorRef.current);
+          noteColorRef.current = originalColorRef.current;
         }
       }
     };
@@ -90,6 +101,7 @@ export default function NoteCard({ note, index }: Props) {
       document.removeEventListener("mouseup", handleMouseUp);
 
       if (isDraggingRef.current) {
+        setDragging(false);
         endDrag();
       } else {
         if (selectMode) {
@@ -105,19 +117,20 @@ export default function NoteCard({ note, index }: Props) {
 
     document.addEventListener("mousemove", handleMouseMove);
     document.addEventListener("mouseup", handleMouseUp);
-  }, [note.id, index, startDrag, updateDrag, endDrag, selectMode, toggleSelect, setEditingId, dragState]);
+  }, [note.id, index, startDrag, updateDrag, endDrag, selectMode, toggleSelect, setEditingId, updateNoteColor, clusterMode, setDragging, dragState]);
 
   const timeAgo = formatTimeAgo(note.updated_at);
   const noteTags = extractTags(note.body);
   const cleanPreview = stripTags(note.preview);
   const isPinned = note.pinned;
-  const colorHex = colors.find((c) => c.name === note.color)?.hex || "";
+  const showSwatch = dragState.isDragging && note.color && dragState.draggedId !== note.id;
 
   const style: React.CSSProperties = {
     ...getCardStyle(note.id, index),
     background: colorHex || (isPinned ? "rgba(34, 197, 94, 0.06)" : "var(--surface)"),
     border: isSelected ? "2px solid var(--accent)" : "1px solid var(--border)",
     cursor: dragState.isDragging && dragState.draggedId === note.id ? "grabbing" : "pointer",
+    transition: "background-color 300ms",
   };
 
   return (
@@ -136,6 +149,14 @@ export default function NoteCard({ note, index }: Props) {
         if (!isSelected && !dragState.isDragging) e.currentTarget.style.borderColor = "var(--border)";
       }}
     >
+      {showSwatch && (
+        <div
+          data-color-swatch={note.color}
+          className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 rounded-full z-10 border-2 border-white dark:border-gray-800 shadow-lg pointer-events-auto"
+          style={{ background: colorHex }}
+        />
+      )}
+
       <div className="flex items-start gap-3">
         <div className="flex-1 min-w-0">
           <p

@@ -42,12 +42,16 @@ const initialDragState: DragState = {
   isDragging: false,
 };
 
-export function DragProvider({ children, onReorder }: { children: ReactNode; onReorder: (id: string, targetIndex: number) => void }) {
+export function DragProvider({ children, onReorder, onDrop, deferReflow }: { children: ReactNode; onReorder: (id: string, targetIndex: number) => void; onDrop?: (id: string, targetIndex: number) => void; deferReflow?: boolean }) {
   const [dragState, setDragState] = useState<DragState>(initialDragState);
   const dragRef = useRef<DragState>(initialDragState);
   const animFrameRef = useRef<number>(0);
   const onReorderRef = useRef(onReorder);
   onReorderRef.current = onReorder;
+  const onDropRef = useRef(onDrop);
+  onDropRef.current = onDrop;
+  const deferReflowRef = useRef(deferReflow);
+  deferReflowRef.current = deferReflow;
 
   const startDrag = useCallback((id: string, index: number, e: React.MouseEvent) => {
     const newState: DragState = {
@@ -91,13 +95,21 @@ export function DragProvider({ children, onReorder }: { children: ReactNode; onR
       dragRef.current = newState;
       setDragState(newState);
 
-      if (newState.draggedId && newState.sourceIndex !== index) {
+      if (!deferReflowRef.current && newState.draggedId && newState.sourceIndex !== index) {
         onReorderRef.current(newState.draggedId, index);
       }
     }
   }, []);
 
   const endDrag = useCallback(() => {
+    const state = dragRef.current;
+    if (deferReflowRef.current && state.draggedId && state.sourceIndex !== state.targetIndex) {
+      if (onDropRef.current) {
+        onDropRef.current(state.draggedId, state.targetIndex);
+      } else {
+        onReorderRef.current(state.draggedId, state.targetIndex);
+      }
+    }
     dragRef.current = initialDragState;
     setDragState(initialDragState);
     document.body.style.cursor = "";
@@ -120,16 +132,11 @@ export function DragProvider({ children, onReorder }: { children: ReactNode; onR
       };
     }
 
-    return {
-      transition: "transform 0.2s ease",
-    };
+    return {};
   }, [dragState]);
 
   const getCardClassName = useCallback((id: string): string => {
-    if (id === dragState.draggedId && dragState.isDragging) {
-      return "break-inside-avoid";
-    }
-    return "break-inside-avoid";
+    return "";
   }, [dragState]);
 
   return (

@@ -4,12 +4,11 @@ import { useEffect } from "react";
 import { useAuthStore } from "@/state/useAuthStore";
 import { useEncryptionStore } from "@/state/useEncryptionStore";
 import LoginScreen from "@/components/LoginScreen";
-import LockScreen from "@/components/LockScreen";
 import AppShell from "@/components/AppShell";
 
 export default function Home() {
   const { user, loading, init } = useAuthStore();
-  const { isSetup, isUnlocked, checkSetup } = useEncryptionStore();
+  const { isReady, initialize } = useEncryptionStore();
 
   useEffect(() => {
     init();
@@ -17,9 +16,9 @@ export default function Home() {
 
   useEffect(() => {
     if (user) {
-      checkSetup(user.id);
+      initialize();
     }
-  }, [user, checkSetup]);
+  }, [user, initialize]);
 
   if (loading) {
     return (
@@ -33,8 +32,12 @@ export default function Home() {
     return <LoginScreen />;
   }
 
-  if (!isSetup || !isUnlocked) {
-    return <LockScreen />;
+  if (!isReady) {
+    return (
+      <div className="flex items-center justify-center h-screen" style={{ background: "var(--bg)" }}>
+        <div style={{ color: "var(--text-muted)" }}>Loading…</div>
+      </div>
+    );
   }
 
   return <AppShell />;
