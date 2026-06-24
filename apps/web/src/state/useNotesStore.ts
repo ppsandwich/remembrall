@@ -20,7 +20,7 @@ export const NOTE_COLORS = [
 export const DARK_NOTE_COLORS = [
   { name: "none", hex: "" },
   { name: "red", hex: "#451A1A" },
-  { name: "orange", hex: "#431407" },
+  { name: "orange", hex: "#422006" },
   { name: "yellow", hex: "#422006" },
   { name: "teal", hex: "#134E4A" },
   { name: "blue", hex: "#1E3A5F" },
