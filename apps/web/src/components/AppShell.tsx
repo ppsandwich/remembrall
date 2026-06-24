@@ -7,6 +7,7 @@ import { useAuthStore } from "@/state/useAuthStore";
 import { readClipboard } from "@/lib/clipboard";
 import { registerShortcut, initShortcuts } from "@/lib/shortcuts";
 import Header from "./Header";
+import TabBar from "./TabBar";
 import TagFilter from "./SearchBox";
 import NoteList from "./NoteList";
 import NoteEditor from "./NoteEditor";
@@ -16,7 +17,7 @@ import ShortcutsPanel from "./ShortcutsPanel";
 import SettingsPanel from "./SettingsPanel";
 
 export default function AppShell() {
-  const { fetchAll, createNote, editingId, selectedIds, deleteNote, duplicateNote, clearSelection, selectAll } =
+  const { fetchAll, fetchPages, createNote, editingId, selectedIds, deleteNote, duplicateNote, clearSelection, selectAll } =
     useNotesStore();
   const { showSettings, setShowSettings, setShowShortcuts, setShowQuickCapture, showToast, setSelectMode } = useUIStore();
   const { user } = useAuthStore();
@@ -29,12 +30,14 @@ export default function AppShell() {
 
   useEffect(() => {
     fetchAll().then(() => setReady(true));
-  }, [fetchAll]);
+    fetchPages();
+  }, [fetchAll, fetchPages]);
 
   useEffect(() => {
     const cleanups = [
       registerShortcut({ key: "/", handler: () => document.querySelector<HTMLInputElement>("[aria-label='Search notes']")?.focus(), allowInInput: false }),
       registerShortcut({ key: "n", handler: () => setShowQuickCapture(true), allowInInput: false }),
+      registerShortcut({ key: "Enter", handler: () => setShowQuickCapture(true), allowInInput: false }),
       registerShortcut({
         key: "v",
         ctrl: true,
@@ -89,6 +92,7 @@ export default function AppShell() {
   return (
     <div className="min-h-screen flex flex-col" style={{ background: "var(--bg)" }}>
       <Header />
+      <TabBar />
       <main className="flex-1 max-w-7xl w-full mx-auto px-8 py-6 flex flex-col gap-4">
         <TagFilter />
         <BulkToolbar />

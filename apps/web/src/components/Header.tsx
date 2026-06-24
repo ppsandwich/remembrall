@@ -86,9 +86,19 @@ export default function Header() {
           </div>
 
           <div className="flex items-center gap-0.5">
-            <HeaderButton onClick={() => setShowQuickCapture(true)} title="New note">
-              <Plus />
-            </HeaderButton>
+            <button
+              onClick={() => setShowQuickCapture(true)}
+              className="mr-2 rounded-md flex items-center justify-center transition-colors"
+              style={{ width: "2.25rem", height: "2.25rem", background: "transparent", color: "#22C55E", border: "1px solid #22C55E" }}
+              title="New note"
+              aria-label="New note"
+              onMouseEnter={(e) => { e.currentTarget.style.background = "#22C55E"; e.currentTarget.style.color = "var(--surface)"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "#22C55E"; }}
+              onMouseDown={(e) => { e.currentTarget.style.background = "#16A34A"; }}
+              onMouseUp={(e) => { e.currentTarget.style.background = "#22C55E"; }}
+            >
+              <Plus size={20} />
+            </button>
 
             <div className="hidden md:block ml-1">
               <input
@@ -185,12 +195,12 @@ export default function Header() {
   );
 }
 
-function HeaderButton({ onClick, title, active, children }: { onClick: () => void; title: string; active?: boolean; children: React.ReactNode }) {
+function HeaderButton({ onClick, title, active, children, className, style }: { onClick: () => void; title: string; active?: boolean; children: React.ReactNode; className?: string; style?: React.CSSProperties }) {
   return (
     <button
       onClick={onClick}
-      className="p-2 rounded-md transition-colors"
-      style={{ color: active ? "var(--text)" : "var(--text-muted)", background: active ? "var(--surface-subtle)" : "transparent" }}
+      className={`p-2 rounded-md transition-colors ${className ?? ""}`}
+      style={{ color: active ? "var(--text)" : "var(--text-muted)", background: active ? "var(--surface-subtle)" : "transparent", ...style }}
       title={title}
       aria-label={title}
       onMouseEnter={(e) => {
@@ -201,7 +211,7 @@ function HeaderButton({ onClick, title, active, children }: { onClick: () => voi
       }}
       onMouseLeave={(e) => {
         if (!active) {
-          e.currentTarget.style.background = "transparent";
+          e.currentTarget.style.background = style?.background as string || "transparent";
           e.currentTarget.style.color = "var(--text-muted)";
         }
       }}

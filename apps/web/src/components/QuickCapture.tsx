@@ -78,7 +78,7 @@ export default function QuickCapture({ onClose }: { onClose?: () => void }) {
         value={body}
         onChange={(e) => setBody(e.target.value)}
         onKeyDown={handleKeyDown}
-        rows={3}
+        rows={6}
         className="w-full text-sm resize-none outline-none leading-relaxed"
         style={{ background: "transparent", color: "var(--text)" }}
         aria-label="Quick capture note"
@@ -126,9 +126,9 @@ export default function QuickCapture({ onClose }: { onClose?: () => void }) {
           style={{ color: "var(--text-muted)", background: "var(--surface-subtle)" }}
           title={enterToSave ? "Enter to save" : "Cmd+Enter to save"}
         >
-          <span style={{ fontWeight: enterToSave ? 600 : 400, color: enterToSave ? "var(--text-secondary)" : undefined }}>Enter</span>
+          <span style={{ fontWeight: enterToSave ? 600 : 400, color: enterToSave ? "#3B82F6" : undefined }}>Enter</span>
           <span style={{ color: "var(--text-muted)" }}>/</span>
-          <span style={{ fontWeight: !enterToSave ? 600 : 400, color: !enterToSave ? "var(--text-secondary)" : undefined }}>⌘↵</span>
+          <span style={{ fontWeight: !enterToSave ? 600 : 400, color: !enterToSave ? "#3B82F6" : undefined }}>⌘↵</span>
           <span>to save</span>
         </button>
       </div>

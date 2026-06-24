@@ -1,10 +1,11 @@
 import { create } from "zustand";
-import type { DecryptedNote, NoteSource, EncryptedPayload } from "@remembrall/core";
+import type { DecryptedNote, NoteSource, EncryptedPayload, NotePage } from "@remembrall/core";
 import { derivePreview, searchNotes as filterNotes, extractTags, addTag, removeTag, stripTags } from "@remembrall/core";
 import { useEncryptionStore } from "./useEncryptionStore";
 import { useAuthStore } from "./useAuthStore";
 import * as api from "@/lib/notesApi";
 import * as prefApi from "@/lib/preferencesApi";
+import * as pagesApi from "@/lib/pagesApi";
 
 export const NOTE_COLORS = [
   { name: "none", hex: "" },
@@ -66,6 +67,8 @@ interface UndoEntry {
 
 interface NotesState {
   notes: DecryptedNote[];
+  pages: NotePage[];
+  activePageId: string | null;
   searchQuery: string;
   selectedIds: Set<string>;
   editingId: string | null;
@@ -81,6 +84,11 @@ interface NotesState {
   colorOrder: string[];
 
   fetchAll: () => Promise<void>;
+  fetchPages: () => Promise<void>;
+  createPage: (name: string) => Promise<void>;
+  updatePage: (id: string, name: string) => Promise<void>;
+  deletePage: (id: string) => Promise<void>;
+  setActivePage: (id: string) => void;
   createNote: (body: string, source?: NoteSource) => Promise<void>;
   updateNote: (id: string, body: string) => Promise<void>;
   updateNoteColor: (id: string, color: string) => Promise<void>;
@@ -112,6 +120,8 @@ interface NotesState {
 
 export const useNotesStore = create<NotesState>((set, get) => ({
   notes: [],
+  pages: [],
+  activePageId: null,
   searchQuery: "",
   selectedIds: new Set(),
   editingId: null,
@@ -150,6 +160,7 @@ export const useNotesStore = create<NotesState>((set, get) => ({
             source: note.source,
             position: note.position ?? 0,
             color: note.color || "",
+            page_id: note.page_id,
             created_at: note.created_at,
             updated_at: note.updated_at,
           });
@@ -166,6 +177,7 @@ export const useNotesStore = create<NotesState>((set, get) => ({
             source: note.source,
             position: note.position ?? 0,
             color: note.color || "",
+            page_id: note.page_id,
             created_at: note.created_at,
             updated_at: note.updated_at,
           });
@@ -177,6 +189,52 @@ export const useNotesStore = create<NotesState>((set, get) => ({
     }
   },
 
+  fetchPages: async () => {
+    const user = useAuthStore.getState().user;
+    if (!user) return;
+    try {
+      const pages = await pagesApi.fetchPages(user.id);
+      set({ pages });
+      if (pages.length > 0 && !get().activePageId) {
+        set({ activePageId: pages[0].id });
+      }
+    } catch {}
+  },
+
+  createPage: async (name: string) => {
+    const user = useAuthStore.getState().user;
+    if (!user) return;
+    const maxPosition = Math.max(0, ...get().pages.map((p) => p.position));
+    const page = await pagesApi.createPage({
+      userId: user.id,
+      name,
+      position: maxPosition + 1,
+    });
+    set((s) => ({ pages: [...s.pages, page], activePageId: page.id }));
+  },
+
+  updatePage: async (id: string, name: string) => {
+    await pagesApi.updatePage(id, { name });
+    set((s) => ({
+      pages: s.pages.map((p) => (p.id === id ? { ...p, name } : p)),
+    }));
+  },
+
+  deletePage: async (id: string) => {
+    const { pages, activePageId } = get();
+    if (pages.length <= 1) return;
+    await pagesApi.deletePage(id);
+    const remaining = pages.filter((p) => p.id !== id);
+    set({
+      pages: remaining,
+      activePageId: activePageId === id ? remaining[0]?.id ?? null : activePageId,
+    });
+  },
+
+  setActivePage: (id: string) => {
+    set({ activePageId: id, selectedIds: new Set() });
+  },
+
   createNote: async (body: string, source: NoteSource = "web") => {
     const user = useAuthStore.getState().user;
     const { encryptText } = useEncryptionStore.getState();
@@ -186,6 +244,7 @@ export const useNotesStore = create<NotesState>((set, get) => ({
     const encryptedBody = await encryptText(cleanedBody);
     const preview = derivePreview(cleanedBody);
     const previewEncrypted = await encryptText(preview);
+    const activePageId = get().activePageId;
 
     const created = await api.createNote({
       userId: user.id,
@@ -194,6 +253,7 @@ export const useNotesStore = create<NotesState>((set, get) => ({
       source,
       pinned: false,
       color,
+      pageId: activePageId || undefined,
     });
 
     const maxPosition = Math.max(0, ...get().notes.map((n) => n.position));
@@ -210,6 +270,7 @@ export const useNotesStore = create<NotesState>((set, get) => ({
       source,
       position: maxPosition + 1,
       color,
+      page_id: activePageId,
       created_at: created.created_at,
       updated_at: created.updated_at,
     };
@@ -307,6 +368,7 @@ export const useNotesStore = create<NotesState>((set, get) => ({
         key_version: 1,
         position: original.position,
         color: original.color,
+        page_id: original.page_id,
         created_at: original.created_at,
         updated_at: original.updated_at,
       },
@@ -328,6 +390,7 @@ export const useNotesStore = create<NotesState>((set, get) => ({
       source: original.source,
       position: maxPosition + 1,
       color: original.color,
+      page_id: original.page_id,
       created_at: created.created_at,
       updated_at: created.updated_at,
     };
@@ -468,9 +531,9 @@ export const useNotesStore = create<NotesState>((set, get) => ({
   },
 
   getFilteredNotes: () => {
-    const { notes, searchQuery, filterTag, clusterMode, isDragging, frozenOrderIds, colorChangeFrozenIds } = get();
+    const { notes, searchQuery, filterTag, clusterMode, isDragging, frozenOrderIds, colorChangeFrozenIds, activePageId } = get();
     
-    const active = notes.filter((n) => !n.deleted_at);
+    const active = notes.filter((n) => !n.deleted_at && n.page_id === activePageId);
     let filtered = filterNotes(active, searchQuery);
     if (filterTag) {
       filtered = filtered.filter((n) => extractTags(n.body).includes(filterTag));
@@ -505,8 +568,8 @@ export const useNotesStore = create<NotesState>((set, get) => ({
   },
 
   getAllTags: () => {
-    const { notes } = get();
-    const active = notes.filter((n) => !n.deleted_at);
+    const { notes, activePageId } = get();
+    const active = notes.filter((n) => !n.deleted_at && n.page_id === activePageId);
     const tags = new Set<string>();
     for (const note of active) {
       for (const tag of extractTags(note.body)) {

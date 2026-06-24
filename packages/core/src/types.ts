@@ -30,6 +30,7 @@ export interface Note {
   key_version: number;
   position: number;
   color: string;
+  page_id: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -46,6 +47,16 @@ export interface DecryptedNote {
   source: NoteSource;
   position: number;
   color: string;
+  page_id: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface NotePage {
+  id: string;
+  user_id: string;
+  name: string;
+  position: number;
   created_at: string;
   updated_at: string;
 }

@@ -3,6 +3,7 @@ export type {
   DecryptedNote,
   EncryptedPayload,
   NoteSource,
+  NotePage,
   UserPreferences,
   UserEncryptionKey,
 } from "./types";

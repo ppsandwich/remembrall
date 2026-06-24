@@ -20,6 +20,7 @@ export async function createNote(params: {
   source: NoteSource;
   pinned: boolean;
   color?: string;
+  pageId?: string;
 }): Promise<Note> {
   const { data, error } = await getSupabase()
     .from("notes")
@@ -30,6 +31,7 @@ export async function createNote(params: {
       source: params.source,
       pinned: params.pinned,
       color: params.color || "",
+      page_id: params.pageId || null,
     })
     .select()
     .single();
@@ -92,6 +94,7 @@ export async function duplicateNote(params: {
       source: params.original.source,
       duplicated_from: params.original.id,
       position: params.original.position,
+      page_id: params.original.page_id,
     })
     .select()
     .single();
