@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { createPortal } from "react-dom";
 import { useNotesStore } from "@/state/useNotesStore";
 import { Plus, Minus, ChevronDown, Pencil } from "./Icons";
@@ -24,6 +24,8 @@ export default function TabBar() {
   const editInputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const dropdownButtonRef = useRef<HTMLButtonElement>(null);
+  const tabContainerRef = useRef<HTMLDivElement>(null);
+  const [indicatorStyle, setIndicatorStyle] = useState<{ left: number; width: number }>({ left: 0, width: 0 });
 
   useEffect(() => {
     if (creating && newInputRef.current) {
@@ -48,6 +50,16 @@ export default function TabBar() {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [showDropdown]);
+
+  useEffect(() => {
+    if (!tabContainerRef.current || !activePageId) return;
+    const btn = tabContainerRef.current.querySelector(`[data-tab-id="${activePageId}"]`) as HTMLElement | null;
+    if (btn) {
+      const containerRect = tabContainerRef.current.getBoundingClientRect();
+      const btnRect = btn.getBoundingClientRect();
+      setIndicatorStyle({ left: btnRect.left - containerRect.left, width: btnRect.width });
+    }
+  }, [activePageId, pages]);
 
   const handleCreate = () => {
     if (newName.trim()) {
@@ -192,15 +204,12 @@ export default function TabBar() {
         ) : (
           <button
             onClick={() => setActivePage(page.id)}
-            onDoubleClick={() => { setEditingId(page.id); setEditName(page.name); }}
             onMouseDown={(e) => handleMouseDown(e, isGlobalIndex)}
             data-tab-id={page.id}
             data-tab-index={isGlobalIndex}
             className="px-3 py-1.5 text-xs transition-colors relative whitespace-nowrap cursor-grab active:cursor-grabbing"
             style={{
               color: activePageId === page.id ? "var(--text)" : "var(--text-muted)",
-              background: activePageId === page.id ? "var(--surface)" : "transparent",
-              boxShadow: activePageId === page.id ? "0 1px 3px rgba(0,0,0,0.1)" : "none",
               borderRadius: "4px",
               margin: "2px",
             }}
@@ -232,9 +241,20 @@ export default function TabBar() {
     <>
       <div className="flex items-center gap-2" style={{ transform: "scale(0.8)", transformOrigin: "left center" }}>
         <div
-          className="flex items-center rounded-md overflow-hidden"
+          ref={tabContainerRef}
+          className="flex items-center rounded-md overflow-hidden relative"
           style={{ border: "1px solid var(--border)", background: "var(--surface-subtle)" }}
         >
+          <div
+            className="absolute top-[2px] bottom-[2px] rounded transition-all duration-200 ease-in-out"
+            style={{
+              left: indicatorStyle.left,
+              width: indicatorStyle.width,
+              background: "var(--surface)",
+              boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+              pointerEvents: "none",
+            }}
+          />
           {visiblePages.map((page, i) => {
             const globalIndex = pages.findIndex((p) => p.id === page.id);
             return renderTab(page, i, globalIndex);
