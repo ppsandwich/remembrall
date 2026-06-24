@@ -133,6 +133,17 @@ export default function NoteEditor() {
     setEditingId(null);
   }, [isNewNote, handleSaveNow, setEditingId, setShowQuickCapture]);
 
+  useEffect(() => {
+    if (!isOpen) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        handleClose();
+      }
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [isOpen, handleClose]);
+
   const handleCopy = useCallback(async () => {
     const plainText = htmlToPlainText(bodyHtml);
     const ok = await writeClipboard(plainText);
@@ -256,7 +267,7 @@ export default function NoteEditor() {
         )}
 
         {!isNewNote && (
-          <div className="px-5 py-3" style={{ borderBottom: "1px solid var(--border)" }}>
+          <div className="px-4 py-2" style={{ borderBottom: "1px solid var(--border)" }}>
             <input
               type="text"
               value={title}
@@ -268,7 +279,7 @@ export default function NoteEditor() {
           </div>
         )}
 
-        <div className="px-5 py-3" style={{ borderBottom: "1px solid var(--border)" }}>
+        <div className={`px-4 py-1.5 ${isNewNote ? "hidden md:block" : ""}`} style={{ borderBottom: "1px solid var(--border)" }}>
           <TagInput tags={tags} onChange={handleTagsChange} compact={isNewNote} />
         </div>
 
