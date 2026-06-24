@@ -164,7 +164,7 @@ export default function Header() {
 
             <button
               onClick={() => setShowQuickCapture(true)}
-              className="mr-2 rounded-md flex items-center justify-center transition-colors"
+              className="mr-2 rounded-full flex items-center justify-center transition-colors hidden md:flex"
               style={{ width: "2.25rem", height: "2.25rem", background: "transparent", color: "#22C55E", border: "1px solid #22C55E" }}
               title="New note"
               aria-label="New note"
@@ -320,6 +320,15 @@ export default function Header() {
           </div>
         </div>
       )}
+      <button
+        onClick={() => setShowQuickCapture(true)}
+        className="fixed bottom-6 right-6 z-40 md:hidden rounded-full flex items-center justify-center shadow-lg transition-transform active:scale-95"
+        style={{ width: "3.25rem", height: "3.25rem", background: "#22C55E", color: "white" }}
+        title="New note"
+        aria-label="New note"
+      >
+        <Plus size={24} />
+      </button>
     </>
   );
 }
