@@ -32,15 +32,17 @@ export default function NoteEditor() {
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout>>(null);
 
   useEffect(() => {
-    if (note) {
-      setTitle(note.title || "");
-      const fullBody = note.body;
+    if (!editingId) return;
+    const current = useNotesStore.getState().notes.find((n) => n.id === editingId);
+    if (current) {
+      setTitle(current.title || "");
+      const fullBody = current.body;
       const extractedTags = extractTags(fullBody);
       const cleanBody = stripTagsFromHtml(fullBody);
       setBodyHtml(cleanBody);
       setTags(extractedTags);
     }
-  }, [note]);
+  }, [editingId]);
 
   const scheduleSave = useCallback((newHtml: string) => {
     setBodyHtml(newHtml);

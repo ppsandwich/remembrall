@@ -123,7 +123,7 @@ export default function NoteList() {
         {unpinned.length > 0 && (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 3xl:grid-cols-7 gap-3">
             {unpinned.map((note, index) => (
-              <NoteCard key={note.id} note={note} index={index} highlighted={highlightedId === note.id} onHighlightEnd={() => setHighlightedId(null)} />
+              <NoteCard key={note.id} note={note} index={pinned.length + index} highlighted={highlightedId === note.id} onHighlightEnd={() => setHighlightedId(null)} />
             ))}
           </div>
         )}
