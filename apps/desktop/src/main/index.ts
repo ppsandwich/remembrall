@@ -1,6 +1,7 @@
-import { app, BrowserWindow, Tray, Menu, globalShortcut, clipboard, ipcMain, nativeImage, screen, systemPreferences } from "electron";
+import { app, BrowserWindow, Tray, Menu, globalShortcut, clipboard, ipcMain, nativeImage, screen, shell } from "electron";
 import path from "path";
 import fs from "fs";
+import { exec } from "child_process";
 
 let tray: Tray | null = null;
 let popoverWindow: BrowserWindow | null = null;
@@ -194,70 +195,79 @@ function createNoteFromClipboard(): void {
 }
 
 function registerGlobalShortcut(): void {
-  // Register a global shortcut to create a note from selected text
-  // Cmd+Shift+R on Mac, Ctrl+Shift+R on Windows/Linux
-  const shortcut = isMac ? "CommandOrControl+Shift+R" : "CommandOrControl+Shift+R";
+  const shortcut = "CommandOrControl+Shift+R";
 
   globalShortcut.register(shortcut, async () => {
     // Save current clipboard content
     const previousClipboard = clipboard.readText();
 
-    // Copy selected text to clipboard
-    // On Mac, we can use pbcopy via a brief AppleScript
     if (isMac) {
-      const { exec } = require("child_process");
+      // On Mac, use AppleScript to simulate Cmd+C
       exec('osascript -e "tell application \\"System Events\\" to keystroke \\"c\\" using command down"', () => {
         setTimeout(() => {
           const selectedText = clipboard.readText();
-          // Restore previous clipboard
-          if (previousClipboard !== selectedText) {
-            // Create a note with the selected text
-            if (selectedText && selectedText.trim()) {
-              if (popoverWindow) {
-                popoverWindow.webContents.send("create-note", selectedText);
-                popoverWindow.show();
-                popoverWindow.focus();
-              } else {
-                createNoteFromClipboard();
-              }
-            }
+          if (selectedText && selectedText.trim() && selectedText !== previousClipboard) {
+            createNoteWithText(selectedText);
           }
-          // Restore original clipboard after a small delay
+          // Restore original clipboard after a delay
           setTimeout(() => {
-            clipboard.writeText(previousClipboard);
+            if (previousClipboard) clipboard.writeText(previousClipboard);
           }, 100);
         }, 200);
       });
     } else {
-      // On Windows, Ctrl+C is already handled by the system
-      // We just read the clipboard after a short delay
-      setTimeout(() => {
-        const selectedText = clipboard.readText();
-        if (selectedText && selectedText.trim() && selectedText !== previousClipboard) {
-          if (popoverWindow) {
-            popoverWindow.webContents.send("create-note", selectedText);
-            popoverWindow.show();
-            popoverWindow.focus();
-          } else {
-            createNoteFromClipboard();
+      // On Windows, use PowerShell to simulate Ctrl+C
+      exec('powershell -command "Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.SendKeys]::SendWait(\'^c\')"', () => {
+        setTimeout(() => {
+          const selectedText = clipboard.readText();
+          if (selectedText && selectedText.trim() && selectedText !== previousClipboard) {
+            createNoteWithText(selectedText);
           }
-        }
-      }, 300);
+          // Restore original clipboard after a delay
+          setTimeout(() => {
+            if (previousClipboard) clipboard.writeText(previousClipboard);
+          }, 100);
+        }, 300);
+      });
     }
   });
 }
 
+function createNoteWithText(text: string): void {
+  if (popoverWindow) {
+    popoverWindow.webContents.send("create-note", text);
+    popoverWindow.show();
+    popoverWindow.focus();
+  } else {
+    popoverWindow = createPopoverWindow();
+    const url = getWebAppUrl();
+    popoverWindow.loadURL(url);
+    popoverWindow.show();
+    popoverWindow.focus();
+    popoverWindow.webContents.on("did-finish-load", () => {
+      popoverWindow?.webContents.send("create-note", text);
+    });
+  }
+}
+
 function registerMacOSServices(): void {
   if (isMac) {
-    // Register as a macOS Service
     app.setAboutPanelOptions({
       applicationName: "Remembrall",
       applicationVersion: "0.0.1",
       copyright: "Sandwich Codes",
     });
+  }
+}
 
-    // Note: Full Services integration requires Info.plist configuration
-    // This is handled in the build configuration
+function registerWindowsContextMenu(): void {
+  if (!isMac && app.isPackaged) {
+    // Add "Send to Remembrall" to Windows context menu for text files
+    // This uses the Windows Registry via Electron's app.setAsDefaultProtocolClient
+    // For a full context menu extension, a native addon would be required
+
+    // Register as a handler for the "remembrall://" protocol
+    app.setAsDefaultProtocolClient("remembrall");
   }
 }
 
@@ -276,6 +286,7 @@ app.whenReady().then(() => {
   createTray();
   registerGlobalShortcut();
   registerMacOSServices();
+  registerWindowsContextMenu();
 
   // Hide dock icon on macOS (tray-only app)
   if (isMac) {
