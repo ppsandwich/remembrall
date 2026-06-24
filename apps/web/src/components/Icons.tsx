@@ -28,6 +28,9 @@ import {
   ListOrdered as LucideListOrdered,
   Volleyball as LucideVolleyball,
   Plus as LucidePlus,
+  Minus as LucideMinus,
+  ChevronDown as LucideChevronDown,
+  TableOfContents as LucideTableOfContents,
   type LucideProps,
 } from "lucide-react";
 
@@ -63,3 +66,6 @@ export const ListUnordered = (props: LucideProps) => <LucideList {...p} {...prop
 export const ListOrdered = (props: LucideProps) => <LucideListOrdered {...p} {...props} />;
 export const Volleyball = (props: LucideProps) => <LucideVolleyball {...p} {...props} />;
 export const Plus = (props: LucideProps) => <LucidePlus {...p} {...props} />;
+export const Minus = (props: LucideProps) => <LucideMinus {...p} {...props} />;
+export const ChevronDown = (props: LucideProps) => <LucideChevronDown {...p} {...props} />;
+export const TableOfContents = (props: LucideProps) => <LucideTableOfContents {...p} {...props} />;

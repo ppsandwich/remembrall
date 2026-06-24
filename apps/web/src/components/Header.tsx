@@ -4,8 +4,9 @@ import { useState, useRef, useEffect } from "react";
 import { useAuthStore } from "@/state/useAuthStore";
 import { useUIStore } from "@/state/useUIStore";
 import { useNotesStore } from "@/state/useNotesStore";
-import { Sun, Moon, HelpCircle, Settings, LogOut, CheckSquare, Square, Layers, Volleyball, Search, X, Plus } from "./Icons";
+import { Sun, Moon, HelpCircle, Settings, LogOut, CheckSquare, Square, Layers, Volleyball, Search, X, Plus, Minus, ChevronDown, TableOfContents } from "./Icons";
 import QuickCapture from "./QuickCapture";
+import TabBar from "./TabBar";
 
 export default function Header() {
   const signOut = useAuthStore((s) => s.signOut);
@@ -14,11 +15,19 @@ export default function Header() {
   const setClusterMode = useNotesStore((s) => s.setClusterMode);
   const searchQuery = useNotesStore((s) => s.searchQuery);
   const setSearchQuery = useNotesStore((s) => s.setSearchQuery);
+  const pages = useNotesStore((s) => s.pages);
+  const activePageId = useNotesStore((s) => s.activePageId);
+  const setActivePage = useNotesStore((s) => s.setActivePage);
+  const createPage = useNotesStore((s) => s.createPage);
+  const deletePage = useNotesStore((s) => s.deletePage);
   const { theme, setTheme, setShowShortcuts, setShowSettings, selectMode, setSelectMode, showQuickCapture, setShowQuickCapture } = useUIStore();
 
   const [searchOpen, setSearchOpen] = useState(false);
+  const [pagesMenuOpen, setPagesMenuOpen] = useState(false);
+  const [showMobileDeleteConfirm, setShowMobileDeleteConfirm] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
   const mobileInputRef = useRef<HTMLInputElement>(null);
+  const pagesMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!searchOpen) return;
@@ -30,6 +39,17 @@ export default function Header() {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [searchOpen]);
+
+  useEffect(() => {
+    if (!pagesMenuOpen) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (pagesMenuRef.current && !pagesMenuRef.current.contains(e.target as Node)) {
+        setPagesMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [pagesMenuOpen]);
 
   useEffect(() => {
     if (searchOpen && mobileInputRef.current) {
@@ -71,7 +91,7 @@ export default function Header() {
             </svg>
             <Volleyball size={24} strokeWidth={1.5} style={{ stroke: "url(#header-gold)", fill: "none" }} />
             <h1
-              className="text-lg font-bold tracking-tight"
+              className="text-lg font-bold tracking-tight hidden sm:block"
               style={{
                 letterSpacing: "-0.01em",
                 fontFamily: "var(--font-almendra), serif",
@@ -85,7 +105,63 @@ export default function Header() {
             </h1>
           </div>
 
-          <div className="flex items-center gap-0.5">
+          <div className="flex items-center gap-0.5 flex-1 min-w-0 mx-4">
+            <div className="hidden md:flex flex-1 min-w-0 overflow-x-auto">
+              <TabBar />
+            </div>
+
+            <div className="relative md:hidden" ref={pagesMenuRef}>
+              <HeaderButton
+                onClick={() => setPagesMenuOpen(!pagesMenuOpen)}
+                title="Pages"
+                active={pagesMenuOpen}
+              >
+                <TableOfContents />
+              </HeaderButton>
+              {pagesMenuOpen && (
+                <div
+                  className="absolute left-0 top-full mt-1 rounded-lg shadow-lg z-50 py-1 min-w-[10rem]"
+                  style={{ background: "var(--surface)", border: "1px solid var(--border)" }}
+                >
+                  {pages.map((page) => (
+                    <button
+                      key={page.id}
+                      onClick={() => {
+                        setActivePage(page.id);
+                        setPagesMenuOpen(false);
+                      }}
+                      className="w-full text-left px-3 py-1.5 text-xs transition-colors"
+                      style={{
+                        color: activePageId === page.id ? "var(--text)" : "var(--text-muted)",
+                        background: activePageId === page.id ? "var(--surface-subtle)" : "transparent",
+                      }}
+                      onMouseEnter={(e) => { e.currentTarget.style.background = "var(--surface-subtle)"; e.currentTarget.style.color = "var(--text-secondary)"; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.background = activePageId === page.id ? "var(--surface-subtle)" : "transparent"; e.currentTarget.style.color = activePageId === page.id ? "var(--text)" : "var(--text-muted)"; }}
+                    >
+                      {page.name}
+                    </button>
+                  ))}
+                  {pages.length > 1 && (
+                    <div style={{ borderTop: "1px solid var(--border)" }} className="mt-1 pt-1">
+                      <button
+                        onClick={() => {
+                          setPagesMenuOpen(false);
+                          setShowMobileDeleteConfirm(true);
+                        }}
+                        className="w-full text-left px-3 py-1.5 text-xs transition-colors flex items-center gap-2"
+                        style={{ color: "var(--text-muted)" }}
+                        onMouseEnter={(e) => { e.currentTarget.style.background = "var(--surface-subtle)"; e.currentTarget.style.color = "var(--text-secondary)"; }}
+                        onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--text-muted)"; }}
+                      >
+                        <Minus size={12} />
+                        Delete active page
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
             <button
               onClick={() => setShowQuickCapture(true)}
               className="mr-2 rounded-md flex items-center justify-center transition-colors"
@@ -188,6 +264,54 @@ export default function Header() {
             onClick={(e) => e.stopPropagation()}
           >
             <QuickCapture onClose={() => setShowQuickCapture(false)} />
+          </div>
+        </div>
+      )}
+
+      {showMobileDeleteConfirm && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-6"
+          style={{ background: "rgba(0,0,0,0.25)", backdropFilter: "blur(2px)" }}
+          onClick={() => setShowMobileDeleteConfirm(false)}
+        >
+          <div
+            className="w-full max-w-sm rounded-xl shadow-xl overflow-hidden"
+            style={{ background: "var(--surface)", border: "1px solid var(--border)" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="p-5">
+              <h3 className="text-sm font-medium mb-2" style={{ color: "var(--text)" }}>
+                Delete page
+              </h3>
+              <p className="text-xs mb-4" style={{ color: "var(--text-muted)" }}>
+                Are you sure you want to delete &ldquo;{pages.find((p) => p.id === activePageId)?.name}&rdquo;? Notes on this page will not be deleted.
+              </p>
+              <div className="flex justify-end gap-2">
+                <button
+                  onClick={() => setShowMobileDeleteConfirm(false)}
+                  className="px-3 py-1.5 text-xs rounded-md transition-colors"
+                  style={{ color: "var(--text-muted)", border: "1px solid var(--border)" }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = "var(--surface-subtle)"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    if (activePageId && pages.length > 1) {
+                      deletePage(activePageId);
+                    }
+                    setShowMobileDeleteConfirm(false);
+                  }}
+                  className="px-3 py-1.5 text-xs rounded-md transition-colors"
+                  style={{ background: "var(--danger, #EF4444)", color: "white" }}
+                  onMouseEnter={(e) => { e.currentTarget.style.opacity = "0.9"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.opacity = "1"; }}
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}

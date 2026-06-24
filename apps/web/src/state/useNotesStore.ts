@@ -32,15 +32,15 @@ export const DARK_NOTE_COLORS = [
 ];
 
 export const DEFAULT_COLOR_NAMES: Record<string, string> = {
-  none: "none",
-  red: "red",
-  orange: "orange",
-  yellow: "yellow",
-  teal: "teal",
-  blue: "blue",
-  green: "green",
-  purple: "purple",
-  pink: "pink",
+  none: "None",
+  red: "Red",
+  orange: "Orange",
+  yellow: "Yellow",
+  teal: "Teal",
+  blue: "Blue",
+  green: "Green",
+  purple: "Purple",
+  pink: "Pink",
 };
 
 export const DEFAULT_COLOR_ORDER = ["red", "orange", "yellow", "teal", "blue", "green", "purple", "pink"];
@@ -88,10 +88,12 @@ interface NotesState {
   createPage: (name: string) => Promise<void>;
   updatePage: (id: string, name: string) => Promise<void>;
   deletePage: (id: string) => Promise<void>;
+  reorderPages: (pageId: string, targetIndex: number) => Promise<void>;
   setActivePage: (id: string) => void;
   createNote: (body: string, source?: NoteSource) => Promise<void>;
   updateNote: (id: string, body: string) => Promise<void>;
   updateNoteColor: (id: string, color: string) => Promise<void>;
+  moveNoteToPage: (noteId: string, pageId: string) => Promise<void>;
   deleteNote: (id: string) => Promise<void>;
   undoDelete: () => Promise<void>;
   duplicateNote: (id: string) => Promise<void>;
@@ -231,6 +233,23 @@ export const useNotesStore = create<NotesState>((set, get) => ({
     });
   },
 
+  reorderPages: async (pageId: string, targetIndex: number) => {
+    const { pages } = get();
+    const sourceIndex = pages.findIndex((p) => p.id === pageId);
+    if (sourceIndex === -1 || sourceIndex === targetIndex) return;
+
+    const newPages = [...pages];
+    const [moved] = newPages.splice(sourceIndex, 1);
+    newPages.splice(targetIndex, 0, moved);
+    set({ pages: newPages });
+
+    try {
+      await Promise.all(
+        newPages.map((page, i) => pagesApi.updatePage(page.id, { position: i }))
+      );
+    } catch {}
+  },
+
   setActivePage: (id: string) => {
     set({ activePageId: id, selectedIds: new Set() });
   },
@@ -313,6 +332,15 @@ export const useNotesStore = create<NotesState>((set, get) => ({
     } catch {
       // Color column may not exist yet - local state is already updated
     }
+  },
+
+  moveNoteToPage: async (noteId: string, pageId: string) => {
+    set((s) => ({
+      notes: s.notes.map((n) => (n.id === noteId ? { ...n, page_id: pageId } : n)),
+    }));
+    try {
+      await api.updateNote(noteId, { page_id: pageId });
+    } catch {}
   },
 
   deleteNote: async (id: string) => {

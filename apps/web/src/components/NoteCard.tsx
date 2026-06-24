@@ -19,7 +19,7 @@ interface Props {
 }
 
 export default function NoteCard({ note, index, highlighted, onHighlightEnd }: Props) {
-  const { toggleSelect, selectedIds, setEditingId, deleteNote, togglePin, updateNoteColor, clusterMode, setDragging, colorNames } =
+  const { toggleSelect, selectedIds, setEditingId, deleteNote, togglePin, updateNoteColor, moveNoteToPage, clusterMode, setDragging, colorNames } =
     useNotesStore();
   const { showToast, selectMode, resolvedTheme } = useUIStore();
   const isSelected = selectedIds.has(note.id);
@@ -32,6 +32,7 @@ export default function NoteCard({ note, index, highlighted, onHighlightEnd }: P
   const originalColorRef = useRef(note.color);
   const [showColors, setShowColors] = useState(false);
   const [radialOrigin, setRadialOrigin] = useState<{ x: number; y: number } | null>(null);
+  const [hoveredTabName, setHoveredTabName] = useState<string | null>(null);
   const radialColorRef = useRef<string | null>(null);
 
   useEffect(() => {
@@ -80,6 +81,16 @@ export default function NoteCard({ note, index, highlighted, onHighlightEnd }: P
 
     mouseDownRef.current = { x: e.clientX, y: e.clientY };
     isDraggingRef.current = false;
+    let hoveredTab: HTMLElement | null = null;
+
+    const clearTabHighlight = () => {
+      if (hoveredTab) {
+        hoveredTab.style.outline = "";
+        hoveredTab.style.outlineOffset = "";
+        hoveredTab = null;
+        setHoveredTabName(null);
+      }
+    };
 
     const handleMouseMove = (moveEvent: MouseEvent) => {
       if (!mouseDownRef.current) return;
@@ -110,12 +121,24 @@ export default function NoteCard({ note, index, highlighted, onHighlightEnd }: P
         const elemBelow = document.elementFromPoint(moveEvent.clientX, moveEvent.clientY);
         if (draggedEl) draggedEl.style.pointerEvents = "";
 
+        clearTabHighlight();
+
         if (elemBelow) {
-          const cardBelow = elemBelow.closest("[data-note-card]");
-          if (cardBelow) {
-            const belowIndex = parseInt(cardBelow.getAttribute("data-note-index") || "-1", 10);
-            if (belowIndex >= 0) {
-              setTargetIndex(belowIndex);
+          const tabBelow = elemBelow.closest("[data-tab-id]") as HTMLElement | null;
+          if (tabBelow) {
+            hoveredTab = tabBelow;
+            hoveredTab.style.outline = "2px solid var(--accent)";
+            hoveredTab.style.outlineOffset = "-2px";
+            const tabName = tabBelow.textContent?.trim() || null;
+            setHoveredTabName(tabName);
+          } else {
+            clearTabHighlight();
+            const cardBelow = elemBelow.closest("[data-note-card]");
+            if (cardBelow) {
+              const belowIndex = parseInt(cardBelow.getAttribute("data-note-index") || "-1", 10);
+              if (belowIndex >= 0) {
+                setTargetIndex(belowIndex);
+              }
             }
           }
         }
@@ -127,6 +150,10 @@ export default function NoteCard({ note, index, highlighted, onHighlightEnd }: P
       document.removeEventListener("mouseup", handleMouseUp);
 
       if (isDraggingRef.current) {
+        const droppedOnTab = hoveredTab;
+        const targetPageId = droppedOnTab?.getAttribute("data-tab-id");
+        clearTabHighlight();
+
         setTimeout(() => {
           if (radialColorRef.current) {
             updateNoteColor(note.id, radialColorRef.current);
@@ -135,6 +162,10 @@ export default function NoteCard({ note, index, highlighted, onHighlightEnd }: P
           setDragging(false);
           endDrag();
           setRadialOrigin(null);
+
+          if (targetPageId && targetPageId !== note.page_id) {
+            moveNoteToPage(note.id, targetPageId);
+          }
         }, 0);
       } else {
         if (selectMode) {
@@ -150,7 +181,7 @@ export default function NoteCard({ note, index, highlighted, onHighlightEnd }: P
 
     document.addEventListener("mousemove", handleMouseMove);
     document.addEventListener("mouseup", handleMouseUp);
-  }, [note.id, index, startDrag, updateDrag, endDrag, selectMode, toggleSelect, setEditingId, updateNoteColor, clusterMode, setDragging, dragState]);
+  }, [note.id, note.page_id, index, startDrag, updateDrag, endDrag, selectMode, toggleSelect, setEditingId, updateNoteColor, moveNoteToPage, clusterMode, setDragging, dragState]);
 
   const timeAgo = formatTimeAgo(note.updated_at);
   const noteTags = extractTags(note.body);
@@ -183,7 +214,10 @@ export default function NoteCard({ note, index, highlighted, onHighlightEnd }: P
         if (!isSelected && !dragState.isDragging) e.currentTarget.style.borderColor = "var(--border)";
       }}
     >
-      <div className="flex items-start gap-3">
+      <div
+        className="flex items-start gap-3"
+        style={{ filter: isDragged && hoveredTabName ? "blur(4px)" : "none", transition: "filter 150ms" }}
+      >
         <div className="flex-1 min-w-0">
           <p
             className="text-sm whitespace-pre-wrap break-words leading-relaxed"
@@ -230,6 +264,17 @@ export default function NoteCard({ note, index, highlighted, onHighlightEnd }: P
           )}
         </div>
       </div>
+
+      {isDragged && hoveredTabName && (
+        <div
+          className="absolute inset-0 flex items-center justify-center rounded-lg z-10"
+          style={{ background: "color-mix(in srgb, var(--surface) 85%, transparent)" }}
+        >
+          <span className="text-lg font-semibold" style={{ color: "var(--text)" }}>
+            Move to {hoveredTabName}
+          </span>
+        </div>
+      )}
 
       <div
         className="absolute top-0 inset-x-0 h-12 rounded-t-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"

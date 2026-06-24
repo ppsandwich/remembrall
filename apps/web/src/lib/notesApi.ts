@@ -48,6 +48,7 @@ export async function updateNote(
     pinned?: boolean;
     archived?: boolean;
     color?: string;
+    page_id?: string | null;
   }
 ): Promise<Note> {
   const { data, error } = await getSupabase()
