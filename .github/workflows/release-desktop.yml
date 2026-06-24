@@ -39,6 +39,9 @@ jobs:
 
       - name: Build web app
         run: pnpm build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
 
       - name: Copy web output to desktop
         run: cp -r apps/web/out apps/desktop/web-out
@@ -78,6 +81,9 @@ jobs:
 
       - name: Build web app
         run: pnpm build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
 
       - name: Copy web output to desktop
         run: xcopy apps\web\out apps\desktop\web-out /E /I /Y
