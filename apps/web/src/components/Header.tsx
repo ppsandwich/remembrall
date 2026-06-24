@@ -250,7 +250,7 @@ export default function Header() {
                 placeholder="Search"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-56 lg:w-72 px-3 py-1.5 rounded-md text-sm outline-none"
+                className="w-[168px] lg:w-[216px] px-3 py-1 rounded-md text-xs outline-none"
                 style={{
                   background: "var(--surface-subtle)",
                   border: "1px solid var(--border)",
