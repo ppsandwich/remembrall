@@ -324,11 +324,11 @@ export const useNotesStore = create<NotesState>((set, get) => ({
   },
 
   updateNoteColor: async (id: string, color: string) => {
-    get().freezeColorChange();
     set((s) => ({
       notes: s.notes.map((n) => (n.id === id ? { ...n, color } : n)),
       lastRecoloredId: id,
     }));
+    get().freezeColorChange();
     try {
       await api.updateNote(id, { color });
     } catch {

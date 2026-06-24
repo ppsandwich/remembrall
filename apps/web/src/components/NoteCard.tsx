@@ -249,8 +249,8 @@ export default function NoteCard({ note, index, highlighted, onHighlightEnd }: P
         <div className="flex-1 min-w-0">
           {note.title && (
             <p
-              className="text-xs font-medium mb-1 uppercase tracking-wider"
-              style={{ color: "var(--text-muted)" }}
+              className="text-xs font-bold mb-1 uppercase tracking-wider"
+              style={{ color: "var(--text)" }}
             >
               {note.title}
             </p>
@@ -260,7 +260,7 @@ export default function NoteCard({ note, index, highlighted, onHighlightEnd }: P
             style={{
               color: "var(--text)",
               display: "-webkit-box",
-              WebkitLineClamp: 7,
+              WebkitLineClamp: 4,
               WebkitBoxOrient: "vertical",
               overflow: "hidden",
             }}
@@ -274,7 +274,7 @@ export default function NoteCard({ note, index, highlighted, onHighlightEnd }: P
             {note.pinned && (
               <span
                 className="text-xs px-1.5 py-0.5 rounded"
-                style={{ background: "var(--surface-subtle)", color: "var(--text-muted)" }}
+                style={{ background: "var(--surface-subtle)", color: "var(--text-secondary)" }}
               >
                 Pinned
               </span>
@@ -291,7 +291,7 @@ export default function NoteCard({ note, index, highlighted, onHighlightEnd }: P
                 <span
                   key={tag}
                   className="text-xs px-1.5 py-0.5 rounded-full"
-                  style={{ background: "var(--surface-subtle)", color: "var(--text-muted)" }}
+                  style={{ background: "var(--surface-subtle)", color: "var(--text-secondary)" }}
                 >
                   #{tag}
                 </span>
@@ -314,7 +314,7 @@ export default function NoteCard({ note, index, highlighted, onHighlightEnd }: P
 
       <div
         className="absolute top-0 inset-x-0 h-12 rounded-t-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"
-        style={{ backdropFilter: "blur(8px)", background: "color-mix(in srgb, var(--surface) 50%, transparent)" }}
+        style={{ backdropFilter: "blur(8px)" }}
       />
 
       <div

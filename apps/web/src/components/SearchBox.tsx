@@ -8,9 +8,10 @@ export default function TagFilter() {
   const filterTag = useNotesStore((s) => s.filterTag);
   const setFilterTag = useNotesStore((s) => s.setFilterTag);
   const notes = useNotesStore((s) => s.notes);
+  const activePageId = useNotesStore((s) => s.activePageId);
 
   const allTags = useMemo(() => {
-    const active = notes.filter((n) => !n.deleted_at);
+    const active = notes.filter((n) => !n.deleted_at && n.page_id === activePageId);
     const set = new Set<string>();
     for (const note of active) {
       for (const tag of extractTags(note.body)) {
@@ -18,12 +19,12 @@ export default function TagFilter() {
       }
     }
     return Array.from(set).sort();
-  }, [notes]);
+  }, [notes, activePageId]);
 
   if (allTags.length === 0) return null;
 
   return (
-    <div className="flex flex-wrap gap-1.5">
+    <div className="flex flex-wrap gap-1.5" style={{ transform: "scale(0.75)", transformOrigin: "left center" }}>
       {allTags.map((tag) => (
         <button
           key={tag}

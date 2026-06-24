@@ -110,7 +110,7 @@ export default function NoteList() {
         {pinned.length > 0 && (
           <>
             <h2 className="text-xs font-medium mb-2 ml-1" style={{ color: "var(--text-muted)" }}>Pinned</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 3xl:grid-cols-6 gap-3 mb-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 3xl:grid-cols-7 gap-3 mb-6">
               {pinned.map((note, index) => (
                 <NoteCard key={note.id} note={note} index={index} highlighted={highlightedId === note.id} onHighlightEnd={() => setHighlightedId(null)} />
               ))}
@@ -121,7 +121,7 @@ export default function NoteList() {
           <h2 className="text-xs font-medium mb-2 ml-1" style={{ color: "var(--text-muted)" }}>Others</h2>
         )}
         {unpinned.length > 0 && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 3xl:grid-cols-6 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 3xl:grid-cols-7 gap-3">
             {unpinned.map((note, index) => (
               <NoteCard key={note.id} note={note} index={index} highlighted={highlightedId === note.id} onHighlightEnd={() => setHighlightedId(null)} />
             ))}
