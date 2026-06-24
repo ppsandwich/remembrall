@@ -1,14 +1,14 @@
 import { create } from "zustand";
 
 interface UIState {
-  theme: "light" | "dark" | "system";
+  theme: "light" | "dark";
   resolvedTheme: "light" | "dark";
   showShortcuts: boolean;
   showSettings: boolean;
   selectMode: boolean;
   toastMessage: string | null;
 
-  setTheme: (theme: "light" | "dark" | "system") => void;
+  setTheme: (theme: "light" | "dark") => void;
   setShowShortcuts: (show: boolean) => void;
   setShowSettings: (show: boolean) => void;
   setSelectMode: (on: boolean) => void;
@@ -16,28 +16,18 @@ interface UIState {
   clearToast: () => void;
 }
 
-function getSystemTheme(): "light" | "dark" {
-  if (typeof window === "undefined") return "light";
-  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-}
-
-function resolveTheme(theme: "light" | "dark" | "system"): "light" | "dark" {
-  return theme === "system" ? getSystemTheme() : theme;
-}
-
 export const useUIStore = create<UIState>((set) => ({
-  theme: "system",
-  resolvedTheme: "light",
+  theme: "dark",
+  resolvedTheme: "dark",
   showShortcuts: false,
   showSettings: false,
   selectMode: false,
   toastMessage: null,
 
   setTheme: (theme) => {
-    const resolved = resolveTheme(theme);
-    document.documentElement.classList.toggle("dark", resolved === "dark");
+    document.documentElement.classList.toggle("dark", theme === "dark");
     localStorage.setItem("remembrall-theme", theme);
-    set({ theme, resolvedTheme: resolved });
+    set({ theme, resolvedTheme: theme });
   },
 
   setShowShortcuts: (show) => set({ showShortcuts: show }),
@@ -53,9 +43,8 @@ export const useUIStore = create<UIState>((set) => ({
 }));
 
 export function initTheme() {
-  const stored = localStorage.getItem("remembrall-theme") as "light" | "dark" | "system" | null;
-  const theme = stored || "system";
-  const resolved = resolveTheme(theme);
-  document.documentElement.classList.toggle("dark", resolved === "dark");
-  useUIStore.setState({ theme, resolvedTheme: resolved });
+  const stored = localStorage.getItem("remembrall-theme") as "light" | "dark" | null;
+  const theme = stored || "dark";
+  document.documentElement.classList.toggle("dark", theme === "dark");
+  useUIStore.setState({ theme, resolvedTheme: theme });
 }

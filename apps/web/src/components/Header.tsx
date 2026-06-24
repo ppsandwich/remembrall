@@ -3,7 +3,7 @@
 import { useAuthStore } from "@/state/useAuthStore";
 import { useUIStore } from "@/state/useUIStore";
 import { useNotesStore } from "@/state/useNotesStore";
-import { Sun, Moon, Monitor, HelpCircle, Settings, LogOut, CheckSquare, Square, Layers } from "./Icons";
+import { Sun, Moon, HelpCircle, Settings, LogOut, CheckSquare, Square, Layers } from "./Icons";
 
 export default function Header() {
   const signOut = useAuthStore((s) => s.signOut);
@@ -13,8 +13,7 @@ export default function Header() {
   const { theme, setTheme, setShowShortcuts, setShowSettings, selectMode, setSelectMode } = useUIStore();
 
   const cycleTheme = () => {
-    const next = theme === "light" ? "dark" : theme === "dark" ? "system" : "light";
-    setTheme(next);
+    setTheme(theme === "light" ? "dark" : "light");
   };
 
   const toggleSelectMode = () => {
@@ -26,7 +25,7 @@ export default function Header() {
     }
   };
 
-  const ThemeIcon = theme === "light" ? Sun : theme === "dark" ? Moon : Monitor;
+  const ThemeIcon = theme === "light" ? Sun : Moon;
 
   return (
     <header

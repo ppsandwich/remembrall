@@ -15,7 +15,7 @@ interface DragState {
 
 interface DragContextValue {
   dragState: DragState;
-  startDrag: (id: string, index: number, e: React.MouseEvent) => void;
+  startDrag: (id: string, index: number, e: React.MouseEvent, cardWidth: number, cardHeight: number) => void;
   updateDrag: (e: React.MouseEvent) => void;
   setTargetIndex: (index: number) => void;
   endDrag: () => void;
@@ -42,18 +42,16 @@ const initialDragState: DragState = {
   isDragging: false,
 };
 
-export function DragProvider({ children, onReorder, onDrop, deferReflow }: { children: ReactNode; onReorder: (id: string, targetIndex: number) => void; onDrop?: (id: string, targetIndex: number) => void; deferReflow?: boolean }) {
+export function DragProvider({ children, onReorder }: { children: ReactNode; onReorder: (id: string, targetIndex: number) => void }) {
   const [dragState, setDragState] = useState<DragState>(initialDragState);
   const dragRef = useRef<DragState>(initialDragState);
   const animFrameRef = useRef<number>(0);
   const onReorderRef = useRef(onReorder);
   onReorderRef.current = onReorder;
-  const onDropRef = useRef(onDrop);
-  onDropRef.current = onDrop;
-  const deferReflowRef = useRef(deferReflow);
-  deferReflowRef.current = deferReflow;
+  const cardSizeRef = useRef({ width: 0, height: 0, gap: 12 });
 
-  const startDrag = useCallback((id: string, index: number, e: React.MouseEvent) => {
+  const startDrag = useCallback((id: string, index: number, e: React.MouseEvent, cardWidth: number, cardHeight: number) => {
+    cardSizeRef.current = { width: cardWidth, height: cardHeight, gap: 12 };
     const newState: DragState = {
       draggedId: id,
       startX: e.clientX,
@@ -94,21 +92,13 @@ export function DragProvider({ children, onReorder, onDrop, deferReflow }: { chi
       };
       dragRef.current = newState;
       setDragState(newState);
-
-      if (!deferReflowRef.current && newState.draggedId && newState.sourceIndex !== index) {
-        onReorderRef.current(newState.draggedId, index);
-      }
     }
   }, []);
 
   const endDrag = useCallback(() => {
     const state = dragRef.current;
-    if (deferReflowRef.current && state.draggedId && state.sourceIndex !== state.targetIndex) {
-      if (onDropRef.current) {
-        onDropRef.current(state.draggedId, state.targetIndex);
-      } else {
-        onReorderRef.current(state.draggedId, state.targetIndex);
-      }
+    if (state.draggedId && state.sourceIndex !== state.targetIndex) {
+      onReorderRef.current(state.draggedId, state.targetIndex);
     }
     dragRef.current = initialDragState;
     setDragState(initialDragState);
@@ -127,7 +117,7 @@ export function DragProvider({ children, onReorder, onDrop, deferReflow }: { chi
         transform: `translate(${dx}px, ${dy}px) scale(1.02)`,
         zIndex: 1000,
         boxShadow: "0 20px 60px rgba(0,0,0,0.15), 0 8px 20px rgba(0,0,0,0.1)",
-        transition: "box-shadow 0.2s, transform 0.05s",
+        transition: "box-shadow 0.2s",
         opacity: 0.95,
       };
     }

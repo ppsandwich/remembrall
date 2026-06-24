@@ -6,17 +6,20 @@ import { useNotesStore, NOTE_COLORS, DARK_NOTE_COLORS } from "@/state/useNotesSt
 import { writeClipboard } from "@/lib/clipboard";
 import { useUIStore } from "@/state/useUIStore";
 import { exportSingleNote, downloadMarkdown, singleNoteFilename } from "@remembrall/export";
-import { Copy, Pin, PinOff, Duplicate, Download, Trash, Palette } from "./Icons";
+import { Copy, Pin, PinOff, Download, Trash, Palette } from "./Icons";
 import { useDragContext } from "./DragContext";
-import { useRef, useCallback, useState } from "react";
+import RadialColorPicker from "./RadialColorPicker";
+import { useRef, useCallback, useState, useEffect } from "react";
 
 interface Props {
   note: DecryptedNote;
   index: number;
+  highlighted?: boolean;
+  onHighlightEnd?: () => void;
 }
 
-export default function NoteCard({ note, index }: Props) {
-  const { toggleSelect, selectedIds, setEditingId, deleteNote, duplicateNote, togglePin, updateNoteColor, clusterMode, setDragging } =
+export default function NoteCard({ note, index, highlighted, onHighlightEnd }: Props) {
+  const { toggleSelect, selectedIds, setEditingId, deleteNote, togglePin, updateNoteColor, clusterMode, setDragging } =
     useNotesStore();
   const { showToast, selectMode, resolvedTheme } = useUIStore();
   const isSelected = selectedIds.has(note.id);
@@ -28,6 +31,34 @@ export default function NoteCard({ note, index }: Props) {
   noteColorRef.current = note.color;
   const originalColorRef = useRef(note.color);
   const [showColors, setShowColors] = useState(false);
+  const [radialOrigin, setRadialOrigin] = useState<{ x: number; y: number } | null>(null);
+  const radialColorRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!highlighted || !cardRef.current) return;
+    const el = cardRef.current;
+    const anim = el.animate(
+      [
+        { outlineColor: "transparent", filter: "brightness(1)", offset: 0 },
+        { outlineColor: "var(--accent)", filter: "brightness(1.5)", offset: 0.2 },
+        { outlineColor: "var(--accent)", filter: "brightness(1.1)", offset: 0.6 },
+        { outlineColor: "transparent", filter: "brightness(1)", offset: 1 },
+      ],
+      { duration: 800, easing: "ease", fill: "forwards" },
+    );
+    el.style.outline = "3px solid transparent";
+    el.style.outlineOffset = "2px";
+    anim.onfinish = () => {
+      el.style.outline = "";
+      el.style.outlineOffset = "";
+      onHighlightEnd?.();
+    };
+    return () => {
+      anim.cancel();
+      el.style.outline = "";
+      el.style.outlineOffset = "";
+    };
+  }, [highlighted, onHighlightEnd]);
 
   const colors = resolvedTheme === "dark" ? DARK_NOTE_COLORS : NOTE_COLORS;
   const colorHex = colors.find((c) => c.name === note.color)?.hex || "";
@@ -60,10 +91,12 @@ export default function NoteCard({ note, index }: Props) {
         isDraggingRef.current = true;
         originalColorRef.current = noteColorRef.current;
         setDragging(true);
+        const rect = cardRef.current?.getBoundingClientRect();
         startDrag(note.id, index, {
           clientX: mouseDownRef.current.x,
           clientY: mouseDownRef.current.y,
-        } as React.MouseEvent);
+        } as React.MouseEvent, rect?.width || 0, rect?.height || 0);
+        if (clusterMode) setRadialOrigin({ x: mouseDownRef.current.x, y: mouseDownRef.current.y });
       }
 
       if (isDraggingRef.current) {
@@ -78,20 +111,13 @@ export default function NoteCard({ note, index }: Props) {
         if (draggedEl) draggedEl.style.pointerEvents = "";
 
         if (elemBelow) {
-          const swatchBelow = elemBelow.closest("[data-color-swatch]");
-          if (swatchBelow) {
-            const swatchColor = swatchBelow.getAttribute("data-color-swatch") || "";
-            if (swatchColor && swatchColor !== noteColorRef.current) {
-              updateNoteColor(note.id, swatchColor);
-              noteColorRef.current = swatchColor;
+          const cardBelow = elemBelow.closest("[data-note-card]");
+          if (cardBelow) {
+            const belowIndex = parseInt(cardBelow.getAttribute("data-note-index") || "-1", 10);
+            if (belowIndex >= 0) {
+              setTargetIndex(belowIndex);
             }
-            return;
           }
-        }
-
-        if (noteColorRef.current !== originalColorRef.current) {
-          updateNoteColor(note.id, originalColorRef.current);
-          noteColorRef.current = originalColorRef.current;
         }
       }
     };
@@ -101,8 +127,15 @@ export default function NoteCard({ note, index }: Props) {
       document.removeEventListener("mouseup", handleMouseUp);
 
       if (isDraggingRef.current) {
-        setDragging(false);
-        endDrag();
+        setTimeout(() => {
+          if (radialColorRef.current) {
+            updateNoteColor(note.id, radialColorRef.current);
+          }
+          radialColorRef.current = null;
+          setDragging(false);
+          endDrag();
+          setRadialOrigin(null);
+        }, 0);
       } else {
         if (selectMode) {
           toggleSelect(note.id);
@@ -123,20 +156,21 @@ export default function NoteCard({ note, index }: Props) {
   const noteTags = extractTags(note.body);
   const cleanPreview = stripTags(note.preview);
   const isPinned = note.pinned;
-  const showSwatch = dragState.isDragging && note.color && dragState.draggedId !== note.id;
+  const isDragged = dragState.isDragging && dragState.draggedId === note.id;
 
   const style: React.CSSProperties = {
     ...getCardStyle(note.id, index),
     background: colorHex || (isPinned ? "rgba(34, 197, 94, 0.06)" : "var(--surface)"),
     border: isSelected ? "2px solid var(--accent)" : "1px solid var(--border)",
-    cursor: dragState.isDragging && dragState.draggedId === note.id ? "grabbing" : "pointer",
-    transition: "background-color 300ms",
+    cursor: isDragged ? "grabbing" : "pointer",
+    transition: isDragged ? "none" : "background-color 300ms, transform 300ms",
+    userSelect: "none",
   };
 
   return (
     <div
       ref={cardRef}
-      data-note-card
+      data-note-card={note.id}
       data-note-index={index}
       data-note-color={note.color || ""}
       className={`rounded-lg p-5 group relative ${getCardClassName(note.id)}`}
@@ -149,14 +183,6 @@ export default function NoteCard({ note, index }: Props) {
         if (!isSelected && !dragState.isDragging) e.currentTarget.style.borderColor = "var(--border)";
       }}
     >
-      {showSwatch && (
-        <div
-          data-color-swatch={note.color}
-          className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 rounded-full z-10 border-2 border-white dark:border-gray-800 shadow-lg pointer-events-auto"
-          style={{ background: colorHex }}
-        />
-      )}
-
       <div className="flex items-start gap-3">
         <div className="flex-1 min-w-0">
           <p
@@ -206,19 +232,27 @@ export default function NoteCard({ note, index }: Props) {
       </div>
 
       <div
-        className={`absolute top-1.5 right-1.5 flex items-center gap-0.5 transition-opacity ${note.color ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
+        className="absolute top-0 inset-x-0 h-12 rounded-t-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"
+        style={{ backdropFilter: "blur(8px)", background: "color-mix(in srgb, var(--surface) 50%, transparent)" }}
+      />
+
+      <div
+        className="absolute top-1.5 right-1.5 flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
         onClick={(e) => e.stopPropagation()}
       >
+        <CardButton onClick={handleCopy} title="Copy">
+          <Copy />
+        </CardButton>
+        <CardButton onClick={() => togglePin(note.id)} title={note.pinned ? "Unpin" : "Pin"}>
+          {note.pinned ? <PinOff /> : <Pin />}
+        </CardButton>
+        <CardButton onClick={handleExport} title="Export">
+          <Download />
+        </CardButton>
         <div className="relative" data-color-picker>
-          <button
-            onClick={() => setShowColors(!showColors)}
-            className="p-1.5 rounded transition-colors"
-            style={{ color: note.color ? "var(--text-secondary)" : "var(--text-muted)" }}
-            title="Set color"
-            aria-label="Set color"
-          >
+          <CardButton onClick={() => setShowColors(!showColors)} title="Set color">
             <Palette />
-          </button>
+          </CardButton>
           {showColors && (
             <div
               data-color-dropdown
@@ -244,28 +278,20 @@ export default function NoteCard({ note, index }: Props) {
             </div>
           )}
         </div>
-      </div>
-
-      <div
-        className="absolute top-1.5 right-10 flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <CardButton onClick={handleCopy} title="Copy">
-          <Copy />
-        </CardButton>
-        <CardButton onClick={() => togglePin(note.id)} title={note.pinned ? "Unpin" : "Pin"}>
-          {note.pinned ? <PinOff /> : <Pin />}
-        </CardButton>
-        <CardButton onClick={() => duplicateNote(note.id)} title="Duplicate">
-          <Duplicate />
-        </CardButton>
-        <CardButton onClick={handleExport} title="Export">
-          <Download />
-        </CardButton>
         <CardButton onClick={() => deleteNote(note.id)} title="Delete" danger>
           <Trash />
         </CardButton>
       </div>
+
+      {isDragged && radialOrigin && (
+        <RadialColorPicker
+          centerX={radialOrigin.x}
+          centerY={radialOrigin.y}
+          currentColor={note.color}
+          onSelect={(color) => { radialColorRef.current = color; }}
+          onCancel={() => { radialColorRef.current = null; }}
+        />
+      )}
     </div>
   );
 }

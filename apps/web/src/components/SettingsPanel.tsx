@@ -43,7 +43,7 @@ export default function SettingsPanel({ onClose }: { onClose: () => void }) {
               Theme
             </label>
             <div className="flex gap-2">
-              {(["light", "dark", "system"] as const).map((t) => (
+              {(["light", "dark"] as const).map((t) => (
                 <button
                   key={t}
                   onClick={() => setTheme(t)}

@@ -47,6 +47,8 @@ interface NotesState {
   clusterMode: boolean;
   isDragging: boolean;
   frozenOrderIds: string[] | null;
+  colorChangeFrozenIds: string[] | null;
+  lastRecoloredId: string | null;
 
   fetchAll: () => Promise<void>;
   createNote: (body: string, source?: NoteSource) => Promise<void>;
@@ -62,6 +64,8 @@ interface NotesState {
   setFilterTag: (tag: string | null) => void;
   setClusterMode: (on: boolean) => void;
   setDragging: (isDragging: boolean) => void;
+  freezeColorChange: () => void;
+  clearLastRecoloredId: () => void;
   toggleSelect: (id: string) => void;
   selectAll: () => void;
   clearSelection: () => void;
@@ -84,6 +88,8 @@ export const useNotesStore = create<NotesState>((set, get) => ({
   clusterMode: true,
   isDragging: false,
   frozenOrderIds: null,
+  colorChangeFrozenIds: null,
+  lastRecoloredId: null,
 
   fetchAll: async () => {
     const user = useAuthStore.getState().user;
@@ -192,8 +198,10 @@ export const useNotesStore = create<NotesState>((set, get) => ({
   },
 
   updateNoteColor: async (id: string, color: string) => {
+    get().freezeColorChange();
     set((s) => ({
       notes: s.notes.map((n) => (n.id === id ? { ...n, color } : n)),
+      lastRecoloredId: id,
     }));
     try {
       await api.updateNote(id, { color });
@@ -335,6 +343,14 @@ export const useNotesStore = create<NotesState>((set, get) => ({
     }
   },
 
+  freezeColorChange: () => {
+    const currentOrder = get().getFilteredNotes();
+    set({ colorChangeFrozenIds: currentOrder.map(n => n.id) });
+    setTimeout(() => set({ colorChangeFrozenIds: null }), 200);
+  },
+
+  clearLastRecoloredId: () => set({ lastRecoloredId: null }),
+
   toggleSelect: (id: string) => {
     set((s) => {
       const next = new Set(s.selectedIds);
@@ -379,7 +395,7 @@ export const useNotesStore = create<NotesState>((set, get) => ({
   },
 
   getFilteredNotes: () => {
-    const { notes, searchQuery, filterTag, clusterMode, isDragging, frozenOrderIds } = get();
+    const { notes, searchQuery, filterTag, clusterMode, isDragging, frozenOrderIds, colorChangeFrozenIds } = get();
     
     const active = notes.filter((n) => !n.deleted_at);
     let filtered = filterNotes(active, searchQuery);
@@ -389,6 +405,15 @@ export const useNotesStore = create<NotesState>((set, get) => ({
 
     if (isDragging && frozenOrderIds) {
       const orderMap = new Map(frozenOrderIds.map((id, i) => [id, i]));
+      return filtered.sort((a, b) => {
+        const aIdx = orderMap.get(a.id) ?? Infinity;
+        const bIdx = orderMap.get(b.id) ?? Infinity;
+        return aIdx - bIdx;
+      });
+    }
+
+    if (colorChangeFrozenIds) {
+      const orderMap = new Map(colorChangeFrozenIds.map((id, i) => [id, i]));
       return filtered.sort((a, b) => {
         const aIdx = orderMap.get(a.id) ?? Infinity;
         const bIdx = orderMap.get(b.id) ?? Infinity;
