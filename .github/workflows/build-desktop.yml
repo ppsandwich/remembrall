@@ -2,9 +2,9 @@ name: Build Desktop App
 
 on:
   push:
-    branches: [main]
+    branches: [main, master]
   pull_request:
-    branches: [main]
+    branches: [main, master]
   workflow_dispatch:
 
 jobs:
@@ -30,6 +30,9 @@ jobs:
 
       - name: Build web app
         run: pnpm build
+
+      - name: Copy web output to desktop
+        run: cp -r apps/web/out apps/desktop/web-out
 
       - name: Build macOS app
         run: pnpm build:desktop:mac
@@ -65,6 +68,9 @@ jobs:
 
       - name: Build web app
         run: pnpm build
+
+      - name: Copy web output to desktop
+        run: xcopy apps\web\out apps\desktop\web-out /E /I /Y
 
       - name: Build Windows app
         run: pnpm build:desktop:win

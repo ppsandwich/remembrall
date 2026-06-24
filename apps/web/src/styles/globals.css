@@ -26,6 +26,7 @@
 }
 
 :root {
+  --font-almendra: 'Almendra', serif;
   --bg: var(--color-bg);
   --surface: var(--color-surface);
   --surface-subtle: var(--color-surface-subtle);

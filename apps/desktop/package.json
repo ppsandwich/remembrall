@@ -31,7 +31,15 @@
     },
     "files": [
       "dist/**/*",
-      "assets/**/*"
+      "assets/**/*",
+      "web-out/**/*"
+    ],
+    "extraResources": [
+      {
+        "from": "web-out",
+        "to": "web-out",
+        "filter": ["**/*"]
+      }
     ],
     "mac": {
       "category": "public.app-category.productivity",

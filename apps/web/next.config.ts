@@ -8,6 +8,10 @@ const nextConfig: NextConfig = {
     "@remembrall/supabase",
   ],
   allowedDevOrigins: ["http://192.168.68.90:3000", "https://192.168.68.90:3000"],
+  output: "export",
+  images: {
+    unoptimized: true,
+  },
 };
 
 export default nextConfig;

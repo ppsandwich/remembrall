@@ -68,7 +68,11 @@ function getWebAppUrl(): string {
   if (isDev) {
     return process.env.WEB_URL || "http://localhost:3000";
   }
-  return `file://${path.join(__dirname, "../../web-out/index.html")}`;
+  // In production, load from the extraResources folder
+  const resourcesPath = app.isPackaged
+    ? path.join(process.resourcesPath, "web-out")
+    : path.join(__dirname, "../../web-out");
+  return `file://${path.join(resourcesPath, "index.html")}`;
 }
 
 function createPopoverWindow(): BrowserWindow {

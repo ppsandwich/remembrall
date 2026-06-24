@@ -1,13 +1,5 @@
 import type { Metadata } from "next";
-import { Almendra } from "next/font/google";
 import "../styles/globals.css";
-
-const almendra = Almendra({
-  weight: ["400", "700"],
-  subsets: ["latin"],
-  variable: "--font-almendra",
-  display: "swap",
-});
 
 export const metadata: Metadata = {
   title: "Remembrall",
@@ -25,7 +17,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={almendra.variable} suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        <link
+          href="https://fonts.googleapis.com/css2?family=Almendra:wght@400;700&display=swap"
+          rel="stylesheet"
+        />
+      </head>
       <body suppressHydrationWarning>{children}</body>
     </html>
   );
