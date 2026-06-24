@@ -9,6 +9,8 @@ const nextConfig: NextConfig = {
   ],
   allowedDevOrigins: ["http://192.168.68.90:3000", "https://192.168.68.90:3000"],
   output: "export",
+  trailingSlash: true,
+  assetPrefix: "./",
   images: {
     unoptimized: true,
   },
