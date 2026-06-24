@@ -1,25 +1,28 @@
 @import "tailwindcss";
 
 @theme {
+  --breakpoint-3xl: 1920px;
   --color-bg: #FAFAF8;
   --color-surface: #FFFFFF;
-  --color-surface-subtle: #F2F2EF;
-  --color-border: #D9D9D4;
-  --color-text: #181818;
-  --color-text-secondary: #666661;
-  --color-text-muted: #999991;
-  --color-accent: #111111;
-  --color-danger: #111111;
+  --color-surface-subtle: #F5F5F2;
+  --color-border: #E5E5E0;
+  --color-border-strong: #D0D0C8;
+  --color-text: #1A1A1A;
+  --color-text-secondary: #5C5C58;
+  --color-text-muted: #9C9C95;
+  --color-accent: #1A1A1A;
+  --color-danger: #DC2626;
 
-  --color-dark-bg: #111111;
-  --color-dark-surface: #181818;
-  --color-dark-surface-subtle: #222222;
-  --color-dark-border: #333333;
-  --color-dark-text: #F5F5F0;
-  --color-dark-text-secondary: #B8B8B0;
-  --color-dark-text-muted: #888880;
-  --color-dark-accent: #F5F5F0;
-  --color-dark-danger: #F5F5F0;
+  --color-dark-bg: #0E0E0E;
+  --color-dark-surface: #1A1A1A;
+  --color-dark-surface-subtle: #242424;
+  --color-dark-border: #2E2E2E;
+  --color-dark-border-strong: #3A3A3A;
+  --color-dark-text: #EDEDEA;
+  --color-dark-text-secondary: #A0A098;
+  --color-dark-text-muted: #6A6A64;
+  --color-dark-accent: #EDEDEA;
+  --color-dark-danger: #EF4444;
 }
 
 :root {
@@ -27,6 +30,7 @@
   --surface: var(--color-surface);
   --surface-subtle: var(--color-surface-subtle);
   --border: var(--color-border);
+  --border-strong: var(--color-border-strong);
   --text: var(--color-text);
   --text-secondary: var(--color-text-secondary);
   --text-muted: var(--color-text-muted);
@@ -39,6 +43,7 @@
   --surface: var(--color-dark-surface);
   --surface-subtle: var(--color-dark-surface-subtle);
   --border: var(--color-dark-border);
+  --border-strong: var(--color-dark-border-strong);
   --text: var(--color-dark-text);
   --text-secondary: var(--color-dark-text-secondary);
   --text-muted: var(--color-dark-text-muted);
@@ -48,16 +53,22 @@
 
 * {
   box-sizing: border-box;
-  margin: 0;
-  padding: 0;
 }
 
 html, body {
   height: 100%;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-size: 16px;
   background: var(--bg);
   color: var(--text);
   -webkit-font-smoothing: antialiased;
+  line-height: 1.5;
+}
+
+@media (min-width: 640px) {
+  html {
+    font-size: 14px;
+  }
 }
 
 ::selection {
@@ -68,6 +79,8 @@ html, body {
 button {
   cursor: pointer;
   font: inherit;
+  border: none;
+  background: none;
 }
 
 textarea {
@@ -77,6 +90,12 @@ textarea {
 
 input {
   font: inherit;
+}
+
+input[type="checkbox"] {
+  accent-color: var(--accent);
+  width: 15px;
+  height: 15px;
 }
 
 @media (prefers-reduced-motion: reduce) {

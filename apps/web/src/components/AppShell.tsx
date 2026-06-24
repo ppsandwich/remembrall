@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useNotesStore } from "@/state/useNotesStore";
-import { useUIStore } from "@/state/useUIStore";
+import { useUIStore, initTheme } from "@/state/useUIStore";
 import { readClipboard } from "@/lib/clipboard";
 import { registerShortcut, initShortcuts } from "@/lib/shortcuts";
 import Header from "./Header";
@@ -18,8 +18,12 @@ import SettingsPanel from "./SettingsPanel";
 export default function AppShell() {
   const { fetchAll, createNote, editingId, selectedIds, deleteNote, duplicateNote, clearSelection, selectAll } =
     useNotesStore();
-  const { showSettings, setShowSettings, setShowShortcuts, showToast } = useUIStore();
+  const { showSettings, setShowSettings, setShowShortcuts, showToast, setSelectMode } = useUIStore();
   const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    initTheme();
+  }, []);
 
   useEffect(() => {
     fetchAll().then(() => setReady(true));
@@ -43,7 +47,7 @@ export default function AppShell() {
           }
         },
       }),
-      registerShortcut({ key: "Escape", handler: () => { clearSelection(); document.querySelectorAll<HTMLInputElement | HTMLTextAreaElement>("input,textarea").forEach((el) => el.blur()); } }),
+      registerShortcut({ key: "Escape", handler: () => { clearSelection(); setSelectMode(false); document.querySelectorAll<HTMLInputElement | HTMLTextAreaElement>("input,textarea").forEach((el) => el.blur()); } }),
       registerShortcut({ key: "a", ctrl: true, handler: () => { if (!editingId) selectAll(); }, allowInInput: false }),
       registerShortcut({ key: "?", handler: () => setShowShortcuts(true), allowInInput: false }),
       registerShortcut({
@@ -70,12 +74,12 @@ export default function AppShell() {
       cleanups.forEach((c) => c());
       cleanAll();
     };
-  }, [createNote, deleteNote, duplicateNote, selectedIds, editingId, clearSelection, selectAll, setShowShortcuts, showToast]);
+  }, [createNote, deleteNote, duplicateNote, selectedIds, editingId, clearSelection, selectAll, setShowShortcuts, showToast, setSelectMode]);
 
   if (!ready) {
     return (
       <div className="flex items-center justify-center h-screen" style={{ background: "var(--bg)" }}>
-        <div style={{ color: "var(--text-muted)" }}>Decrypting notes…</div>
+        <div className="text-sm" style={{ color: "var(--text-muted)" }}>Decrypting notes…</div>
       </div>
     );
   }
@@ -83,7 +87,7 @@ export default function AppShell() {
   return (
     <div className="min-h-screen flex flex-col" style={{ background: "var(--bg)" }}>
       <Header />
-      <main className="flex-1 max-w-3xl w-full mx-auto px-4 py-4 flex flex-col gap-3">
+      <main className="flex-1 max-w-7xl w-full mx-auto px-8 py-6 flex flex-col gap-4">
         <SearchBox />
         <QuickCapture />
         <BulkToolbar />

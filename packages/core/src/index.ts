@@ -18,4 +18,4 @@ export {
   NOTE_SOURCES,
 } from "./validation";
 
-export { derivePreview, sortNotes, searchNotes, formatBulkCopy } from "./noteUtils";
+export { derivePreview, sortNotes, searchNotes, formatBulkCopy, extractTags, stripTags, addTag, removeTag } from "./noteUtils";

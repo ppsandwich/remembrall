@@ -31,21 +31,25 @@ export default function ExportMenu({ onClose }: { onClose: () => void }) {
 
   return (
     <div
-      className="absolute right-0 top-full mt-1 rounded border shadow-lg py-1 z-40 min-w-[160px]"
-      style={{ background: "var(--surface)", borderColor: "var(--border)" }}
+      className="absolute right-0 top-full mt-2 rounded-lg shadow-lg py-1.5 z-40 min-w-[180px]"
+      style={{ background: "var(--surface)", border: "1px solid var(--border)" }}
     >
       <button
         onClick={handleExportAll}
-        className="w-full text-left px-3 py-2 text-sm hover:opacity-70"
+        className="w-full text-left px-4 py-2.5 text-sm transition-colors"
         style={{ color: "var(--text)" }}
+        onMouseEnter={(e) => (e.currentTarget.style.background = "var(--surface-subtle)")}
+        onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
       >
         Export all as Markdown
       </button>
       {selectedIds.size > 0 && (
         <button
           onClick={handleExportSelected}
-          className="w-full text-left px-3 py-2 text-sm hover:opacity-70"
+          className="w-full text-left px-4 py-2.5 text-sm transition-colors"
           style={{ color: "var(--text)" }}
+          onMouseEnter={(e) => (e.currentTarget.style.background = "var(--surface-subtle)")}
+          onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
         >
           Export selected ({selectedIds.size})
         </button>

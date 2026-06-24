@@ -2,6 +2,7 @@ import type { UserEncryptionKey } from "@remembrall/core";
 import { getSupabase } from "@remembrall/supabase";
 
 const SALT_STORAGE_KEY = "remembrall-salt";
+const KEY_STORAGE_KEY = "remembrall-key";
 
 export function getLocalSalt(): string | null {
   return localStorage.getItem(SALT_STORAGE_KEY);
@@ -9,6 +10,18 @@ export function getLocalSalt(): string | null {
 
 export function setLocalSalt(salt: string): void {
   localStorage.setItem(SALT_STORAGE_KEY, salt);
+}
+
+export function getStoredKey(): string | null {
+  return localStorage.getItem(KEY_STORAGE_KEY);
+}
+
+export function setStoredKey(keyJwk: string): void {
+  localStorage.setItem(KEY_STORAGE_KEY, keyJwk);
+}
+
+export function clearStoredKey(): void {
+  localStorage.removeItem(KEY_STORAGE_KEY);
 }
 
 export async function fetchEncryptionKey(

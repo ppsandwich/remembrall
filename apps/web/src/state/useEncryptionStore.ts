@@ -10,6 +10,11 @@ import {
   saveEncryptionKey,
   getLocalSalt,
   setLocalSalt,
+  getStoredKey,
+  setStoredKey,
+  clearStoredKey,
+  exportKey,
+  importKey,
 } from "@remembrall/crypto";
 import type { EncryptedPayload } from "@remembrall/core";
 
@@ -41,11 +46,23 @@ export const useEncryptionStore = create<EncryptionState>((set, get) => ({
     try {
       const keyData = await fetchEncryptionKey(userId);
       if (keyData) {
-        set({ isSetup: true, isUnlocked: false, saltId: keyData.salt, keyVersion: keyData.key_version });
+        set({ isSetup: true, saltId: keyData.salt, keyVersion: keyData.key_version });
         const localSalt = getLocalSalt();
         if (!localSalt) setLocalSalt(keyData.salt);
+
+        const storedKeyJwk = getStoredKey();
+        if (storedKeyJwk) {
+          try {
+            const key = await importKey(storedKeyJwk);
+            set({ isUnlocked: true, cryptoKey: key, error: null });
+          } catch {
+            set({ isUnlocked: false, cryptoKey: null });
+          }
+        } else {
+          set({ isUnlocked: false, cryptoKey: null });
+        }
       } else {
-        set({ isSetup: false, isUnlocked: false });
+        set({ isSetup: false, isUnlocked: false, cryptoKey: null });
       }
     } catch {
       set({ error: "Could not check encryption setup." });
@@ -65,6 +82,9 @@ export const useEncryptionStore = create<EncryptionState>((set, get) => ({
         verifier,
       });
 
+      const keyJwk = await exportKey(key);
+      setStoredKey(keyJwk);
+
       set({ isSetup: true, isUnlocked: true, cryptoKey: key, saltId: salt, keyVersion: 1, error: null });
       return {};
     } catch (e: unknown) {
@@ -83,6 +103,10 @@ export const useEncryptionStore = create<EncryptionState>((set, get) => ({
 
       const key = await deriveKey(passphrase, keyData.salt);
       setLocalSalt(keyData.salt);
+
+      const keyJwk = await exportKey(key);
+      setStoredKey(keyJwk);
+
       set({ isUnlocked: true, cryptoKey: key, saltId: keyData.salt, keyVersion: keyData.key_version, error: null });
       return {};
     } catch {
@@ -91,6 +115,7 @@ export const useEncryptionStore = create<EncryptionState>((set, get) => ({
   },
 
   lock: () => {
+    clearStoredKey();
     set({ isUnlocked: false, cryptoKey: null });
   },
 

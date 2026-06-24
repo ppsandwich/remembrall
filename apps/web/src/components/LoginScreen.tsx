@@ -37,10 +37,10 @@ export default function LoginScreen() {
 
   return (
     <div className="flex items-center justify-center min-h-screen" style={{ background: "var(--bg)" }}>
-      <div className="w-full max-w-sm px-6">
+      <div className="w-full max-w-xs">
         <h1
-          className="text-2xl font-semibold mb-1 tracking-tight"
-          style={{ color: "var(--text)" }}
+          className="text-xl font-semibold tracking-tight mb-1.5"
+          style={{ color: "var(--text)", letterSpacing: "-0.02em" }}
         >
           Remembrall
         </h1>
@@ -51,14 +51,17 @@ export default function LoginScreen() {
         <form onSubmit={handleSubmit} className="flex flex-col gap-3">
           <input
             type="email"
+            name="email"
+            id="email"
+            autoComplete="email"
             placeholder="Email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
-            className="w-full px-3 py-2 rounded border text-sm"
+            className="w-full px-4 py-3 rounded-lg text-sm outline-none"
             style={{
               background: "var(--surface)",
-              borderColor: "var(--border)",
+              border: "1px solid var(--border)",
               color: "var(--text)",
             }}
           />
@@ -66,14 +69,17 @@ export default function LoginScreen() {
           {mode !== "magic" && (
             <input
               type="password"
+              name="password"
+              id="password"
+              autoComplete="current-password"
               placeholder="Password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              className="w-full px-3 py-2 rounded border text-sm"
+              className="w-full px-4 py-3 rounded-lg text-sm outline-none"
               style={{
                 background: "var(--surface)",
-                borderColor: "var(--border)",
+                border: "1px solid var(--border)",
                 color: "var(--text)",
               }}
             />
@@ -82,12 +88,8 @@ export default function LoginScreen() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-2 rounded text-sm font-medium"
-            style={{
-              background: "var(--accent)",
-              color: "var(--surface)",
-              opacity: loading ? 0.7 : 1,
-            }}
+            className="w-full py-3 rounded-lg text-sm font-medium transition-opacity disabled:opacity-40"
+            style={{ background: "var(--accent)", color: "var(--surface)" }}
           >
             {loading
               ? "Loading…"
@@ -100,17 +102,17 @@ export default function LoginScreen() {
         </form>
 
         {error && (
-          <p className="mt-3 text-sm" style={{ color: "var(--danger)" }}>
+          <p className="mt-4 text-sm" style={{ color: "var(--danger)" }}>
             {error}
           </p>
         )}
         {message && (
-          <p className="mt-3 text-sm" style={{ color: "var(--text-secondary)" }}>
+          <p className="mt-4 text-sm" style={{ color: "var(--text-secondary)" }}>
             {message}
           </p>
         )}
 
-        <div className="mt-6 flex flex-col gap-2 text-sm" style={{ color: "var(--text-muted)" }}>
+        <div className="mt-8 flex flex-col gap-2.5 text-sm" style={{ color: "var(--text-muted)" }}>
           {mode === "login" && (
             <>
               <button onClick={() => { setMode("signup"); setError(null); }} className="text-left hover:underline">

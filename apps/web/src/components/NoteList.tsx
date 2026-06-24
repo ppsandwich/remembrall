@@ -10,8 +10,8 @@ export default function NoteList() {
 
   if (loading) {
     return (
-      <div className="py-12 text-center text-sm" style={{ color: "var(--text-muted)" }}>
-        Loading notes…
+      <div className="py-16 text-center text-sm" style={{ color: "var(--text-muted)" }}>
+        Decrypting notes…
       </div>
     );
   }
@@ -21,9 +21,9 @@ export default function NoteList() {
   }
 
   return (
-    <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-      {notes.map((note) => (
-        <NoteCard key={note.id} note={note} />
+    <div className="columns-1 sm:columns-2 lg:columns-3 xl:columns-4 2xl:columns-5 3xl:columns-6 gap-3 space-y-3">
+      {notes.map((note, index) => (
+        <NoteCard key={note.id} note={note} index={index} />
       ))}
     </div>
   );

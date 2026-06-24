@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import type { DecryptedNote, NoteSource } from "@remembrall/core";
-import { derivePreview, searchNotes as filterNotes } from "@remembrall/core";
+import { derivePreview, searchNotes as filterNotes, extractTags, addTag, removeTag, stripTags } from "@remembrall/core";
 import { useEncryptionStore } from "./useEncryptionStore";
 import { useAuthStore } from "./useAuthStore";
 import * as api from "@/lib/notesApi";
@@ -17,6 +17,7 @@ interface NotesState {
   editingId: string | null;
   undoStack: UndoEntry[];
   loading: boolean;
+  filterTag: string | null;
 
   fetchAll: () => Promise<void>;
   createNote: (body: string, source?: NoteSource) => Promise<void>;
@@ -25,7 +26,9 @@ interface NotesState {
   undoDelete: () => Promise<void>;
   duplicateNote: (id: string) => Promise<void>;
   togglePin: (id: string) => Promise<void>;
+  reorderNote: (id: string, targetIndex: number) => Promise<void>;
   setSearchQuery: (query: string) => void;
+  setFilterTag: (tag: string | null) => void;
   toggleSelect: (id: string) => void;
   selectAll: () => void;
   clearSelection: () => void;
@@ -34,6 +37,7 @@ interface NotesState {
   bulkDuplicate: () => Promise<void>;
   bulkCopy: () => string;
   getFilteredNotes: () => DecryptedNote[];
+  getAllTags: () => string[];
 }
 
 export const useNotesStore = create<NotesState>((set, get) => ({
@@ -43,6 +47,7 @@ export const useNotesStore = create<NotesState>((set, get) => ({
   editingId: null,
   undoStack: [],
   loading: false,
+  filterTag: null,
 
   fetchAll: async () => {
     const user = useAuthStore.getState().user;
@@ -66,6 +71,7 @@ export const useNotesStore = create<NotesState>((set, get) => ({
             deleted_at: note.deleted_at,
             duplicated_from: note.duplicated_from,
             source: note.source,
+            position: note.position ?? 0,
             created_at: note.created_at,
             updated_at: note.updated_at,
           });
@@ -80,6 +86,7 @@ export const useNotesStore = create<NotesState>((set, get) => ({
             deleted_at: note.deleted_at,
             duplicated_from: note.duplicated_from,
             source: note.source,
+            position: note.position ?? 0,
             created_at: note.created_at,
             updated_at: note.updated_at,
           });
@@ -108,6 +115,8 @@ export const useNotesStore = create<NotesState>((set, get) => ({
       pinned: false,
     });
 
+    const maxPosition = Math.max(0, ...get().notes.map((n) => n.position));
+
     const note: DecryptedNote = {
       id: created.id,
       user_id: created.user_id,
@@ -118,6 +127,7 @@ export const useNotesStore = create<NotesState>((set, get) => ({
       deleted_at: null,
       duplicated_from: null,
       source,
+      position: maxPosition + 1,
       created_at: created.created_at,
       updated_at: created.updated_at,
     };
@@ -193,12 +203,15 @@ export const useNotesStore = create<NotesState>((set, get) => ({
         source: original.source,
         encryption_version: 1,
         key_version: 1,
+        position: original.position,
         created_at: original.created_at,
         updated_at: original.updated_at,
       },
       encryptedBody,
       previewEncrypted,
     });
+
+    const maxPosition = Math.max(0, ...get().notes.map((n) => n.position));
 
     const note: DecryptedNote = {
       id: created.id,
@@ -210,6 +223,7 @@ export const useNotesStore = create<NotesState>((set, get) => ({
       deleted_at: null,
       duplicated_from: original.id,
       source: original.source,
+      position: maxPosition + 1,
       created_at: created.created_at,
       updated_at: created.updated_at,
     };
@@ -227,7 +241,33 @@ export const useNotesStore = create<NotesState>((set, get) => ({
     }));
   },
 
+  reorderNote: async (id: string, targetIndex: number) => {
+    const { notes } = get();
+    const filtered = notes.filter((n) => !n.deleted_at);
+    const draggedNote = notes.find((n) => n.id === id);
+    if (!draggedNote) return;
+
+    const currentIndex = filtered.findIndex((n) => n.id === id);
+    if (currentIndex === targetIndex) return;
+
+    const newOrder = [...filtered];
+    newOrder.splice(currentIndex, 1);
+    newOrder.splice(targetIndex, 0, draggedNote);
+
+    const positions = newOrder.map((n, i) => ({ id: n.id, position: i }));
+
+    set((s) => ({
+      notes: s.notes.map((n) => {
+        const pos = positions.find((p) => p.id === n.id);
+        return pos ? { ...n, position: pos.position } : n;
+      }),
+    }));
+
+    await api.updateNotePositions(positions);
+  },
+
   setSearchQuery: (query: string) => set({ searchQuery: query }),
+  setFilterTag: (tag: string | null) => set({ filterTag: tag }),
 
   toggleSelect: (id: string) => {
     set((s) => {
@@ -269,12 +309,31 @@ export const useNotesStore = create<NotesState>((set, get) => ({
   bulkCopy: () => {
     const ids = get().selectedIds;
     const notes = get().notes.filter((n) => ids.has(n.id));
-    return notes.map((n) => n.body).join("\n\n---\n\n");
+    return notes.map((n) => stripTags(n.body)).join("\n\n---\n\n");
   },
 
   getFilteredNotes: () => {
-    const { notes, searchQuery } = get();
+    const { notes, searchQuery, filterTag } = get();
     const active = notes.filter((n) => !n.deleted_at);
-    return filterNotes(active, searchQuery);
+    let filtered = filterNotes(active, searchQuery);
+    if (filterTag) {
+      filtered = filtered.filter((n) => extractTags(n.body).includes(filterTag));
+    }
+    return filtered.sort((a, b) => {
+      if (a.position !== b.position) return a.position - b.position;
+      return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime();
+    });
+  },
+
+  getAllTags: () => {
+    const { notes } = get();
+    const active = notes.filter((n) => !n.deleted_at);
+    const tags = new Set<string>();
+    for (const note of active) {
+      for (const tag of extractTags(note.body)) {
+        tags.add(tag);
+      }
+    }
+    return Array.from(tags).sort();
   },
 }));

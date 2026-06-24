@@ -44,40 +44,46 @@ export default function LockScreen() {
   if (!isSetup) {
     return (
       <div className="flex items-center justify-center min-h-screen" style={{ background: "var(--bg)" }}>
-        <div className="w-full max-w-sm px-6">
-          <h1 className="text-xl font-semibold mb-1" style={{ color: "var(--text)" }}>
+        <div className="w-full max-w-xs">
+          <h1 className="text-lg font-semibold tracking-tight mb-1.5" style={{ color: "var(--text)" }}>
             Set up encryption
           </h1>
-          <p className="text-sm mb-6" style={{ color: "var(--text-muted)" }}>
+          <p className="text-sm mb-8 leading-relaxed" style={{ color: "var(--text-muted)" }}>
             Your notes are encrypted before they leave your device. Remembrall cannot recover them if you lose your encryption passphrase.
           </p>
 
           <form onSubmit={handleSetup} className="flex flex-col gap-3">
             <input
               type="password"
+              name="new-password"
+              id="new-passphrase"
+              autoComplete="new-password"
               placeholder="Create a passphrase"
               value={passphrase}
               onChange={(e) => setPassphrase(e.target.value)}
               required
-              className="w-full px-3 py-2 rounded border text-sm"
-              style={{ background: "var(--surface)", borderColor: "var(--border)", color: "var(--text)" }}
+              className="w-full px-4 py-3 rounded-lg text-sm outline-none"
+              style={{ background: "var(--surface)", border: "1px solid var(--border)", color: "var(--text)" }}
             />
             <input
               type="password"
+              name="confirm-password"
+              id="confirm-passphrase"
+              autoComplete="new-password"
               placeholder="Confirm passphrase"
               value={confirmPassphrase}
               onChange={(e) => setConfirmPassphrase(e.target.value)}
               required
-              className="w-full px-3 py-2 rounded border text-sm"
-              style={{ background: "var(--surface)", borderColor: "var(--border)", color: "var(--text)" }}
+              className="w-full px-4 py-3 rounded-lg text-sm outline-none"
+              style={{ background: "var(--surface)", border: "1px solid var(--border)", color: "var(--text)" }}
             />
 
-            <label className="flex items-start gap-2 text-xs" style={{ color: "var(--text-muted)" }}>
+            <label className="flex items-start gap-2.5 text-xs leading-relaxed" style={{ color: "var(--text-muted)" }}>
               <input
                 type="checkbox"
                 checked={acknowledged}
                 onChange={(e) => setAcknowledged(e.target.checked)}
-                className="mt-0.5"
+                className="mt-0.5 shrink-0"
               />
               <span>I understand that if I lose my passphrase, my notes may be unrecoverable.</span>
             </label>
@@ -85,7 +91,7 @@ export default function LockScreen() {
             <button
               type="submit"
               disabled={loading || !acknowledged}
-              className="w-full py-2 rounded text-sm font-medium disabled:opacity-50"
+              className="w-full py-3 rounded-lg text-sm font-medium transition-opacity disabled:opacity-30"
               style={{ background: "var(--accent)", color: "var(--surface)" }}
             >
               {loading ? "Setting up…" : "Set up encryption"}
@@ -93,7 +99,7 @@ export default function LockScreen() {
           </form>
 
           {(error || encError) && (
-            <p className="mt-3 text-sm" style={{ color: "var(--danger)" }}>
+            <p className="mt-4 text-sm" style={{ color: "var(--danger)" }}>
               {error || encError}
             </p>
           )}
@@ -104,38 +110,41 @@ export default function LockScreen() {
 
   return (
     <div className="flex items-center justify-center min-h-screen" style={{ background: "var(--bg)" }}>
-      <div className="w-full max-w-sm px-6">
-        <h1 className="text-xl font-semibold mb-1" style={{ color: "var(--text)" }}>
+      <div className="w-full max-w-xs">
+        <h1 className="text-lg font-semibold tracking-tight mb-1.5" style={{ color: "var(--text)" }}>
           Unlock notes
         </h1>
-        <p className="text-sm mb-6" style={{ color: "var(--text-muted)" }}>
+        <p className="text-sm mb-8 leading-relaxed" style={{ color: "var(--text-muted)" }}>
           Notes are locked. Unlock to search, copy, paste, and generally rummage around.
         </p>
 
         <form onSubmit={handleUnlock} className="flex flex-col gap-3">
           <input
             type="password"
+            name="password"
+            id="passphrase"
+            autoComplete="current-password"
             placeholder="Enter your passphrase"
             value={passphrase}
             onChange={(e) => setPassphrase(e.target.value)}
             required
             autoFocus
-            className="w-full px-3 py-2 rounded border text-sm"
-            style={{ background: "var(--surface)", borderColor: "var(--border)", color: "var(--text)" }}
+            className="w-full px-4 py-3 rounded-lg text-sm outline-none"
+            style={{ background: "var(--surface)", border: "1px solid var(--border)", color: "var(--text)" }}
           />
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-2 rounded text-sm font-medium"
-            style={{ background: "var(--accent)", color: "var(--surface)", opacity: loading ? 0.7 : 1 }}
+            className="w-full py-3 rounded-lg text-sm font-medium transition-opacity disabled:opacity-40"
+            style={{ background: "var(--accent)", color: "var(--surface)" }}
           >
             {loading ? "Unlocking…" : "Unlock"}
           </button>
         </form>
 
         {(error || encError) && (
-          <p className="mt-3 text-sm" style={{ color: "var(--danger)" }}>
+          <p className="mt-4 text-sm" style={{ color: "var(--danger)" }}>
             {error || encError}
           </p>
         )}

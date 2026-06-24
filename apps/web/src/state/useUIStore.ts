@@ -5,11 +5,13 @@ interface UIState {
   resolvedTheme: "light" | "dark";
   showShortcuts: boolean;
   showSettings: boolean;
+  selectMode: boolean;
   toastMessage: string | null;
 
   setTheme: (theme: "light" | "dark" | "system") => void;
   setShowShortcuts: (show: boolean) => void;
   setShowSettings: (show: boolean) => void;
+  setSelectMode: (on: boolean) => void;
   showToast: (message: string) => void;
   clearToast: () => void;
 }
@@ -24,10 +26,11 @@ function resolveTheme(theme: "light" | "dark" | "system"): "light" | "dark" {
 }
 
 export const useUIStore = create<UIState>((set) => ({
-  theme: "light",
+  theme: "system",
   resolvedTheme: "light",
   showShortcuts: false,
   showSettings: false,
+  selectMode: false,
   toastMessage: null,
 
   setTheme: (theme) => {
@@ -39,6 +42,7 @@ export const useUIStore = create<UIState>((set) => ({
 
   setShowShortcuts: (show) => set({ showShortcuts: show }),
   setShowSettings: (show) => set({ showSettings: show }),
+  setSelectMode: (on) => set({ selectMode: on }),
 
   showToast: (message) => {
     set({ toastMessage: message });
@@ -47,3 +51,11 @@ export const useUIStore = create<UIState>((set) => ({
 
   clearToast: () => set({ toastMessage: null }),
 }));
+
+export function initTheme() {
+  const stored = localStorage.getItem("remembrall-theme") as "light" | "dark" | "system" | null;
+  const theme = stored || "system";
+  const resolved = resolveTheme(theme);
+  document.documentElement.classList.toggle("dark", resolved === "dark");
+  useUIStore.setState({ theme, resolvedTheme: resolved });
+}

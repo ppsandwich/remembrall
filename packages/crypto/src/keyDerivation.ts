@@ -22,7 +22,7 @@ export async function deriveKey(
     },
     keyMaterial,
     { name: "AES-GCM", length: 256 },
-    false,
+    true,
     ["encrypt", "decrypt"]
   );
 }
@@ -68,6 +68,22 @@ export async function verifyPassphrase(
 export function generateSalt(): string {
   const salt = crypto.getRandomValues(new Uint8Array(16));
   return bufferToBase64(salt);
+}
+
+export async function exportKey(key: CryptoKey): Promise<string> {
+  const jwk = await crypto.subtle.exportKey("jwk", key);
+  return JSON.stringify(jwk);
+}
+
+export async function importKey(jwkString: string): Promise<CryptoKey> {
+  const jwk = JSON.parse(jwkString);
+  return crypto.subtle.importKey(
+    "jwk",
+    jwk,
+    { name: "AES-GCM", length: 256 },
+    true,
+    ["encrypt", "decrypt"]
+  );
 }
 
 function bufferToBase64(buffer: Uint8Array): string {

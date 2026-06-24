@@ -4,6 +4,7 @@ import { useNotesStore } from "@/state/useNotesStore";
 import { writeClipboard } from "@/lib/clipboard";
 import { useUIStore } from "@/state/useUIStore";
 import { exportNotes, downloadMarkdown, exportFilename } from "@remembrall/export";
+import { Copy, Duplicate, Download, Trash, X } from "./Icons";
 
 export default function BulkToolbar() {
   const { selectedIds, clearSelection, bulkDelete, bulkDuplicate, bulkCopy, notes } =
@@ -35,47 +36,51 @@ export default function BulkToolbar() {
 
   return (
     <div
-      className="flex items-center gap-2 px-4 py-2 rounded border text-sm"
-      style={{ background: "var(--surface-subtle)", borderColor: "var(--border)" }}
+      className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm"
+      style={{ background: "var(--surface-subtle)", border: "1px solid var(--border)" }}
     >
-      <span style={{ color: "var(--text-secondary)" }}>
+      <span className="text-xs font-medium mr-1" style={{ color: "var(--text-secondary)" }}>
         {count} selected
       </span>
-      <button
-        onClick={handleBulkCopy}
-        className="px-2 py-1 rounded text-xs hover:opacity-70"
-        style={{ color: "var(--text-secondary)" }}
-      >
-        Copy
-      </button>
-      <button
-        onClick={() => { bulkDuplicate(); showToast(`Duplicated ${count} notes.`); }}
-        className="px-2 py-1 rounded text-xs hover:opacity-70"
-        style={{ color: "var(--text-secondary)" }}
-      >
-        Duplicate
-      </button>
-      <button
-        onClick={handleBulkExport}
-        className="px-2 py-1 rounded text-xs hover:opacity-70"
-        style={{ color: "var(--text-secondary)" }}
-      >
-        Export
-      </button>
-      <button
-        onClick={handleBulkDelete}
-        className="px-2 py-1 rounded text-xs hover:opacity-70"
-        style={{ color: "var(--danger)" }}
-      >
-        Delete
-      </button>
-      <button
-        onClick={clearSelection}
-        className="px-2 py-1 rounded text-xs hover:opacity-70 ml-auto"
-        style={{ color: "var(--text-muted)" }}
-      >
-        Clear
-      </button>
+      <div className="w-px h-4" style={{ background: "var(--border)" }} />
+      <BulkButton onClick={handleBulkCopy} title="Copy">
+        <Copy />
+      </BulkButton>
+      <BulkButton onClick={() => { bulkDuplicate(); showToast(`Duplicated ${count} notes.`); }} title="Duplicate">
+        <Duplicate />
+      </BulkButton>
+      <BulkButton onClick={handleBulkExport} title="Export">
+        <Download />
+      </BulkButton>
+      <BulkButton onClick={handleBulkDelete} title="Delete" danger>
+        <Trash />
+      </BulkButton>
+      <div className="flex-1" />
+      <BulkButton onClick={clearSelection} title="Clear selection">
+        <X />
+      </BulkButton>
     </div>
+  );
+}
+
+function BulkButton({ onClick, title, danger, children }: { onClick: () => void; title: string; danger?: boolean; children: React.ReactNode }) {
+  return (
+    <button
+      onClick={onClick}
+      className="p-1.5 rounded transition-colors"
+      style={{ color: danger ? "var(--danger)" : "var(--text-muted)" }}
+      title={title}
+      aria-label={title}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.background = "var(--surface)";
+        e.currentTarget.style.color = "var(--text-secondary)";
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.background = "transparent";
+        e.currentTarget.style.color = danger ? "var(--danger)" : "var(--text-muted)";
+      }}
+    >
+      {children}
+    </button>
   );
 }
