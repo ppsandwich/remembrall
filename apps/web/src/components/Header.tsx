@@ -228,10 +228,10 @@ export default function Header() {
             </div>
 
             <nav className="flex items-center gap-0.5">
-              <HeaderButton onClick={cycleTheme} title={`Theme: ${theme}`}>
+              <HeaderButton onClick={cycleTheme} title={`Theme: ${theme}`} className="hidden sm:block">
                 <ThemeIcon />
               </HeaderButton>
-              <HeaderButton onClick={() => setShowShortcuts(true)} title="Keyboard shortcuts">
+              <HeaderButton onClick={() => setShowShortcuts(true)} title="Keyboard shortcuts" className="hidden sm:block">
                 <HelpCircle />
               </HeaderButton>
               <HeaderButton onClick={toggleSelectMode} title={selectMode ? "Exit select mode" : "Select mode"} active={selectMode}>
@@ -242,10 +242,6 @@ export default function Header() {
               </HeaderButton>
               <HeaderButton onClick={() => setShowSettings(true)} title="Settings">
                 <Settings />
-              </HeaderButton>
-              <div className="w-px h-4 mx-1.5" style={{ background: "var(--border)" }} />
-              <HeaderButton onClick={signOut} title="Sign out">
-                <LogOut />
               </HeaderButton>
             </nav>
           </div>
