@@ -5,7 +5,6 @@ import { useAuthStore } from "@/state/useAuthStore";
 import { useUIStore } from "@/state/useUIStore";
 import { useNotesStore } from "@/state/useNotesStore";
 import { Sun, Moon, HelpCircle, Settings, LogOut, CheckSquare, Square, Layers, Volleyball, Search, X, Plus, Minus, ChevronDown, TableOfContents, Pencil } from "./Icons";
-import QuickCapture from "./QuickCapture";
 import TabBar from "./TabBar";
 
 export default function Header() {
@@ -325,22 +324,6 @@ export default function Header() {
           </div>
         </div>
       </header>
-
-      {showQuickCapture && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-6"
-          style={{ background: "rgba(0,0,0,0.25)", backdropFilter: "blur(2px)" }}
-          onClick={() => setShowQuickCapture(false)}
-        >
-          <div
-            className="w-full max-w-lg rounded-xl shadow-xl overflow-hidden"
-            style={{ background: "var(--surface)", border: "1px solid var(--border)" }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <QuickCapture onClose={() => setShowQuickCapture(false)} />
-          </div>
-        </div>
-      )}
 
       {showMobileDeleteConfirm && (
         <div

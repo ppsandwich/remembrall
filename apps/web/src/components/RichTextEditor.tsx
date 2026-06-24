@@ -9,6 +9,7 @@ interface Props {
   onChange: (html: string) => void;
   onKeyDown?: (e: React.KeyboardEvent) => void;
   placeholder?: string;
+  autoFocus?: boolean;
 }
 
 function ToolbarButton({
@@ -42,7 +43,7 @@ function ToolbarButton({
   );
 }
 
-export default function RichTextEditor({ body, onChange, onKeyDown, placeholder }: Props) {
+export default function RichTextEditor({ body, onChange, onKeyDown, placeholder, autoFocus }: Props) {
   const editorRef = useRef<HTMLDivElement>(null);
   const initializedRef = useRef(false);
 
@@ -121,7 +122,10 @@ export default function RichTextEditor({ body, onChange, onKeyDown, placeholder 
       node.innerHTML = html;
       initializedRef.current = true;
     }
-  }, [body]);
+    if (autoFocus) {
+      node.focus();
+    }
+  }, [body, autoFocus]);
 
   return (
     <div>

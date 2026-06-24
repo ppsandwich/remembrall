@@ -22,9 +22,9 @@ export default function BulkToolbar() {
   };
 
   const handleBulkDelete = () => {
-    if (count > 1 && !confirm(`Delete ${count} notes?`)) return;
+    if (count > 1 && !confirm(`Archive ${count} notes?`)) return;
     bulkDelete();
-    showToast(`Deleted ${count} notes.`);
+    showToast(`Archived ${count} notes.`);
   };
 
   const handleBulkExport = () => {
@@ -52,7 +52,7 @@ export default function BulkToolbar() {
       <BulkButton onClick={handleBulkExport} title="Export">
         <Download />
       </BulkButton>
-      <BulkButton onClick={handleBulkDelete} title="Delete" danger>
+      <BulkButton onClick={handleBulkDelete} title="Archive" danger>
         <Trash />
       </BulkButton>
       <div className="flex-1" />

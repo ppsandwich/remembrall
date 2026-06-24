@@ -2,12 +2,12 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useNotesStore } from "@/state/useNotesStore";
-import { writeClipboard } from "@/lib/clipboard";
+import { writeClipboard, readClipboard } from "@/lib/clipboard";
 import { useUIStore } from "@/state/useUIStore";
 import { exportSingleNote, downloadMarkdown, singleNoteFilename } from "@brall/export";
 import { extractTags, addTag } from "@brall/core";
 import { htmlToPlainText, stripTagsFromHtml } from "@/lib/html";
-import { Copy, Pin, PinOff, Duplicate, Download, Trash, X } from "./Icons";
+import { Copy, Pin, PinOff, Duplicate, Download, Trash, X, Save, Clipboard, Undo } from "./Icons";
 import TagInput from "./TagInput";
 import RichTextEditor from "./RichTextEditor";
 
@@ -20,11 +20,19 @@ function buildBody(htmlBody: string, tags: string[]): string {
 }
 
 export default function NoteEditor() {
-  const { editingId, notes, setEditingId, updateNote, updateNoteTitle, deleteNote, duplicateNote, togglePin } =
+  const { editingId, notes, setEditingId, createNote, updateNote, updateNoteTitle, deleteNote, restoreNote, duplicateNote, togglePin } =
     useNotesStore();
   const showToast = useUIStore((s) => s.showToast);
   const enterToSave = useUIStore((s) => s.enterToSave);
+  const setEnterToSave = useUIStore((s) => s.setEnterToSave);
+  const showQuickCapture = useUIStore((s) => s.showQuickCapture);
+  const setShowQuickCapture = useUIStore((s) => s.setShowQuickCapture);
+  const showArchived = useUIStore((s) => s.showArchived);
+
+  const isNewNote = showQuickCapture && !editingId;
+  const isOpen = isNewNote || !!editingId;
   const note = notes.find((n) => n.id === editingId);
+
   const [title, setTitle] = useState("");
   const [bodyHtml, setBodyHtml] = useState("");
   const [tags, setTags] = useState<string[]>([]);
@@ -88,6 +96,19 @@ export default function NoteEditor() {
 
   const handleSaveNow = useCallback(async () => {
     if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+    if (isNewNote) {
+      if (!bodyHtml.trim()) return;
+      let fullBody = bodyHtml;
+      for (const tag of tags) {
+        fullBody = addTag(fullBody, tag);
+      }
+      await createNote(fullBody);
+      showToast("Saved.");
+      setBodyHtml("");
+      setTags([]);
+      setShowQuickCapture(false);
+      return;
+    }
     if (note) {
       if (title !== note.title) {
         setSaving(true);
@@ -101,18 +122,44 @@ export default function NoteEditor() {
         setSaving(false);
       }
     }
-  }, [note, title, bodyHtml, tags, updateNote, updateNoteTitle]);
+  }, [isNewNote, note, title, bodyHtml, tags, createNote, updateNote, updateNoteTitle, showToast, setShowQuickCapture]);
 
   const handleClose = useCallback(async () => {
+    if (isNewNote) {
+      setShowQuickCapture(false);
+      return;
+    }
     await handleSaveNow();
     setEditingId(null);
-  }, [handleSaveNow, setEditingId]);
+  }, [isNewNote, handleSaveNow, setEditingId, setShowQuickCapture]);
 
   const handleCopy = useCallback(async () => {
     const plainText = htmlToPlainText(bodyHtml);
     const ok = await writeClipboard(plainText);
     showToast(ok ? "Copied." : "Could not copy.");
   }, [bodyHtml, showToast]);
+
+  const handleDumpClipboard = useCallback(async () => {
+    const text = await readClipboard();
+    if (!text) {
+      showToast("Clipboard is empty. A rare moment of peace.");
+      return;
+    }
+    if (isNewNote) {
+      setSaving(true);
+      await createNote(text);
+      setSaving(false);
+      showToast("Saved.");
+      setShowQuickCapture(false);
+    } else {
+      setBodyHtml(text);
+      if (note) {
+        setSaving(true);
+        await updateNote(note.id, text);
+        setSaving(false);
+      }
+    }
+  }, [isNewNote, note, createNote, updateNote, showToast, setShowQuickCapture]);
 
   const handleExport = useCallback(() => {
     if (!note) return;
@@ -122,20 +169,31 @@ export default function NoteEditor() {
   }, [note, bodyHtml, tags]);
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
-    if (enterToSave && e.key === "Enter" && !e.metaKey && !e.ctrlKey && !e.shiftKey) {
+    const isSmallScreen = typeof window !== "undefined" && window.innerWidth < 768;
+    if (!isSmallScreen && enterToSave && e.key === "Enter" && !e.metaKey && !e.ctrlKey && !e.shiftKey) {
       e.preventDefault();
-      handleSaveNow().then(() => setEditingId(null));
+      if (isNewNote) {
+        handleSaveNow();
+      } else {
+        handleSaveNow().then(() => setEditingId(null));
+      }
     }
-    if (!enterToSave && (e.metaKey || e.ctrlKey) && e.key === "Enter") {
+    if (!isSmallScreen && !enterToSave && (e.metaKey || e.ctrlKey) && e.key === "Enter") {
       e.preventDefault();
-      handleSaveNow().then(() => setEditingId(null));
+      if (isNewNote) {
+        handleSaveNow();
+      } else {
+        handleSaveNow().then(() => setEditingId(null));
+      }
     }
     if (e.key === "Escape") {
       handleClose();
     }
-  }, [enterToSave, handleSaveNow, setEditingId, handleClose]);
+  }, [isNewNote, enterToSave, handleSaveNow, setEditingId, handleClose]);
 
-  if (!note) return null;
+  if (!isOpen) return null;
+
+  const modKey = typeof navigator !== "undefined" && /Mac|iPhone|iPad|iPod/.test(navigator.userAgent) ? "⌘" : "Ctrl+";
 
   return (
     <div
@@ -144,64 +202,74 @@ export default function NoteEditor() {
       onClick={handleClose}
     >
       <div
-        className="w-full max-w-2xl rounded-xl shadow-xl overflow-hidden"
+        className="w-full max-w-2xl rounded-xl shadow-xl overflow-hidden flex flex-col"
         style={{ background: "var(--surface)", border: "1px solid var(--border)" }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div
-          className="flex items-center justify-between px-5 py-3"
-          style={{ borderBottom: "1px solid var(--border)" }}
-        >
-          <div className="flex items-center gap-2">
-            <EditorButton onClick={handleClose} title="Close">
-              <X />
-            </EditorButton>
-            <div className="w-px h-4 mx-0.5" style={{ background: "var(--border)" }} />
-            <span className="text-xs" style={{ color: "var(--text-muted)" }}>
-              {saving ? "Saving…" : "Saved"}
-            </span>
-            {note.pinned && (
-              <span
-                className="text-xs px-1.5 py-0.5 rounded"
-                style={{ background: "var(--surface-subtle)", color: "var(--text-muted)" }}
-              >
-                Pinned
+        {!isNewNote && (
+          <div
+            className="flex items-center justify-between px-5 py-3"
+            style={{ borderBottom: "1px solid var(--border)" }}
+          >
+            <div className="flex items-center gap-2">
+              <EditorButton onClick={handleClose} title="Close">
+                <X />
+              </EditorButton>
+              <div className="w-px h-4 mx-0.5" style={{ background: "var(--border)" }} />
+              <span className="text-xs" style={{ color: "var(--text-muted)" }}>
+                {saving ? "Saving…" : "Saved"}
               </span>
-            )}
+              {note?.pinned && (
+                <span
+                  className="text-xs px-1.5 py-0.5 rounded"
+                  style={{ background: "var(--surface-subtle)", color: "var(--text-muted)" }}
+                >
+                  Pinned
+                </span>
+              )}
+            </div>
+            <div className="flex items-center gap-0.5">
+              <EditorButton onClick={handleCopy} title="Copy">
+                <Copy />
+              </EditorButton>
+              <EditorButton onClick={() => note && togglePin(note.id)} title={note?.pinned ? "Unpin" : "Pin"}>
+                {note?.pinned ? <PinOff /> : <Pin />}
+              </EditorButton>
+              <EditorButton onClick={() => note && duplicateNote(note.id)} title="Duplicate">
+                <Duplicate />
+              </EditorButton>
+              <EditorButton onClick={handleExport} title="Export">
+                <Download />
+              </EditorButton>
+              <div className="w-px h-4 mx-1" style={{ background: "var(--border)" }} />
+              {note?.deleted_at ? (
+                <EditorButton onClick={() => { if (note) { restoreNote(note.id); setEditingId(null); } }} title="Restore">
+                  <Undo />
+                </EditorButton>
+              ) : (
+                <EditorButton onClick={() => { if (note) { deleteNote(note.id); setEditingId(null); } }} title="Archive" danger>
+                  <Trash />
+                </EditorButton>
+              )}
+            </div>
           </div>
-          <div className="flex items-center gap-0.5">
-            <EditorButton onClick={handleCopy} title="Copy">
-              <Copy />
-            </EditorButton>
-            <EditorButton onClick={() => togglePin(note.id)} title={note.pinned ? "Unpin" : "Pin"}>
-              {note.pinned ? <PinOff /> : <Pin />}
-            </EditorButton>
-            <EditorButton onClick={() => duplicateNote(note.id)} title="Duplicate">
-              <Duplicate />
-            </EditorButton>
-            <EditorButton onClick={handleExport} title="Export">
-              <Download />
-            </EditorButton>
-            <div className="w-px h-4 mx-1" style={{ background: "var(--border)" }} />
-            <EditorButton onClick={() => { deleteNote(note.id); setEditingId(null); }} title="Delete" danger>
-              <Trash />
-            </EditorButton>
+        )}
+
+        {!isNewNote && (
+          <div className="px-5 py-3" style={{ borderBottom: "1px solid var(--border)" }}>
+            <input
+              type="text"
+              value={title}
+              onChange={(e) => handleTitleChange(e.target.value)}
+              placeholder="Title (optional)"
+              className="w-full text-sm font-medium outline-none bg-transparent"
+              style={{ color: "var(--text)" }}
+            />
           </div>
-        </div>
+        )}
 
         <div className="px-5 py-3" style={{ borderBottom: "1px solid var(--border)" }}>
-          <input
-            type="text"
-            value={title}
-            onChange={(e) => handleTitleChange(e.target.value)}
-            placeholder="Title (optional)"
-            className="w-full text-sm font-medium outline-none bg-transparent"
-            style={{ color: "var(--text)" }}
-          />
-        </div>
-
-        <div className="px-5 py-3" style={{ borderBottom: "1px solid var(--border)" }}>
-          <TagInput tags={tags} onChange={handleTagsChange} />
+          <TagInput tags={tags} onChange={handleTagsChange} compact={isNewNote} />
         </div>
 
         <RichTextEditor
@@ -209,14 +277,82 @@ export default function NoteEditor() {
           onChange={scheduleSave}
           onKeyDown={handleKeyDown}
           placeholder="Start typing…"
+          autoFocus={isNewNote}
         />
 
         <div
-          className="flex items-center justify-between px-5 py-3 text-xs"
-          style={{ borderTop: "1px solid var(--border)", color: "var(--text-muted)" }}
+          className={`flex items-center justify-between px-5 py-3 text-xs ${isNewNote ? "order-first md:order-last" : ""}`}
+          style={{ [isNewNote ? "borderBottom" : "borderTop"]: "1px solid var(--border)", color: "var(--text-muted)" }}
         >
-          <span>{new Date(note.updated_at).toLocaleString()}</span>
-          <span>Esc to close · {enterToSave ? "Enter" : "Cmd+Enter"} to save</span>
+          {isNewNote ? (
+            <>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleSaveNow}
+                  disabled={!bodyHtml.trim() || saving}
+                  className="p-2 rounded-md transition-colors disabled:opacity-40"
+                  style={{
+                    background: (!bodyHtml.trim() || saving) ? "var(--surface-subtle)" : "#22C55E",
+                    color: (!bodyHtml.trim() || saving) ? "var(--text-muted)" : "var(--surface)",
+                    border: (!bodyHtml.trim() || saving) ? "1px solid var(--border)" : "none",
+                  }}
+                  title="Save note"
+                  aria-label="Save note"
+                >
+                  <Save />
+                </button>
+                <button
+                  onClick={handleDumpClipboard}
+                  disabled={saving}
+                  className="p-2 rounded-md transition-colors"
+                  style={{ color: "var(--text-muted)", border: "1px solid var(--border)" }}
+                  title="Paste from clipboard"
+                  aria-label="Paste from clipboard"
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = "var(--surface-subtle)";
+                    e.currentTarget.style.color = "var(--text-secondary)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = "transparent";
+                    e.currentTarget.style.color = "var(--text-muted)";
+                  }}
+                >
+                  <Clipboard />
+                </button>
+              </div>
+              <button
+                type="button"
+                onClick={() => setEnterToSave(!enterToSave)}
+                className="hidden md:flex items-center gap-1.5 px-2 py-1 rounded transition-colors"
+                style={{ color: "var(--text-muted)", background: "var(--surface-subtle)" }}
+                title={enterToSave ? "Enter to save" : `${modKey}Enter to save`}
+              >
+                <span style={{ fontWeight: enterToSave ? 600 : 400, color: enterToSave ? "#3B82F6" : undefined }}>Enter</span>
+                <span style={{ color: "var(--text-muted)" }}>/</span>
+                <span style={{ fontWeight: !enterToSave ? 600 : 400, color: !enterToSave ? "#3B82F6" : undefined }}>{modKey}↵</span>
+                <span>to save</span>
+              </button>
+            </>
+          ) : (
+            <>
+              <span>{note ? new Date(note.updated_at).toLocaleString() : ""}</span>
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => setEnterToSave(!enterToSave)}
+                  className="hidden md:flex items-center gap-1.5 px-2 py-1 rounded transition-colors"
+                  style={{ color: "var(--text-muted)", background: "var(--surface-subtle)" }}
+                  title={enterToSave ? "Enter to save" : `${modKey}Enter to save`}
+                >
+                  <span style={{ fontWeight: enterToSave ? 600 : 400, color: enterToSave ? "#3B82F6" : undefined }}>Enter</span>
+                  <span style={{ color: "var(--text-muted)" }}>/</span>
+                  <span style={{ fontWeight: !enterToSave ? 600 : 400, color: !enterToSave ? "#3B82F6" : undefined }}>{modKey}↵</span>
+                  <span>to save</span>
+                </button>
+                <span>Esc to close</span>
+              </div>
+            </>
+          )}
         </div>
       </div>
     </div>

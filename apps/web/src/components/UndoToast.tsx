@@ -17,7 +17,7 @@ export default function UndoToast() {
           className="flex items-center gap-4 px-5 py-3 rounded-lg shadow-lg text-sm"
           style={{ background: "var(--accent)", color: "var(--surface)" }}
         >
-          <span>Note deleted.</span>
+          <span>Note archived.</span>
           <button
             onClick={undoDelete}
             className="font-medium underline underline-offset-2 hover:opacity-80"

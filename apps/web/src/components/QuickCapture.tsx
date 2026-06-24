@@ -54,11 +54,12 @@ export default function QuickCapture({ onClose }: { onClose?: () => void }) {
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (enterToSave && e.key === "Enter" && !e.metaKey && !e.ctrlKey && !e.shiftKey) {
+    const isSmallScreen = typeof window !== "undefined" && window.innerWidth < 768;
+    if (!isSmallScreen && enterToSave && e.key === "Enter" && !e.metaKey && !e.ctrlKey && !e.shiftKey) {
       e.preventDefault();
       handleSave();
     }
-    if (!enterToSave && (e.metaKey || e.ctrlKey) && e.key === "Enter") {
+    if (!isSmallScreen && !enterToSave && (e.metaKey || e.ctrlKey) && e.key === "Enter") {
       e.preventDefault();
       handleSave();
     }
@@ -74,7 +75,7 @@ export default function QuickCapture({ onClose }: { onClose?: () => void }) {
     >
       <textarea
         ref={textareaRef}
-        placeholder="Start typing a note…"
+        placeholder="Start typing…"
         value={body}
         onChange={(e) => setBody(e.target.value)}
         onKeyDown={handleKeyDown}
@@ -122,13 +123,13 @@ export default function QuickCapture({ onClose }: { onClose?: () => void }) {
         <button
           type="button"
           onClick={() => setEnterToSave(!enterToSave)}
-          className="ml-auto flex items-center gap-1.5 text-xs px-2 py-1 rounded transition-colors"
+          className="ml-auto hidden md:flex items-center gap-1.5 text-xs px-2 py-1 rounded transition-colors"
           style={{ color: "var(--text-muted)", background: "var(--surface-subtle)" }}
-          title={enterToSave ? "Enter to save" : "Cmd+Enter to save"}
+          title={enterToSave ? "Enter to save" : `${typeof navigator !== "undefined" && /Mac|iPhone|iPad|iPod/.test(navigator.userAgent) ? "⌘" : "Ctrl+"}Enter to save`}
         >
           <span style={{ fontWeight: enterToSave ? 600 : 400, color: enterToSave ? "#3B82F6" : undefined }}>Enter</span>
           <span style={{ color: "var(--text-muted)" }}>/</span>
-          <span style={{ fontWeight: !enterToSave ? 600 : 400, color: !enterToSave ? "#3B82F6" : undefined }}>⌘↵</span>
+          <span style={{ fontWeight: !enterToSave ? 600 : 400, color: !enterToSave ? "#3B82F6" : undefined }}>{typeof navigator !== "undefined" && /Mac|iPhone|iPad|iPod/.test(navigator.userAgent) ? "⌘" : "Ctrl+"}↵</span>
           <span>to save</span>
         </button>
       </div>

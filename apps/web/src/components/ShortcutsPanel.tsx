@@ -9,7 +9,7 @@ const SHORTCUTS = [
   { key: "Escape", desc: "Clear focus / close editor" },
   { key: "Cmd+C", desc: "Copy selected note" },
   { key: "Cmd+D", desc: "Duplicate selected note" },
-  { key: "Delete", desc: "Delete selected note" },
+  { key: "Delete", desc: "Archive selected note" },
   { key: "Cmd+A", desc: "Select all notes" },
   { key: "?", desc: "Show shortcuts" },
 ];

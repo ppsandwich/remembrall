@@ -10,6 +10,7 @@ interface UIState {
   toastMessage: string | null;
   dragHint: string | null;
   enterToSave: boolean;
+  showArchived: boolean;
 
   setTheme: (theme: "light" | "dark") => void;
   setShowShortcuts: (show: boolean) => void;
@@ -20,11 +21,12 @@ interface UIState {
   setDragHint: (message: string | null) => void;
   showToast: (message: string) => void;
   clearToast: () => void;
+  setShowArchived: (show: boolean) => void;
 }
 
 export const useUIStore = create<UIState>((set) => ({
-  theme: "dark",
-  resolvedTheme: "dark",
+  theme: "light",
+  resolvedTheme: "light",
   showShortcuts: false,
   showSettings: false,
   showQuickCapture: false,
@@ -32,6 +34,7 @@ export const useUIStore = create<UIState>((set) => ({
   toastMessage: null,
   dragHint: null,
   enterToSave: true,
+  showArchived: false,
 
   setTheme: (theme) => {
     document.documentElement.classList.toggle("dark", theme === "dark");
@@ -55,11 +58,13 @@ export const useUIStore = create<UIState>((set) => ({
   },
 
   clearToast: () => set({ toastMessage: null }),
+  setShowArchived: (show) => set({ showArchived: show }),
 }));
 
 export function initTheme() {
   const stored = localStorage.getItem("remembrall-theme") as "light" | "dark" | null;
-  const theme = stored || "dark";
+  const prefersDark = typeof window !== "undefined" && window.matchMedia("(prefers-color-scheme: dark)").matches;
+  const theme = stored || (prefersDark ? "dark" : "light");
   document.documentElement.classList.toggle("dark", theme === "dark");
 
   const storedEnter = localStorage.getItem("remembrall-enter-to-save");

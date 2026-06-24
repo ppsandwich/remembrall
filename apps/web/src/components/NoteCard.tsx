@@ -6,7 +6,7 @@ import { useNotesStore, NOTE_COLORS, DARK_NOTE_COLORS, getColorDisplayName } fro
 import { writeClipboard } from "@/lib/clipboard";
 import { useUIStore } from "@/state/useUIStore";
 import { exportSingleNote, downloadMarkdown, singleNoteFilename } from "@brall/export";
-import { Copy, Pin, PinOff, Download, Trash, Palette } from "./Icons";
+import { Copy, Pin, PinOff, Download, Trash, Palette, Undo } from "./Icons";
 import { useDragContext } from "./DragContext";
 import RadialColorPicker from "./RadialColorPicker";
 import { useRef, useCallback, useState, useEffect } from "react";
@@ -19,9 +19,9 @@ interface Props {
 }
 
 export default function NoteCard({ note, index, highlighted, onHighlightEnd }: Props) {
-  const { toggleSelect, selectedIds, setEditingId, deleteNote, togglePin, updateNoteColor, moveNoteToPage, clusterMode, setDragging, colorNames, pages, activePageId } =
+  const { toggleSelect, selectedIds, setEditingId, deleteNote, restoreNote, togglePin, updateNoteColor, moveNoteToPage, clusterMode, setDragging, colorNames, pages, activePageId } =
     useNotesStore();
-  const { showToast, selectMode, resolvedTheme, setDragHint } = useUIStore();
+  const { showToast, selectMode, resolvedTheme, setDragHint, showArchived } = useUIStore();
   const isSelected = selectedIds.has(note.id);
   const { startDrag, updateDrag, setTargetIndex, endDrag, getCardStyle, getCardClassName, dragState } = useDragContext();
   const cardRef = useRef<HTMLDivElement>(null);
@@ -287,6 +287,14 @@ export default function NoteCard({ note, index, highlighted, onHighlightEnd }: P
                 Pinned
               </span>
             )}
+            {note.deleted_at && (
+              <span
+                className="text-xs px-1.5 py-0.5 rounded"
+                style={{ background: "var(--surface-subtle)", color: "var(--text-muted)" }}
+              >
+                Archived
+              </span>
+            )}
             {note.source !== "web" && (
               <span className="text-xs" style={{ color: "var(--text-muted)" }}>
                 {note.source}
@@ -367,9 +375,15 @@ export default function NoteCard({ note, index, highlighted, onHighlightEnd }: P
             </div>
           )}
         </div>
-        <CardButton onClick={() => deleteNote(note.id)} title="Delete" danger>
-          <Trash />
-        </CardButton>
+        {note.deleted_at ? (
+          <CardButton onClick={() => restoreNote(note.id)} title="Restore">
+            <Undo />
+          </CardButton>
+        ) : (
+          <CardButton onClick={() => deleteNote(note.id)} title="Archive" danger>
+            <Trash />
+          </CardButton>
+        )}
       </div>
 
       {isDragged && radialOrigin && (

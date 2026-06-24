@@ -7,7 +7,7 @@ import { useState, useRef } from "react";
 import ExportMenu from "./ExportMenu";
 
 export default function SettingsPanel({ onClose }: { onClose: () => void }) {
-  const { theme, setTheme, resolvedTheme } = useUIStore();
+  const { theme, setTheme, resolvedTheme, showArchived, setShowArchived } = useUIStore();
   const { user, signOut } = useAuthStore();
   const { colorNames, colorOrder, setColorName, resetColorName, setColorOrder } = useNotesStore();
   const [showExport, setShowExport] = useState(false);
@@ -151,6 +151,29 @@ export default function SettingsPanel({ onClose }: { onClose: () => void }) {
               Export notes as Markdown
             </button>
             {showExport && <ExportMenu onClose={() => setShowExport(false)} />}
+          </div>
+
+          <div>
+            <label className="text-xs font-medium mb-2.5 block" style={{ color: "var(--text-secondary)" }}>
+              Archived notes
+            </label>
+            <button
+              onClick={() => setShowArchived(!showArchived)}
+              className="w-full text-left text-xs py-2 px-3 rounded-md transition-colors"
+              style={{
+                color: showArchived ? "var(--text)" : "var(--text-muted)",
+                background: showArchived ? "var(--surface-subtle)" : "transparent",
+                border: "1px solid var(--border)",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = "var(--surface-subtle)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = showArchived ? "var(--surface-subtle)" : "transparent";
+              }}
+            >
+              {showArchived ? "Viewing archived notes" : "View archived notes"}
+            </button>
           </div>
 
           <div style={{ borderTop: "1px solid var(--border)" }} className="pt-4">

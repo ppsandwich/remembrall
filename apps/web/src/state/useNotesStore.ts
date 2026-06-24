@@ -3,6 +3,7 @@ import type { DecryptedNote, NoteSource, EncryptedPayload, NotePage } from "@bra
 import { derivePreview, searchNotes as filterNotes, extractTags, addTag, removeTag, stripTags } from "@brall/core";
 import { useEncryptionStore } from "./useEncryptionStore";
 import { useAuthStore } from "./useAuthStore";
+import { useUIStore } from "./useUIStore";
 import * as api from "@/lib/notesApi";
 import * as prefApi from "@/lib/preferencesApi";
 import * as pagesApi from "@/lib/pagesApi";
@@ -94,6 +95,7 @@ interface NotesState {
   moveNoteToPage: (noteId: string, pageId: string) => Promise<void>;
   deleteNote: (id: string) => Promise<void>;
   undoDelete: () => Promise<void>;
+  restoreNote: (id: string) => Promise<void>;
   duplicateNote: (id: string) => Promise<void>;
   togglePin: (id: string) => Promise<void>;
   moveNote: (id: string, targetIndex: number) => void;
@@ -226,12 +228,17 @@ export const useNotesStore = create<NotesState>((set, get) => ({
   },
 
   deletePage: async (id: string) => {
-    const { pages, activePageId } = get();
+    const { pages, activePageId, notes } = get();
     if (pages.length <= 1) return;
+
+    const pageNotes = notes.filter((n) => n.page_id === id && !n.deleted_at);
+    await Promise.all(pageNotes.map((n) => api.softDeleteNote(n.id)));
     await pagesApi.deletePage(id);
+
     const remaining = pages.filter((p) => p.id !== id);
     set({
       pages: remaining,
+      notes: notes.filter((n) => n.page_id !== id),
       activePageId: activePageId === id ? remaining[0]?.id ?? null : activePageId,
     });
   },
@@ -369,7 +376,7 @@ export const useNotesStore = create<NotesState>((set, get) => ({
     }, 5000);
 
     set((s) => ({
-      notes: s.notes.filter((n) => n.id !== id),
+      notes: s.notes.map((n) => n.id === id ? { ...n, deleted_at: new Date().toISOString() } : n),
       undoStack: [...s.undoStack, { note, timeout }],
     }));
   },
@@ -382,8 +389,18 @@ export const useNotesStore = create<NotesState>((set, get) => ({
 
     await api.restoreNote(entry.note.id);
     set((s) => ({
-      notes: [entry.note, ...s.notes],
+      notes: s.notes.map((n) => n.id === entry.note.id ? { ...n, deleted_at: null } : n),
       undoStack: s.undoStack.slice(0, -1),
+    }));
+  },
+
+  restoreNote: async (id: string) => {
+    const note = get().notes.find((n) => n.id === id);
+    if (!note) return;
+
+    await api.restoreNote(id);
+    set((s) => ({
+      notes: s.notes.map((n) => n.id === id ? { ...n, deleted_at: null } : n),
     }));
   },
 
@@ -577,8 +594,13 @@ export const useNotesStore = create<NotesState>((set, get) => ({
 
   getFilteredNotes: () => {
     const { notes, searchQuery, filterTag, clusterMode, isDragging, frozenOrderIds, colorChangeFrozenIds, activePageId } = get();
+    const showArchived = useUIStore.getState().showArchived;
     
-    const active = notes.filter((n) => !n.deleted_at && n.page_id === activePageId);
+    const active = showArchived
+      ? notes.filter((n) => !!n.deleted_at)
+      : searchQuery.trim()
+        ? notes.filter((n) => !n.deleted_at)
+        : notes.filter((n) => !n.deleted_at && n.page_id === activePageId);
     let filtered = filterNotes(active, searchQuery);
     if (filterTag) {
       filtered = filtered.filter((n) => extractTags(n.body).includes(filterTag));

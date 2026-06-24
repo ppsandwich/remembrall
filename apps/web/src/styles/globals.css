@@ -4,13 +4,13 @@
   --breakpoint-3xl: 1920px;
   --color-bg: #FAFAF8;
   --color-surface: #FFFFFF;
-  --color-surface-subtle: #F5F5F2;
-  --color-border: #E5E5E0;
-  --color-border-strong: #D0D0C8;
-  --color-text: #1A1A1A;
-  --color-text-secondary: #5C5C58;
-  --color-text-muted: #9C9C95;
-  --color-accent: #1A1A1A;
+  --color-surface-subtle: #F0F0EC;
+  --color-border: #D4D4CC;
+  --color-border-strong: #B8B8B0;
+  --color-text: #111111;
+  --color-text-secondary: #484844;
+  --color-text-muted: #787870;
+  --color-accent: #111111;
   --color-danger: #DC2626;
 
   --color-dark-bg: #0E0E0E;
