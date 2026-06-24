@@ -10,16 +10,37 @@ function formatDateTime(iso: string): string {
   return d.toISOString().slice(0, 16).replace("T", " ");
 }
 
+function htmlToPlainText(html: string): string {
+  if (!/<[a-z][\s\S]*>/i.test(html)) return html;
+  let text = html;
+  text = text.replace(/<\/li>/gi, "\n");
+  text = text.replace(/<br\s*\/?>/gi, "\n");
+  text = text.replace(/<\/p>/gi, "\n\n");
+  text = text.replace(/<\/div>/gi, "\n");
+  text = text.replace(/<li[^>]*>/gi, "• ");
+  text = text.replace(/<[^>]+>/g, "");
+  text = text.replace(/&nbsp;/g, " ");
+  text = text.replace(/&amp;/g, "&");
+  text = text.replace(/&lt;/g, "<");
+  text = text.replace(/&gt;/g, ">");
+  text = text.replace(/&quot;/g, '"');
+  text = text.replace(/\n{3,}/g, "\n\n");
+  return text.trim();
+}
+
 export function exportSingleNote(note: DecryptedNote): string {
-  return `# Remembrall Export\n\nExported: ${formatDate(new Date().toISOString())}\n\n---\n\n## Note\n\nCreated: ${formatDateTime(note.created_at)}\nUpdated: ${formatDateTime(note.updated_at)}\nSource: ${note.source}\n\n\`\`\`text\n${note.body}\n\`\`\`\n`;
+  const body = htmlToPlainText(note.body);
+  return `# Remembrall Export\n\nExported: ${formatDate(new Date().toISOString())}\n\n---\n\n## Note\n\nCreated: ${formatDateTime(note.created_at)}\nUpdated: ${formatDateTime(note.updated_at)}\nSource: ${note.source}\n\n\`\`\`text\n${body}\n\`\`\`\n`;
 }
 
 export function exportNotes(notes: DecryptedNote[]): string {
   const date = formatDate(new Date().toISOString());
   const noteBlocks = notes
     .map(
-      (note, i) =>
-        `## Note ${i + 1}\n\nCreated: ${formatDateTime(note.created_at)}\nUpdated: ${formatDateTime(note.updated_at)}\nSource: ${note.source}\n\n\`\`\`text\n${note.body}\n\`\`\``
+      (note, i) => {
+        const body = htmlToPlainText(note.body);
+        return `## Note ${i + 1}\n\nCreated: ${formatDateTime(note.created_at)}\nUpdated: ${formatDateTime(note.updated_at)}\nSource: ${note.source}\n\n\`\`\`text\n${body}\n\`\`\``;
+      }
     )
     .join("\n\n---\n\n");
 

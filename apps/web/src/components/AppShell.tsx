@@ -94,6 +94,20 @@ export default function AppShell() {
         <BulkToolbar />
         <NoteList />
       </main>
+      <footer className="px-8 py-4 text-right">
+        <span className="text-xs" style={{ color: "var(--text-muted)", opacity: 0.5 }}>
+          This app is a hallucination by{" "}
+          <a
+            href="https://sandwich.codes"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:underline"
+            style={{ color: "var(--text-secondary)" }}
+          >
+            Sandwich Codes
+          </a>
+        </span>
+      </footer>
       <NoteEditor />
       <UndoToast />
       <ShortcutsPanel />

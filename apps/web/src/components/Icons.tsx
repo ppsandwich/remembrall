@@ -21,6 +21,12 @@ import {
   Tag as LucideTag,
   Layers as LucideLayers,
   Paintbrush as LucidePaintbrush,
+  Bold as LucideBold,
+  Italic as LucideItalic,
+  Underline as LucideUnderline,
+  List as LucideList,
+  ListOrdered as LucideListOrdered,
+  Volleyball as LucideVolleyball,
   type LucideProps,
 } from "lucide-react";
 
@@ -49,3 +55,9 @@ export const Tag = (props: LucideProps) => <LucideTag {...p} {...props} />;
 export const Layers = (props: LucideProps) => <LucideLayers {...p} {...props} />;
 export const Duplicate = (props: LucideProps) => <LucideCopy {...p} {...props} />;
 export const Palette = (props: LucideProps) => <LucidePaintbrush {...p} {...props} />;
+export const Bold = (props: LucideProps) => <LucideBold {...p} {...props} />;
+export const Italic = (props: LucideProps) => <LucideItalic {...p} {...props} />;
+export const UnderlineIcon = (props: LucideProps) => <LucideUnderline {...p} {...props} />;
+export const ListUnordered = (props: LucideProps) => <LucideList {...p} {...props} />;
+export const ListOrdered = (props: LucideProps) => <LucideListOrdered {...p} {...props} />;
+export const Volleyball = (props: LucideProps) => <LucideVolleyball {...p} {...props} />;

@@ -2,8 +2,7 @@
 
 import { useEffect, useRef, useCallback, useState } from "react";
 import { createPortal } from "react-dom";
-import { NOTE_COLORS, DARK_NOTE_COLORS, useNotesStore, getColorDisplayName } from "@/state/useNotesStore";
-import { useUIStore } from "@/state/useUIStore";
+import { useNotesStore, getColorDisplayName } from "@/state/useNotesStore";
 
 interface Props {
   centerX: number;
@@ -17,14 +16,21 @@ const RADIUS = 80;
 const SWATCH_SIZE = 28;
 
 export default function RadialColorPicker({ centerX, centerY, currentColor, onSelect, onCancel }: Props) {
-  const { resolvedTheme } = useUIStore();
   const colorNames = useNotesStore((s) => s.colorNames);
   const storeColorOrder = useNotesStore((s) => s.colorOrder);
-  const colors = resolvedTheme === "dark" ? DARK_NOTE_COLORS : NOTE_COLORS;
-  const colorHexMap = new Map(colors.map((c) => [c.name, c.hex]));
+  const PICKER_COLORS: Record<string, string> = {
+    red: "#F87171",
+    orange: "#FB923C",
+    yellow: "#FACC15",
+    teal: "#2DD4BF",
+    blue: "#60A5FA",
+    green: "#4ADE80",
+    purple: "#C084FC",
+    pink: "#F472B6",
+  };
   const pickerColors = storeColorOrder
     .filter((name) => name !== "none")
-    .map((name) => ({ name, hex: colorHexMap.get(name) || "" }));
+    .map((name) => ({ name, hex: PICKER_COLORS[name] || "" }));
 
   const [hoveredColor, setHoveredColor] = useState<string | null>(null);
   const hoveredRef = useRef<string | null>(null);

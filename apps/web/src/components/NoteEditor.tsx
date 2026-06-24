@@ -1,16 +1,18 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useNotesStore } from "@/state/useNotesStore";
 import { writeClipboard } from "@/lib/clipboard";
 import { useUIStore } from "@/state/useUIStore";
 import { exportSingleNote, downloadMarkdown, singleNoteFilename } from "@remembrall/export";
-import { extractTags, stripTags, addTag } from "@remembrall/core";
+import { extractTags, addTag } from "@remembrall/core";
+import { htmlToPlainText, stripTagsFromHtml } from "@/lib/html";
 import { Copy, Pin, PinOff, Duplicate, Download, Trash, X } from "./Icons";
 import TagInput from "./TagInput";
+import RichTextEditor from "./RichTextEditor";
 
-function buildBody(cleanBody: string, tags: string[]): string {
-  let result = cleanBody.trim();
+function buildBody(htmlBody: string, tags: string[]): string {
+  let result = htmlBody.trim();
   for (const tag of tags) {
     result = addTag(result, tag);
   }
@@ -23,26 +25,27 @@ export default function NoteEditor() {
   const showToast = useUIStore((s) => s.showToast);
   const enterToSave = useUIStore((s) => s.enterToSave);
   const note = notes.find((n) => n.id === editingId);
-  const [cleanBody, setCleanBody] = useState("");
+  const [bodyHtml, setBodyHtml] = useState("");
   const [tags, setTags] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout>>(null);
 
   useEffect(() => {
     if (note) {
-      setCleanBody(stripTags(note.body));
-      setTags(extractTags(note.body));
-      setTimeout(() => textareaRef.current?.focus(), 50);
+      const fullBody = note.body;
+      const extractedTags = extractTags(fullBody);
+      const cleanBody = stripTagsFromHtml(fullBody);
+      setBodyHtml(cleanBody);
+      setTags(extractedTags);
     }
   }, [note]);
 
-  const scheduleSave = (newCleanBody: string) => {
-    setCleanBody(newCleanBody);
+  const scheduleSave = useCallback((newHtml: string) => {
+    setBodyHtml(newHtml);
     if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
     saveTimeoutRef.current = setTimeout(async () => {
       if (note) {
-        const fullBody = buildBody(newCleanBody, tags);
+        const fullBody = buildBody(newHtml, tags);
         if (fullBody !== note.body) {
           setSaving(true);
           await updateNote(note.id, fullBody);
@@ -50,14 +53,14 @@ export default function NoteEditor() {
         }
       }
     }, 600);
-  };
+  }, [note, tags, updateNote]);
 
-  const handleTagsChange = (newTags: string[]) => {
+  const handleTagsChange = useCallback((newTags: string[]) => {
     setTags(newTags);
     if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
     saveTimeoutRef.current = setTimeout(async () => {
       if (note) {
-        const fullBody = buildBody(cleanBody, newTags);
+        const fullBody = buildBody(bodyHtml, newTags);
         if (fullBody !== note.body) {
           setSaving(true);
           await updateNote(note.id, fullBody);
@@ -65,38 +68,39 @@ export default function NoteEditor() {
         }
       }
     }, 600);
-  };
+  }, [note, bodyHtml, updateNote]);
 
-  const handleSaveNow = async () => {
+  const handleSaveNow = useCallback(async () => {
     if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
     if (note) {
-      const fullBody = buildBody(cleanBody, tags);
+      const fullBody = buildBody(bodyHtml, tags);
       if (fullBody !== note.body) {
         setSaving(true);
         await updateNote(note.id, fullBody);
         setSaving(false);
       }
     }
-  };
+  }, [note, bodyHtml, tags, updateNote]);
 
-  const handleClose = async () => {
+  const handleClose = useCallback(async () => {
     await handleSaveNow();
     setEditingId(null);
-  };
+  }, [handleSaveNow, setEditingId]);
 
-  const handleCopy = async () => {
-    const ok = await writeClipboard(cleanBody);
+  const handleCopy = useCallback(async () => {
+    const plainText = htmlToPlainText(bodyHtml);
+    const ok = await writeClipboard(plainText);
     showToast(ok ? "Copied." : "Could not copy.");
-  };
+  }, [bodyHtml, showToast]);
 
-  const handleExport = () => {
+  const handleExport = useCallback(() => {
     if (!note) return;
-    const fullBody = buildBody(cleanBody, tags);
+    const fullBody = buildBody(bodyHtml, tags);
     const md = exportSingleNote({ ...note, body: fullBody });
     downloadMarkdown(md, singleNoteFilename());
-  };
+  }, [note, bodyHtml, tags]);
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
     if (enterToSave && e.key === "Enter" && !e.metaKey && !e.ctrlKey && !e.shiftKey) {
       e.preventDefault();
       handleSaveNow().then(() => setEditingId(null));
@@ -108,7 +112,7 @@ export default function NoteEditor() {
     if (e.key === "Escape") {
       handleClose();
     }
-  };
+  }, [enterToSave, handleSaveNow, setEditingId, handleClose]);
 
   if (!note) return null;
 
@@ -168,15 +172,11 @@ export default function NoteEditor() {
           <TagInput tags={tags} onChange={handleTagsChange} />
         </div>
 
-        <textarea
-          ref={textareaRef}
-          value={cleanBody}
-          onChange={(e) => scheduleSave(e.target.value)}
+        <RichTextEditor
+          body={bodyHtml}
+          onChange={scheduleSave}
           onKeyDown={handleKeyDown}
-          className="w-full px-5 py-4 text-sm outline-none resize-none leading-relaxed"
-          style={{ minHeight: "50vh", maxHeight: "70vh", background: "transparent", color: "var(--text)" }}
           placeholder="Start typing…"
-          aria-label="Note editor"
         />
 
         <div

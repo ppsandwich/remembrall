@@ -3,7 +3,7 @@
 import { useAuthStore } from "@/state/useAuthStore";
 import { useUIStore } from "@/state/useUIStore";
 import { useNotesStore } from "@/state/useNotesStore";
-import { Sun, Moon, HelpCircle, Settings, LogOut, CheckSquare, Square, Layers } from "./Icons";
+import { Sun, Moon, HelpCircle, Settings, LogOut, CheckSquare, Square, Layers, Volleyball } from "./Icons";
 
 export default function Header() {
   const signOut = useAuthStore((s) => s.signOut);
@@ -34,9 +34,26 @@ export default function Header() {
     >
       <div className="max-w-7xl w-full mx-auto flex items-center justify-between">
         <div className="flex items-center gap-3">
+          <svg width="0" height="0" style={{ position: "absolute" }}>
+            <defs>
+              <linearGradient id="header-gold" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stopColor="#D4AF37" />
+                <stop offset="50%" stopColor="#B8860B" />
+                <stop offset="100%" stopColor="#996515" />
+              </linearGradient>
+            </defs>
+          </svg>
+          <Volleyball size={24} strokeWidth={1.5} style={{ stroke: "url(#header-gold)", fill: "none" }} />
           <h1
-            className="text-base font-semibold tracking-tight"
-            style={{ color: "var(--text)", letterSpacing: "-0.01em" }}
+            className="text-lg font-bold tracking-tight"
+            style={{
+              letterSpacing: "-0.01em",
+              fontFamily: "var(--font-almendra), serif",
+              background: "linear-gradient(to bottom, #D4AF37, #B8860B, #996515)",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+              backgroundClip: "text",
+            }}
           >
             Remembrall
           </h1>
