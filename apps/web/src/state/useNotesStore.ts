@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import type { DecryptedNote, NoteSource } from "@remembrall/core";
+import type { DecryptedNote, NoteSource, EncryptedPayload } from "@remembrall/core";
 import { derivePreview, searchNotes as filterNotes, extractTags, addTag, removeTag, stripTags } from "@remembrall/core";
 import { useEncryptionStore } from "./useEncryptionStore";
 import { useAuthStore } from "./useAuthStore";
@@ -42,6 +42,17 @@ export const DEFAULT_COLOR_NAMES: Record<string, string> = {
 };
 
 export const DEFAULT_COLOR_ORDER = ["red", "orange", "yellow", "teal", "blue", "green", "purple", "pink"];
+
+function detectColorFromTags(body: string): { color: string; cleanedBody: string } {
+  const tags = extractTags(body);
+  for (const tag of tags) {
+    const match = NOTE_COLORS.find((c) => c.name !== "none" && c.name === tag);
+    if (match) {
+      return { color: match.name, cleanedBody: removeTag(body, tag) };
+    }
+  }
+  return { color: "", cleanedBody: body };
+}
 
 export function getColorDisplayName(name: string, customNames: Record<string, string>): string {
   return customNames[name] || DEFAULT_COLOR_NAMES[name] || name;
@@ -170,8 +181,9 @@ export const useNotesStore = create<NotesState>((set, get) => ({
     const { encryptText } = useEncryptionStore.getState();
     if (!user || !body.trim()) return;
 
-    const encryptedBody = await encryptText(body);
-    const preview = derivePreview(body);
+    const { color, cleanedBody } = detectColorFromTags(body);
+    const encryptedBody = await encryptText(cleanedBody);
+    const preview = derivePreview(cleanedBody);
     const previewEncrypted = await encryptText(preview);
 
     const created = await api.createNote({
@@ -180,6 +192,7 @@ export const useNotesStore = create<NotesState>((set, get) => ({
       previewEncrypted,
       source,
       pinned: false,
+      color,
     });
 
     const maxPosition = Math.max(0, ...get().notes.map((n) => n.position));
@@ -187,7 +200,7 @@ export const useNotesStore = create<NotesState>((set, get) => ({
     const note: DecryptedNote = {
       id: created.id,
       user_id: created.user_id,
-      body,
+      body: cleanedBody,
       preview,
       pinned: false,
       archived: false,
@@ -195,7 +208,7 @@ export const useNotesStore = create<NotesState>((set, get) => ({
       duplicated_from: null,
       source,
       position: maxPosition + 1,
-      color: "",
+      color,
       created_at: created.created_at,
       updated_at: created.updated_at,
     };
@@ -205,16 +218,23 @@ export const useNotesStore = create<NotesState>((set, get) => ({
 
   updateNote: async (id: string, body: string) => {
     const { encryptText } = useEncryptionStore.getState();
-    const encryptedBody = await encryptText(body);
-    const preview = derivePreview(body);
+    const { color, cleanedBody } = detectColorFromTags(body);
+    const encryptedBody = await encryptText(cleanedBody);
+    const preview = derivePreview(cleanedBody);
     const previewEncrypted = await encryptText(preview);
 
-    await api.updateNote(id, { encrypted_body: encryptedBody, body_preview_encrypted: previewEncrypted });
+    const updates: { encrypted_body: EncryptedPayload; body_preview_encrypted: EncryptedPayload; color?: string } = {
+      encrypted_body: encryptedBody,
+      body_preview_encrypted: previewEncrypted,
+    };
+    if (color) updates.color = color;
+
+    await api.updateNote(id, updates);
 
     set((s) => ({
       notes: s.notes.map((n) =>
         n.id === id
-          ? { ...n, body, preview, updated_at: new Date().toISOString() }
+          ? { ...n, body: cleanedBody, preview, color: color || n.color, updated_at: new Date().toISOString() }
           : n
       ),
     }));

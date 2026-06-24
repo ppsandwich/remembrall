@@ -38,7 +38,12 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
 
   signInWithMagicLink: async (email) => {
-    const { error } = await getSupabase().auth.signInWithOtp({ email });
+    const { error } = await getSupabase().auth.signInWithOtp({
+      email,
+      options: {
+        emailRedirectTo: window.location.origin,
+      },
+    });
     if (error) return { error: error.message };
     return {};
   },

@@ -19,6 +19,7 @@ export async function createNote(params: {
   previewEncrypted: EncryptedPayload | null;
   source: NoteSource;
   pinned: boolean;
+  color?: string;
 }): Promise<Note> {
   const { data, error } = await getSupabase()
     .from("notes")
@@ -28,6 +29,7 @@ export async function createNote(params: {
       body_preview_encrypted: params.previewEncrypted,
       source: params.source,
       pinned: params.pinned,
+      color: params.color || "",
     })
     .select()
     .single();

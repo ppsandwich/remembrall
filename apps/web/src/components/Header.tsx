@@ -78,7 +78,7 @@ export default function Header() {
           <HeaderButton onClick={toggleSelectMode} title={selectMode ? "Exit select mode" : "Select mode"} active={selectMode}>
             {selectMode ? <CheckSquare /> : <Square />}
           </HeaderButton>
-          <HeaderButton onClick={() => setClusterMode(!clusterMode)} title={clusterMode ? "Disable clustering" : "Cluster by color"} active={clusterMode}>
+          <HeaderButton onClick={() => setClusterMode(!clusterMode)} title={clusterMode ? "Sort by colour" : "Manual sort"} active={clusterMode}>
             <Layers />
           </HeaderButton>
           <HeaderButton onClick={() => setShowSettings(true)} title="Settings">
