@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useNotesStore, initColorSettings } from "@/state/useNotesStore";
 import { useUIStore, initTheme } from "@/state/useUIStore";
+import { useAuthStore } from "@/state/useAuthStore";
 import { readClipboard } from "@/lib/clipboard";
 import { registerShortcut, initShortcuts } from "@/lib/shortcuts";
 import Header from "./Header";
@@ -19,12 +20,13 @@ export default function AppShell() {
   const { fetchAll, createNote, editingId, selectedIds, deleteNote, duplicateNote, clearSelection, selectAll } =
     useNotesStore();
   const { showSettings, setShowSettings, setShowShortcuts, showToast, setSelectMode } = useUIStore();
+  const { user } = useAuthStore();
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
     initTheme();
-    initColorSettings();
-  }, []);
+    initColorSettings(user?.id);
+  }, [user?.id]);
 
   useEffect(() => {
     fetchAll().then(() => setReady(true));

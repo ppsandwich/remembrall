@@ -4,6 +4,7 @@ import { derivePreview, searchNotes as filterNotes, extractTags, addTag, removeT
 import { useEncryptionStore } from "./useEncryptionStore";
 import { useAuthStore } from "./useAuthStore";
 import * as api from "@/lib/notesApi";
+import * as prefApi from "@/lib/preferencesApi";
 
 export const NOTE_COLORS = [
   { name: "none", hex: "" },
@@ -398,17 +399,29 @@ export const useNotesStore = create<NotesState>((set, get) => ({
     const names = { ...get().colorNames, [name]: displayName };
     localStorage.setItem("remembrall-color-names", JSON.stringify(names));
     set({ colorNames: names });
+    const user = useAuthStore.getState().user;
+    if (user) {
+      prefApi.upsertPreferences(user.id, { color_names: names }).catch(() => {});
+    }
   },
 
   resetColorName: (name: string) => {
     const names = { ...get().colorNames, [name]: DEFAULT_COLOR_NAMES[name] };
     localStorage.setItem("remembrall-color-names", JSON.stringify(names));
     set({ colorNames: names });
+    const user = useAuthStore.getState().user;
+    if (user) {
+      prefApi.upsertPreferences(user.id, { color_names: names }).catch(() => {});
+    }
   },
 
   setColorOrder: (order: string[]) => {
     localStorage.setItem("remembrall-color-order", JSON.stringify(order));
     set({ colorOrder: order });
+    const user = useAuthStore.getState().user;
+    if (user) {
+      prefApi.upsertPreferences(user.id, { color_order: order }).catch(() => {});
+    }
   },
 
   toggleSelect: (id: string) => {
@@ -529,12 +542,16 @@ function clusterNotes(notes: DecryptedNote[], colorOrder: string[]): DecryptedNo
   return result;
 }
 
-export function initColorSettings() {
+export async function initColorSettings(userId?: string) {
+  let localNames: Record<string, string> = {};
+  let localOrder: string[] = [];
+
   try {
     const storedNames = localStorage.getItem("remembrall-color-names");
     if (storedNames) {
       const parsed = JSON.parse(storedNames);
-      useNotesStore.setState({ colorNames: { ...DEFAULT_COLOR_NAMES, ...parsed } });
+      localNames = { ...DEFAULT_COLOR_NAMES, ...parsed };
+      useNotesStore.setState({ colorNames: localNames });
     }
   } catch {}
   try {
@@ -542,8 +559,35 @@ export function initColorSettings() {
     if (storedOrder) {
       const parsed = JSON.parse(storedOrder);
       if (Array.isArray(parsed) && parsed.length > 0) {
-        useNotesStore.setState({ colorOrder: parsed });
+        localOrder = parsed;
+        useNotesStore.setState({ colorOrder: localOrder });
       }
+    }
+  } catch {}
+
+  if (!userId) return;
+
+  try {
+    const prefs = await prefApi.fetchPreferences(userId);
+    if (prefs) {
+      const serverNames = prefs.color_names && Object.keys(prefs.color_names).length > 0
+        ? { ...DEFAULT_COLOR_NAMES, ...prefs.color_names }
+        : localNames;
+      const serverOrder = prefs.color_order && prefs.color_order.length > 0
+        ? prefs.color_order
+        : localOrder;
+
+      useNotesStore.setState({
+        colorNames: serverNames,
+        colorOrder: serverOrder,
+      });
+      localStorage.setItem("remembrall-color-names", JSON.stringify(serverNames));
+      localStorage.setItem("remembrall-color-order", JSON.stringify(serverOrder));
+    } else if (Object.keys(localNames).length > 0 || localOrder.length > 0) {
+      await prefApi.upsertPreferences(userId, {
+        color_names: localNames,
+        color_order: localOrder,
+      });
     }
   } catch {}
 }

@@ -59,6 +59,8 @@ export interface UserPreferences {
   desktop_global_shortcut: string | null;
   desktop_auto_detect_clipboard: boolean;
   desktop_hide_on_blur: boolean;
+  color_names: Record<string, string>;
+  color_order: string[];
   created_at: string;
   updated_at: string;
 }
