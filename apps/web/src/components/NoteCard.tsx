@@ -6,7 +6,7 @@ import { useNotesStore, NOTE_COLORS, DARK_NOTE_COLORS } from "@/state/useNotesSt
 import { writeClipboard } from "@/lib/clipboard";
 import { useUIStore } from "@/state/useUIStore";
 import { exportSingleNote, downloadMarkdown, singleNoteFilename } from "@remembrall/export";
-import { Copy, Pin, PinOff, Duplicate, Download, Trash } from "./Icons";
+import { Copy, Pin, PinOff, Duplicate, Download, Trash, Palette } from "./Icons";
 import { useDragContext } from "./DragContext";
 import { useRef, useCallback, useState } from "react";
 
@@ -16,7 +16,7 @@ interface Props {
 }
 
 export default function NoteCard({ note, index }: Props) {
-  const { toggleSelect, selectedIds, setEditingId, deleteNote, duplicateNote, togglePin, updateNoteColor } =
+  const { toggleSelect, selectedIds, setEditingId, deleteNote, duplicateNote, togglePin, updateNoteColor, clusterMode } =
     useNotesStore();
   const { showToast, selectMode, resolvedTheme } = useUIStore();
   const isSelected = selectedIds.has(note.id);
@@ -71,8 +71,12 @@ export default function NoteCard({ note, index }: Props) {
           const cardBelow = elemBelow.closest("[data-note-card]");
           if (cardBelow) {
             const belowIndex = parseInt(cardBelow.getAttribute("data-note-index") || "-1", 10);
+            const belowColor = cardBelow.getAttribute("data-note-color") || "";
             if (belowIndex >= 0) {
               setTargetIndex(belowIndex);
+              if (clusterMode && belowColor && belowColor !== note.color) {
+                updateNoteColor(note.id, belowColor);
+              }
             }
           }
         }
@@ -119,6 +123,7 @@ export default function NoteCard({ note, index }: Props) {
       ref={cardRef}
       data-note-card
       data-note-index={index}
+      data-note-color={note.color || ""}
       className={`rounded-lg p-5 group relative ${getCardClassName(note.id)}`}
       style={style}
       onMouseDown={handleMouseDown}
@@ -178,17 +183,19 @@ export default function NoteCard({ note, index }: Props) {
       </div>
 
       <div
-        className="absolute top-1.5 right-1.5 flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+        className={`absolute top-1.5 right-1.5 flex items-center gap-0.5 transition-opacity ${note.color ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="relative" data-color-picker>
           <button
             onClick={() => setShowColors(!showColors)}
-            className="w-4 h-4 rounded-full border border-gray-300 dark:border-gray-600"
-            style={{ background: colorHex || "var(--surface-subtle)" }}
+            className="p-1.5 rounded transition-colors"
+            style={{ color: note.color ? "var(--text-secondary)" : "var(--text-muted)" }}
             title="Set color"
             aria-label="Set color"
-          />
+          >
+            <Palette />
+          </button>
           {showColors && (
             <div
               data-color-dropdown
@@ -214,6 +221,12 @@ export default function NoteCard({ note, index }: Props) {
             </div>
           )}
         </div>
+      </div>
+
+      <div
+        className="absolute top-1.5 right-10 flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+        onClick={(e) => e.stopPropagation()}
+      >
         <CardButton onClick={handleCopy} title="Copy">
           <Copy />
         </CardButton>

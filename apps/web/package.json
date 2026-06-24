@@ -14,13 +14,14 @@
     "@remembrall/crypto": "workspace:*",
     "@remembrall/export": "workspace:*",
     "@remembrall/supabase": "workspace:*",
-    "@supabase/supabase-js": "^2.50.0",
     "@supabase/ssr": "^0.6.1",
+    "@supabase/supabase-js": "^2.50.0",
+    "lucide-react": "^1.21.0",
     "next": "^15.5.19",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
-    "zustand": "^5.0.5",
-    "zod": "^3.25.67"
+    "zod": "^3.25.67",
+    "zustand": "^5.0.5"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.10",
