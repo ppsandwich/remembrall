@@ -244,7 +244,11 @@ export default function Header() {
                 <Settings />
               </HeaderButton>
               {(window as any).electronAPI && (
-                <HeaderButton onClick={() => (window as any).electronAPI.hidePopover()} title="Close">
+                <HeaderButton
+                  onClick={() => (window as any).electronAPI.hidePopover()}
+                  title="Close"
+                  style={{ color: "#EF4444", background: "rgba(239, 68, 68, 0.1)" }}
+                >
                   <X size={16} />
                 </HeaderButton>
               )}

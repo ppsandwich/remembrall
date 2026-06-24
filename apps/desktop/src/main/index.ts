@@ -80,7 +80,7 @@ function createPopoverWindow(): BrowserWindow {
 
   const win = new BrowserWindow({
     width: 320,
-    height: 400,
+    height: 480,
     show: false,
     frame: false,
     resizable: false,
@@ -100,7 +100,7 @@ function createPopoverWindow(): BrowserWindow {
   const trayBounds = tray?.getBounds();
   if (trayBounds) {
     const x = Math.round(trayBounds.x + trayBounds.width / 2 - 160);
-    const y = isMac ? Math.round(trayBounds.y + trayBounds.height + 4) : Math.round(trayBounds.y - 404);
+    const y = isMac ? Math.round(trayBounds.y + trayBounds.height + 4) : Math.round(trayBounds.y - 484);
     win.setPosition(x, y);
   } else {
     win.setPosition(width - 340, 40);
