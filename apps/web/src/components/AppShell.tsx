@@ -7,7 +7,7 @@ import { useAuthStore } from "@/state/useAuthStore";
 import { readClipboard } from "@/lib/clipboard";
 import { registerShortcut, initShortcuts } from "@/lib/shortcuts";
 import Header from "./Header";
-import SearchBox from "./SearchBox";
+import TagFilter from "./SearchBox";
 import QuickCapture from "./QuickCapture";
 import NoteList from "./NoteList";
 import NoteEditor from "./NoteEditor";
@@ -91,7 +91,7 @@ export default function AppShell() {
     <div className="min-h-screen flex flex-col" style={{ background: "var(--bg)" }}>
       <Header />
       <main className="flex-1 max-w-7xl w-full mx-auto px-8 py-6 flex flex-col gap-4">
-        <SearchBox />
+        <TagFilter />
         <QuickCapture />
         <BulkToolbar />
         <NoteList />
