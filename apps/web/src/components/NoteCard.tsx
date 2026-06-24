@@ -24,6 +24,8 @@ export default function NoteCard({ note, index }: Props) {
   const cardRef = useRef<HTMLDivElement>(null);
   const isDraggingRef = useRef(false);
   const mouseDownRef = useRef<{ x: number; y: number } | null>(null);
+  const noteColorRef = useRef(note.color);
+  noteColorRef.current = note.color;
   const [showColors, setShowColors] = useState(false);
 
   const colors = resolvedTheme === "dark" ? DARK_NOTE_COLORS : NOTE_COLORS;
@@ -74,7 +76,7 @@ export default function NoteCard({ note, index }: Props) {
             const belowColor = cardBelow.getAttribute("data-note-color") || "";
             if (belowIndex >= 0) {
               setTargetIndex(belowIndex);
-              if (clusterMode && belowColor && belowColor !== note.color) {
+              if (clusterMode && belowColor && belowColor !== noteColorRef.current) {
                 updateNoteColor(note.id, belowColor);
               }
             }
