@@ -191,6 +191,7 @@ export default function NoteCard({ note, index }: Props) {
           />
           {showColors && (
             <div
+              data-color-dropdown
               className="absolute right-0 top-full mt-1 p-2 rounded-lg shadow-lg z-50 flex gap-1.5 flex-wrap w-[140px]"
               style={{ background: "var(--surface)", border: "1px solid var(--border)" }}
             >
