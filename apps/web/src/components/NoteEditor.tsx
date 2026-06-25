@@ -285,6 +285,7 @@ export default function NoteEditor() {
         </div>
 
         <RichTextEditor
+          key={editingId || "new"}
           body={bodyHtml}
           onChange={scheduleSave}
           onKeyDown={handleKeyDown}
