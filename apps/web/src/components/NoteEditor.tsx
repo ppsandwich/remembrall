@@ -41,6 +41,13 @@ export default function NoteEditor() {
 
   useEffect(() => {
     if (!isOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = prev; };
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) return;
     if (!editingId) {
       setTitle("");
       setBodyHtml("");
