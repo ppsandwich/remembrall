@@ -385,9 +385,18 @@ export default function NoteCard({ note, index, highlighted, onHighlightEnd }: P
   const isPinned = note.pinned;
   const isDragged = dragState.isDragging && dragState.draggedId === note.id;
 
+  const isOrangeDark = resolvedTheme === "dark" && note.color === "orange";
+
   const style: React.CSSProperties = {
     ...getCardStyle(note.id, index),
-    background: colorHex || (isPinned ? "rgba(34, 197, 94, 0.06)" : "var(--surface)"),
+    ...(isOrangeDark
+      ? {
+          backgroundColor: "#431407",
+          backgroundImage: `url("data:image/svg+xml,%3Csvg width='20' height='20' viewBox='0 0 20 20' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%237c2d12' fill-opacity='0.3' fill-rule='evenodd'%3E%3Ccircle cx='3' cy='3' r='3'/%3E%3Ccircle cx='13' cy='13' r='3'/%3E%3C/g%3E%3C/svg%3E")`,
+        }
+      : {
+          background: colorHex || (isPinned ? "rgba(34, 197, 94, 0.06)" : "var(--surface)"),
+        }),
     border: isSelected ? "2px solid var(--accent)" : "1px solid var(--border)",
     cursor: isDragged ? "grabbing" : "pointer",
     transition: isDragged ? "none" : "background-color 300ms, transform 300ms",
