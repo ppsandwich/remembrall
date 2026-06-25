@@ -56,24 +56,35 @@ export default function Header() {
   const createNote = useNotesStore((s) => s.createNote);
   const setHighlightNoteId = useNotesStore((s) => s.setHighlightNoteId);
 
+  const MAX_RECORDING_SECONDS = 60;
   const { isRecording, start, stop, isSupported } = useVoiceRecording();
   const [transcribing, setTranscribing] = useState(false);
-  const [elapsed, setElapsed] = useState(0);
+  const [remaining, setRemaining] = useState(MAX_RECORDING_SECONDS);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const stopRef = useRef(stop);
+  stopRef.current = stop;
 
   useEffect(() => {
     if (isRecording) {
-      setElapsed(0);
-      timerRef.current = setInterval(() => setElapsed((s) => s + 1), 1000);
+      setRemaining(MAX_RECORDING_SECONDS);
+      timerRef.current = setInterval(() => {
+        setRemaining((s) => {
+          if (s <= 1) {
+            if (timerRef.current) clearInterval(timerRef.current);
+            timerRef.current = null;
+            stopRef.current();
+            return 0;
+          }
+          return s - 1;
+        });
+      }, 1000);
     } else {
       if (timerRef.current) clearInterval(timerRef.current);
       timerRef.current = null;
-      setElapsed(0);
+      setRemaining(MAX_RECORDING_SECONDS);
     }
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
   }, [isRecording]);
-
-  const formatTime = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 
   const handleVoiceToggle = useCallback(async () => {
     if (transcribing) return;
@@ -341,7 +352,7 @@ export default function Header() {
                   ) : isRecording ? (
                     <>
                       <Square size={14} />
-                      <span className="text-xs font-medium tabular-nums">{formatTime(elapsed)}</span>
+                      <span className="text-xs font-medium tabular-nums">{remaining}s remaining</span>
                     </>
                   ) : (
                     <AudioLines size={20} />
@@ -530,7 +541,7 @@ export default function Header() {
             ) : isRecording ? (
               <>
                 <Square size={18} />
-                <span className="text-xs font-medium tabular-nums">{formatTime(elapsed)}</span>
+                <span className="text-xs font-medium tabular-nums">{remaining}s remaining</span>
               </>
             ) : (
               <AudioLines size={22} />
