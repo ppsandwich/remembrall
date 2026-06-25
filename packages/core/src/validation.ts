@@ -7,6 +7,7 @@ export const NOTE_SOURCES = [
   "desktop",
   "extension",
   "import",
+  "welcome",
 ] as const;
 
 export const noteSourceSchema = z.enum(NOTE_SOURCES);

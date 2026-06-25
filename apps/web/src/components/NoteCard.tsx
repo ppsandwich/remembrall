@@ -6,7 +6,7 @@ import { useNotesStore, NOTE_COLORS, DARK_NOTE_COLORS, getColorDisplayName } fro
 import { writeClipboard } from "@/lib/clipboard";
 import { useUIStore } from "@/state/useUIStore";
 import { exportSingleNote, downloadMarkdown, singleNoteFilename } from "@brall/export";
-import { Copy, Pin, PinOff, Download, Trash, Palette, Undo } from "./Icons";
+import { Copy, Pin, PinOff, Download, Trash, Palette, Undo, X } from "./Icons";
 import { useDragContext } from "./DragContext";
 import RadialColorPicker from "./RadialColorPicker";
 import { useRef, useCallback, useState, useEffect } from "react";
@@ -19,7 +19,7 @@ interface Props {
 }
 
 export default function NoteCard({ note, index, highlighted, onHighlightEnd }: Props) {
-  const { toggleSelect, selectedIds, setEditingId, deleteNote, restoreNote, togglePin, updateNoteColor, moveNoteToPage, clusterMode, setDragging, colorNames, pages, activePageId } =
+  const { toggleSelect, selectedIds, setEditingId, deleteNote, dismissWelcomeNote, restoreNote, togglePin, updateNoteColor, moveNoteToPage, clusterMode, setDragging, colorNames, pages, activePageId } =
     useNotesStore();
   const { showToast, selectMode, resolvedTheme, setDragHint, showArchived } = useUIStore();
   const isSelected = selectedIds.has(note.id);
@@ -398,6 +398,22 @@ export default function NoteCard({ note, index, highlighted, onHighlightEnd }: P
           pages={pages}
           activePageId={activePageId}
         />
+      )}
+      {note.source === "welcome" && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            dismissWelcomeNote(note.id);
+          }}
+          className="absolute bottom-2 right-2 w-6 h-6 rounded-full flex items-center justify-center transition-colors"
+          style={{ background: "var(--surface-subtle)", color: "var(--text-muted)" }}
+          title="Dismiss"
+          aria-label="Dismiss welcome note"
+          onMouseEnter={(e) => { e.currentTarget.style.background = "var(--border)"; e.currentTarget.style.color = "var(--text)"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = "var(--surface-subtle)"; e.currentTarget.style.color = "var(--text-muted)"; }}
+        >
+          <X size={12} />
+        </button>
       )}
     </div>
   );

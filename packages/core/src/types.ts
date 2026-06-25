@@ -4,7 +4,8 @@ export type NoteSource =
   | "mobile-share"
   | "desktop"
   | "extension"
-  | "import";
+  | "import"
+  | "welcome";
 
 export interface EncryptedPayload {
   version: 1;

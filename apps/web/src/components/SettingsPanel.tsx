@@ -2,13 +2,13 @@
 
 import { useUIStore } from "@/state/useUIStore";
 import { useAuthStore } from "@/state/useAuthStore";
-import { useNotesStore, NOTE_COLORS, DARK_NOTE_COLORS, DEFAULT_COLOR_NAMES, getColorDisplayName } from "@/state/useNotesStore";
+import { useNotesStore, NOTE_COLORS, DARK_NOTE_COLORS, DEFAULT_COLOR_NAMES, getColorDisplayName, seedWelcomeNotes } from "@/state/useNotesStore";
 import { useState, useRef } from "react";
 import { testApiKey } from "@/lib/openrouter";
 import ExportMenu from "./ExportMenu";
 
 export default function SettingsPanel({ onClose }: { onClose: () => void }) {
-  const { theme, setTheme, resolvedTheme, showArchived, setShowArchived } = useUIStore();
+  const { theme, setTheme, resolvedTheme, showArchived, setShowArchived, showToast } = useUIStore();
   const { user, signOut } = useAuthStore();
   const { colorNames, colorOrder, setColorName, resetColorName, setColorOrder, openrouterKey, setOpenrouterKey } = useNotesStore();
   const [showExport, setShowExport] = useState(false);
@@ -280,6 +280,19 @@ export default function SettingsPanel({ onClose }: { onClose: () => void }) {
             </button>
             {showExport && <ExportMenu onClose={() => setShowExport(false)} />}
           </div>
+
+          <button
+            onClick={async () => {
+              await seedWelcomeNotes(true);
+              showToast("Welcome notes added.");
+            }}
+            className="w-full text-left text-xs py-2 px-3 rounded-md transition-colors"
+            style={{ color: "var(--text-muted)", border: "1px solid var(--border)" }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = "var(--surface-subtle)"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+          >
+            Restore welcome notes
+          </button>
 
           <div>
             <label className="text-xs font-medium mb-2.5 block" style={{ color: "var(--text-secondary)" }}>

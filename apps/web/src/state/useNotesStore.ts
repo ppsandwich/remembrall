@@ -96,6 +96,7 @@ interface NotesState {
   updateNoteColor: (id: string, color: string) => Promise<void>;
   moveNoteToPage: (noteId: string, pageId: string) => Promise<void>;
   deleteNote: (id: string) => Promise<void>;
+  dismissWelcomeNote: (id: string) => Promise<void>;
   undoDelete: () => Promise<void>;
   restoreNote: (id: string) => Promise<void>;
   duplicateNote: (id: string) => Promise<void>;
@@ -194,6 +195,9 @@ export const useNotesStore = create<NotesState>((set, get) => ({
         }
       }
       set({ notes: decrypted, loading: false });
+      if (decrypted.length === 0) {
+        seedWelcomeNotes();
+      }
     } catch {
       set({ loading: false });
     }
@@ -386,6 +390,13 @@ export const useNotesStore = create<NotesState>((set, get) => ({
       notes: s.notes.map((n) => n.id === id ? { ...n, deleted_at: new Date().toISOString() } : n),
       undoStack: [...s.undoStack, { note, timeout }],
     }));
+  },
+
+  dismissWelcomeNote: async (id: string) => {
+    set((s) => ({ notes: s.notes.filter((n) => n.id !== id) }));
+    try {
+      await api.hardDeleteNote(id);
+    } catch {}
   },
 
   undoDelete: async () => {
@@ -779,4 +790,74 @@ export async function initOpenrouterKey(userId?: string) {
       localStorage.setItem("remembrall-openrouter-key", prefs.openrouter_api_key);
     }
   } catch {}
+}
+
+const WELCOME_NOTES: { body: string; color: string }[] = [
+  { body: 'By default, <b>notes are sorted by colour</b> - change this from the toolbar', color: "red" },
+  { body: 'When in Sort by Colour, <b>drag notes to set colour</b>', color: "orange" },
+  { body: 'You can <b>rename the colours</b> from Settings to help you organize notes', color: "teal" },
+  { body: 'You can <b>create new pages</b> from the toolbar', color: "blue" },
+  { body: '<b>#tags and #colours can be typed into notes</b> to automatically label them', color: "green" },
+  { body: 'Provide an OpenRouter API key in Settings to <b>enable voice transcription</b>', color: "purple" },
+];
+
+export async function seedWelcomeNotes(force = false) {
+  const user = useAuthStore.getState().user;
+  const { encryptText } = useEncryptionStore.getState();
+  if (!user) return;
+
+  if (!force) {
+    const seeded = localStorage.getItem(`remembrall-welcome-${user.id}`);
+    if (seeded) return;
+
+    const store = useNotesStore.getState();
+    const existing = store.notes.filter((n) => n.source === "welcome");
+    if (existing.length > 0) {
+      localStorage.setItem(`remembrall-welcome-${user.id}`, "1");
+      return;
+    }
+
+    localStorage.setItem(`remembrall-welcome-${user.id}`, "1");
+  }
+
+  const activePageId = useNotesStore.getState().activePageId;
+
+  for (let i = 0; i < WELCOME_NOTES.length; i++) {
+    const { body, color } = WELCOME_NOTES[i];
+    const encryptedBody = await encryptText(body);
+    const preview = derivePreview(body);
+    const previewEncrypted = await encryptText(preview);
+
+    try {
+      const created = await api.createNote({
+        userId: user.id,
+        encryptedBody,
+        previewEncrypted,
+        source: "welcome",
+        pinned: false,
+        color,
+        pageId: activePageId || undefined,
+      });
+
+      const note: DecryptedNote = {
+        id: created.id,
+        user_id: created.user_id,
+        body,
+        preview,
+        pinned: false,
+        archived: false,
+        deleted_at: null,
+        duplicated_from: null,
+        source: "welcome",
+        position: i,
+        color,
+        page_id: activePageId,
+        title: "",
+        created_at: created.created_at,
+        updated_at: created.updated_at,
+      };
+
+      useNotesStore.setState((s) => ({ notes: [...s.notes, note] }));
+    } catch {}
+  }
 }

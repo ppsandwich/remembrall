@@ -467,12 +467,12 @@ export default function Header() {
       {openrouterKey && isSupported ? (
         <div
           className="fixed bottom-6 right-6 z-40 md:hidden flex items-center rounded-full shadow-lg overflow-hidden transition-all"
-          style={{ background: isRecording ? "#EF4444" : "#3B82F6", height: "3.25rem" }}
+          style={{ height: "3.25rem" }}
         >
           <button
             onClick={handleVoiceToggle}
             className="flex items-center justify-center transition-transform active:scale-95"
-            style={{ width: isRecording ? "auto" : "2.75rem", height: "3.25rem", color: "white", opacity: transcribing ? 0.6 : 1, paddingInline: isRecording ? "0.75rem" : undefined, gap: isRecording ? "0.375rem" : 0 }}
+            style={{ width: isRecording ? "auto" : "2.75rem", height: "3.25rem", color: "white", opacity: transcribing ? 0.6 : 1, paddingInline: isRecording ? "0.75rem" : undefined, gap: isRecording ? "0.375rem" : 0, background: isRecording ? "#EF4444" : "#3B82F6" }}
             title={isRecording ? "Stop recording" : transcribing ? "Transcribing…" : "New from voice"}
             aria-label={isRecording ? "Stop recording" : transcribing ? "Transcribing" : "New from voice"}
             disabled={transcribing}
@@ -492,18 +492,15 @@ export default function Header() {
             )}
           </button>
           {!isRecording && !transcribing && (
-            <>
-              <div style={{ width: "1px", height: "60%", background: "rgba(255,255,255,0.3)" }} />
-              <button
-                onClick={() => setShowQuickCapture(true)}
-                className="flex items-center justify-center transition-transform active:scale-95"
-                style={{ width: "2.75rem", height: "3.25rem", color: "white" }}
-                title="New note"
-                aria-label="New note"
-              >
-                <Plus size={24} />
-              </button>
-            </>
+            <button
+              onClick={() => setShowQuickCapture(true)}
+              className="flex items-center justify-center transition-transform active:scale-95"
+              style={{ width: "2.75rem", height: "3.25rem", color: "white", background: "#22C55E" }}
+              title="New note"
+              aria-label="New note"
+            >
+              <Plus size={24} />
+            </button>
           )}
         </div>
       ) : (
