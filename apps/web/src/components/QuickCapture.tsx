@@ -80,6 +80,7 @@ export default function QuickCapture({ onClose }: { onClose?: () => void }) {
         onChange={(e) => setBody(e.target.value)}
         onKeyDown={handleKeyDown}
         rows={6}
+        dir="ltr"
         className="w-full text-sm resize-none outline-none leading-relaxed"
         style={{ background: "transparent", color: "var(--text)" }}
         aria-label="Quick capture note"

@@ -273,6 +273,7 @@ export default function NoteEditor() {
               value={title}
               onChange={(e) => handleTitleChange(e.target.value)}
               placeholder="Title (optional)"
+              dir="ltr"
               className="w-full text-sm font-medium outline-none bg-transparent"
               style={{ color: "var(--text)" }}
             />

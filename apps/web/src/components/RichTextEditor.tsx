@@ -156,6 +156,7 @@ export default function RichTextEditor({ body, onChange, onKeyDown, placeholder,
         ref={setRef}
         contentEditable
         suppressContentEditableWarning
+        dir="ltr"
         role="textbox"
         aria-label="Note editor"
         aria-multiline
