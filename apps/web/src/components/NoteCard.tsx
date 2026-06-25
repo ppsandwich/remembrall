@@ -385,10 +385,12 @@ export default function NoteCard({ note, index, highlighted, onHighlightEnd }: P
   const isPinned = note.pinned;
   const isDragged = dragState.isDragging && dragState.draggedId === note.id;
 
+  const isRedDark = resolvedTheme === "dark" && note.color === "red";
   const isOrangeDark = resolvedTheme === "dark" && note.color === "orange";
   const isTealDark = resolvedTheme === "dark" && note.color === "teal";
   const isPurpleDark = resolvedTheme === "dark" && note.color === "purple";
   const isPinkDark = resolvedTheme === "dark" && note.color === "pink";
+  const isBlueDark = resolvedTheme === "dark" && note.color === "blue";
 
   const style: React.CSSProperties = {
     ...getCardStyle(note.id, index),
@@ -412,9 +414,14 @@ export default function NoteCard({ note, index, highlighted, onHighlightEnd }: P
                 backgroundColor: "#500724",
                 backgroundImage: `url("data:image/svg+xml,%3Csvg width='52' height='26' viewBox='0 0 52 26' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23831843' fill-opacity='0.4'%3E%3Cpath d='M10 10c0-2.21-1.79-4-4-4-3.314 0-6-2.686-6-6h2c0 2.21 1.79 4 4 4 3.314 0 6 2.686 6 6 0 2.21 1.79 4 4 4 3.314 0 6 2.686 6 6 0 2.21 1.79 4 4 4v2c-3.314 0-6-2.686-6-6 0-2.21-1.79-4-4-4-3.314 0-6-2.686-6-6zm25.464-1.95l8.486 8.486-1.414 1.414-8.486-8.486 1.414-1.414z' /%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
               }
-            : {
-                background: colorHex || (isPinned ? "rgba(34, 197, 94, 0.06)" : "var(--surface)"),
-              }),
+            : isBlueDark
+              ? {
+                  backgroundColor: "#172554",
+                  backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='88' height='24' viewBox='0 0 88 24'%3E%3Cg fill-rule='evenodd'%3E%3Cg id='autumn' fill='%231e3a8a' fill-opacity='0.4'%3E%3Cpath d='M10 0l30 15 2 1V2.18A10 10 0 0 0 41.76 0H39.7a8 8 0 0 1 .3 2.18v10.58L14.47 0H10zm31.76 24a10 10 0 0 0-5.29-6.76L4 1 2 0v13.82a10 10 0 0 0 5.53 8.94L10 24h4.47l-6.05-3.02A8 8 0 0 1 4 13.82V3.24l31.58 15.78A8 8 0 0 1 39.7 24h2.06zM78 24l2.47-1.24A10 10 0 0 0 86 13.82V0l-2 1-32.47 16.24A10 10 0 0 0 46.24 24h2.06a8 8 0 0 1 4.12-4.98L84 3.24v10.58a8 8 0 0 1-4.42 7.16L73.53 24H78zm0-24L48 15l-2 1V2.18A10 10 0 0 1 46.24 0h2.06a8 8 0 0 0-.3 2.18v10.58L73.53 0H78z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+                }
+              : {
+                  background: colorHex || (isPinned ? "rgba(34, 197, 94, 0.06)" : "var(--surface)"),
+                }),
     border: isSelected ? "2px solid var(--accent)" : "1px solid var(--border)",
     cursor: isDragged ? "grabbing" : "pointer",
     transition: isDragged ? "none" : "background-color 300ms, transform 300ms",
