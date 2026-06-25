@@ -1,10 +1,10 @@
-# PRD: Remembrall
+# PRD: Brall (formerly Remembrall)
 
 ## 1. Product Summary
 
-**Remembrall** is a speed-first, cross-platform note capture app designed for the smallest possible gap between “I should save this” and “it is saved”.
+**Brall** (formerly Remembrall) is a speed-first, cross-platform note capture app designed for the smallest possible gap between “I should save this” and “it is saved”.
 
-The app is inspired by Google Keep, Notion, and QuickNote, but it should avoid becoming a full productivity system. Remembrall is not trying to manage someone’s entire life, second brain, PARA method, weekly planning ritual, or other forms of stationery cosplay. It is a fast place to dump, find, copy, select, duplicate, delete, and export text.
+The app is inspired by Google Keep, Notion, and QuickNote, but it should avoid becoming a full productivity system. Brall is not trying to manage someone’s entire life, second brain, PARA method, weekly planning ritual, or other forms of stationery cosplay. It is a fast place to dump, find, copy, select, duplicate, delete, and export text.
 
 The core product promise:
 
@@ -104,6 +104,8 @@ The MVP will not include:
 23. Recovery of lost encryption passphrases.
 
 These can be considered later, but they are not part of the first build.
+
+> **Post-MVP note:** Items 1 (rich text editing) and 15 (voice capture via transcription) were added in later releases. See Revision History.
 
 ---
 
@@ -256,6 +258,8 @@ Recommended approach:
 
 - Tauri preferred for a lightweight desktop shell.
 - Electron acceptable if implementation simplicity is more important than bundle size.
+
+> **Implementation note:** Electron was chosen for the desktop app to prioritise development speed.
 
 Desktop requirements:
 
@@ -773,7 +777,7 @@ Quick actions:
 
 Requirements:
 
-- Plain text editor.
+- ~~Plain text editor.~~ **Rich text editor** (added post-MVP; supports basic formatting with LTR enforcement).
 - Auto-save after 400–800ms idle.
 - User can select text inside note normally.
 - Text selection must not accidentally trigger card drag/select behaviour.
@@ -974,6 +978,8 @@ If not implemented:
 
 - Keep `archived` field in schema for future use.
 - Do not show archive controls.
+
+> **Implementation note:** Archive and restore were fully implemented post-MVP. Notes are soft-deleted (archived) and can be restored from the archived view.
 
 ---
 
@@ -2032,11 +2038,11 @@ Future versions may include:
 
 1. Google Keep import.
 2. Tags.
-3. Archive view.
+3. ~~Archive view.~~ **Implemented** in v1.0.0.
 4. Trash view.
 5. Attachments.
 6. OCR.
-7. Voice capture.
+7. ~~Voice capture.~~ **Implemented** in v1.1.5 (transcription via OpenRouter Whisper).
 8. Browser side panel extension.
 9. Safari and Firefox extensions.
 10. Raycast extension.
@@ -2058,3 +2064,94 @@ Future versions may include:
 Future features must not compromise the core promise:
 
 > Open. Type or paste. Done.
+
+---
+
+## 30. Revision History
+
+### v1.1.8 — Touch drag-and-drop and Listening indicator
+
+- Added press-and-hold touch drag-and-drop for note cards on mobile devices (500ms hold threshold, 5px movement tolerance).
+- Added touch event support to RadialColorPicker for colour selection during drag on touch devices.
+- Added "Listening…" wave animation indicator above (mobile) and below (desktop) the voice recording button while recording.
+- Generalised DragContext types from `React.MouseEvent` to a shared `Point` interface for mouse/touch compatibility.
+
+### v1.1.7 — Welcome notes and onboarding
+
+- Added welcome notes for new users with dismiss and restore functionality.
+- Fixed dropdown closing when clicking inside portal menus.
+
+### v1.1.6 — PWA support
+
+- Added Progressive Web App support with service worker and web app manifest.
+- Fallback to default colour settings when empty.
+- Sequenced settings initialisation and removed local key sync.
+
+### v1.1.5 — Voice transcription
+
+- Added voice-to-note transcription via OpenRouter Whisper API.
+- Added recording timer (MM:SS) to voice button while recording.
+- Switched transcription request format to JSON.
+- Requires user-provided OpenRouter API key (configured in Settings).
+
+### v1.1.4 — macOS code signing fix
+
+- Fixed macOS code signing for desktop app distribution.
+
+### v1.1.3 — Scroll-to-note highlight
+
+- Added scroll-to-new-note with highlight animation after creation.
+- Improved note editor scroll behaviour.
+
+### v1.1.2 — Tray icon and shortcut polish
+
+- New custom tray icon with gold gradient volleyball motif.
+- Simplified paste shortcut for desktop capture.
+
+### v1.1.1 — Windows shortcut fix
+
+- Fixed paste-to-note shortcut on Windows (changed from `Ctrl+Shift+C` to `Ctrl+Shift+B`).
+
+### v1.1.0 — Context menu rebrand and toasts
+
+- Rebranded context menu items to Brall.
+- Updated global shortcut bindings.
+- Added notification toasts for capture feedback.
+
+### v1.0.0 — Brall rebrand
+
+- Renamed project from Remembrall to Brall.
+- New volleyball icon with gold gradient for tray, extension, and favicon.
+- UI improvements across header, note cards, and settings.
+- Added GitHub Actions CI/CD workflow for web and desktop builds.
+- Page management: multi-page/tab system with drag-to-reorder notes between pages.
+- Note colour coding with radial colour picker (Sort by Colour mode).
+- Drag-and-drop note reordering (mouse-based).
+- Archive and restore functionality (replaces hard delete in UI).
+- Responsive mobile layout with floating action button.
+- Chrome extension for clipping selected text and page URLs.
+- Desktop Electron app with system tray popover and global shortcut.
+- E2EE with PBKDF2 key derivation and AES-GCM encryption.
+- Local decrypted search.
+- Markdown export (single note, selection, or all notes).
+- Bulk operations (select, delete, duplicate, pin/unpin, copy, export).
+- Light and dark theme with system preference detection.
+- Keyboard shortcuts with help panel.
+
+### Pre-release — Original MVP build
+
+- Monorepo structure: `apps/web`, `apps/desktop`, `apps/extension`, `packages/core`, `packages/crypto`, `packages/export`, `packages/supabase`.
+- Supabase Auth (email/password, magic link).
+- Supabase Postgres with Row Level Security on all tables.
+- End-to-end encrypted note bodies (AES-GCM, PBKDF2).
+- Client-side encryption/decryption — zero Vercel API routes for CRUD.
+- Note CRUD: create, edit, copy, delete (soft), duplicate, pin/unpin.
+- Clipboard dump as note.
+- Local decrypted search (case-insensitive, in-memory).
+- Markdown export (client-side, post-decryption).
+- Bulk operations: select, delete, duplicate, copy, export.
+- Responsive layout: desktop header + mobile floating actions.
+- Light/dark theme toggle.
+- Zustand state management.
+- Tailwind CSS v4 styling.
+- Zod validation.

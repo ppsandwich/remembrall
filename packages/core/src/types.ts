@@ -4,7 +4,8 @@ export type NoteSource =
   | "mobile-share"
   | "desktop"
   | "extension"
-  | "import";
+  | "import"
+  | "welcome";
 
 export interface EncryptedPayload {
   version: 1;
@@ -72,6 +73,7 @@ export interface UserPreferences {
   desktop_global_shortcut: string | null;
   desktop_auto_detect_clipboard: boolean;
   desktop_hide_on_blur: boolean;
+  openrouter_api_key: string | null;
   color_names: Record<string, string>;
   color_order: string[];
   created_at: string;

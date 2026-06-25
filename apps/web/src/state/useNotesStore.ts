@@ -78,8 +78,10 @@ interface NotesState {
   frozenOrderIds: string[] | null;
   colorChangeFrozenIds: string[] | null;
   lastRecoloredId: string | null;
+  highlightNoteId: string | null;
   colorNames: Record<string, string>;
   colorOrder: string[];
+  openrouterKey: string | null;
 
   fetchAll: () => Promise<void>;
   fetchPages: () => Promise<void>;
@@ -88,12 +90,13 @@ interface NotesState {
   deletePage: (id: string) => Promise<void>;
   reorderPages: (pageId: string, targetIndex: number) => Promise<void>;
   setActivePage: (id: string) => void;
-  createNote: (body: string, source?: NoteSource, title?: string) => Promise<void>;
+  createNote: (body: string, source?: NoteSource, title?: string) => Promise<string | null>;
   updateNote: (id: string, body: string) => Promise<void>;
   updateNoteTitle: (id: string, title: string) => Promise<void>;
   updateNoteColor: (id: string, color: string) => Promise<void>;
   moveNoteToPage: (noteId: string, pageId: string) => Promise<void>;
   deleteNote: (id: string) => Promise<void>;
+  dismissWelcomeNote: (id: string) => Promise<void>;
   undoDelete: () => Promise<void>;
   restoreNote: (id: string) => Promise<void>;
   duplicateNote: (id: string) => Promise<void>;
@@ -106,9 +109,11 @@ interface NotesState {
   setDragging: (isDragging: boolean) => void;
   freezeColorChange: () => void;
   clearLastRecoloredId: () => void;
+  setHighlightNoteId: (id: string | null) => void;
   setColorName: (name: string, displayName: string) => void;
   resetColorName: (name: string) => void;
   setColorOrder: (order: string[]) => void;
+  setOpenrouterKey: (key: string | null) => void;
   toggleSelect: (id: string) => void;
   selectAll: () => void;
   clearSelection: () => void;
@@ -135,8 +140,10 @@ export const useNotesStore = create<NotesState>((set, get) => ({
   frozenOrderIds: null,
   colorChangeFrozenIds: null,
   lastRecoloredId: null,
+  highlightNoteId: null,
   colorNames: { ...DEFAULT_COLOR_NAMES },
   colorOrder: [...DEFAULT_COLOR_ORDER],
+  openrouterKey: null,
 
   fetchAll: async () => {
     const user = useAuthStore.getState().user;
@@ -188,6 +195,9 @@ export const useNotesStore = create<NotesState>((set, get) => ({
         }
       }
       set({ notes: decrypted, loading: false });
+      if (decrypted.length === 0) {
+        seedWelcomeNotes();
+      }
     } catch {
       set({ loading: false });
     }
@@ -268,7 +278,7 @@ export const useNotesStore = create<NotesState>((set, get) => ({
   createNote: async (body: string, source: NoteSource = "web", title: string = "") => {
     const user = useAuthStore.getState().user;
     const { encryptText } = useEncryptionStore.getState();
-    if (!user || !body.trim()) return;
+    if (!user || !body.trim()) return null;
 
     const { color, cleanedBody } = detectColorFromTags(body);
     const encryptedBody = await encryptText(cleanedBody);
@@ -308,6 +318,7 @@ export const useNotesStore = create<NotesState>((set, get) => ({
     };
 
     set((s) => ({ notes: [note, ...s.notes] }));
+    return created.id;
   },
 
   updateNote: async (id: string, body: string) => {
@@ -379,6 +390,13 @@ export const useNotesStore = create<NotesState>((set, get) => ({
       notes: s.notes.map((n) => n.id === id ? { ...n, deleted_at: new Date().toISOString() } : n),
       undoStack: [...s.undoStack, { note, timeout }],
     }));
+  },
+
+  dismissWelcomeNote: async (id: string) => {
+    set((s) => ({ notes: s.notes.filter((n) => n.id !== id) }));
+    try {
+      await api.hardDeleteNote(id);
+    } catch {}
   },
 
   undoDelete: async () => {
@@ -520,6 +538,8 @@ export const useNotesStore = create<NotesState>((set, get) => ({
 
   clearLastRecoloredId: () => set({ lastRecoloredId: null }),
 
+  setHighlightNoteId: (id: string | null) => set({ highlightNoteId: id }),
+
   setColorName: (name: string, displayName: string) => {
     const names = { ...get().colorNames, [name]: displayName };
     localStorage.setItem("remembrall-color-names", JSON.stringify(names));
@@ -546,6 +566,19 @@ export const useNotesStore = create<NotesState>((set, get) => ({
     const user = useAuthStore.getState().user;
     if (user) {
       prefApi.upsertPreferences(user.id, { color_order: order }).catch(() => {});
+    }
+  },
+
+  setOpenrouterKey: (key: string | null) => {
+    if (key) {
+      localStorage.setItem("remembrall-openrouter-key", key);
+    } else {
+      localStorage.removeItem("remembrall-openrouter-key");
+    }
+    set({ openrouterKey: key });
+    const user = useAuthStore.getState().user;
+    if (user) {
+      prefApi.upsertPreferences(user.id, { openrouter_api_key: key }).catch(() => {});
     }
   },
 
@@ -720,20 +753,111 @@ export async function initColorSettings(userId?: string) {
 
       const serverOrderRaw = prefs.color_order && prefs.color_order.length > 0
         ? prefs.color_order
-        : localOrder;
+        : localOrder.length > 0 ? localOrder : DEFAULT_COLOR_ORDER;
       const serverOrder = serverOrderRaw.filter((c: string) => validColorNames.has(c));
 
       useNotesStore.setState({
         colorNames: serverNames,
-        colorOrder: serverOrder,
+        colorOrder: serverOrder.length > 0 ? serverOrder : DEFAULT_COLOR_ORDER,
       });
       localStorage.setItem("remembrall-color-names", JSON.stringify(serverNames));
       localStorage.setItem("remembrall-color-order", JSON.stringify(serverOrder));
     } else if (Object.keys(localNames).length > 0 || localOrder.length > 0) {
       await prefApi.upsertPreferences(userId, {
-        color_names: localNames,
-        color_order: localOrder,
+        color_names: Object.keys(localNames).length > 0 ? localNames : DEFAULT_COLOR_NAMES,
+        color_order: localOrder.length > 0 ? localOrder : DEFAULT_COLOR_ORDER,
       });
     }
   } catch {}
+}
+
+export async function initOpenrouterKey(userId?: string) {
+  let localKey: string | null = null;
+  try {
+    const stored = localStorage.getItem("remembrall-openrouter-key");
+    if (stored) {
+      localKey = stored;
+      useNotesStore.setState({ openrouterKey: localKey });
+    }
+  } catch {}
+
+  if (!userId) return;
+
+  try {
+    const prefs = await prefApi.fetchPreferences(userId);
+    if (prefs?.openrouter_api_key) {
+      useNotesStore.setState({ openrouterKey: prefs.openrouter_api_key });
+      localStorage.setItem("remembrall-openrouter-key", prefs.openrouter_api_key);
+    }
+  } catch {}
+}
+
+const WELCOME_NOTES: { body: string; color: string }[] = [
+  { body: 'By default, <b>notes are sorted by colour</b> - change this from the toolbar', color: "red" },
+  { body: 'When in Sort by Colour, <b>drag notes to set colour</b>', color: "orange" },
+  { body: 'You can <b>rename the colours</b> from Settings to help you organize notes', color: "teal" },
+  { body: 'You can <b>create new pages</b> from the toolbar', color: "blue" },
+  { body: '<b>#tags and #colours can be typed into notes</b> to automatically label them', color: "green" },
+  { body: 'Provide an OpenRouter API key in Settings to <b>enable voice transcription</b>', color: "purple" },
+];
+
+export async function seedWelcomeNotes(force = false) {
+  const user = useAuthStore.getState().user;
+  const { encryptText } = useEncryptionStore.getState();
+  if (!user) return;
+
+  if (!force) {
+    const seeded = localStorage.getItem(`remembrall-welcome-${user.id}`);
+    if (seeded) return;
+
+    const store = useNotesStore.getState();
+    const existing = store.notes.filter((n) => n.source === "welcome");
+    if (existing.length > 0) {
+      localStorage.setItem(`remembrall-welcome-${user.id}`, "1");
+      return;
+    }
+
+    localStorage.setItem(`remembrall-welcome-${user.id}`, "1");
+  }
+
+  const activePageId = useNotesStore.getState().activePageId;
+
+  for (let i = 0; i < WELCOME_NOTES.length; i++) {
+    const { body, color } = WELCOME_NOTES[i];
+    const encryptedBody = await encryptText(body);
+    const preview = derivePreview(body);
+    const previewEncrypted = await encryptText(preview);
+
+    try {
+      const created = await api.createNote({
+        userId: user.id,
+        encryptedBody,
+        previewEncrypted,
+        source: "welcome",
+        pinned: false,
+        color,
+        pageId: activePageId || undefined,
+      });
+
+      const note: DecryptedNote = {
+        id: created.id,
+        user_id: created.user_id,
+        body,
+        preview,
+        pinned: false,
+        archived: false,
+        deleted_at: null,
+        duplicated_from: null,
+        source: "welcome",
+        position: i,
+        color,
+        page_id: activePageId,
+        title: "",
+        created_at: created.created_at,
+        updated_at: created.updated_at,
+      };
+
+      useNotesStore.setState((s) => ({ notes: [...s.notes, note] }));
+    } catch {}
+  }
 }

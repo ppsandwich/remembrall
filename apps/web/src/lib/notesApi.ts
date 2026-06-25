@@ -74,6 +74,15 @@ export async function softDeleteNote(noteId: string): Promise<void> {
   if (error) throw error;
 }
 
+export async function hardDeleteNote(noteId: string): Promise<void> {
+  const { error } = await getSupabase()
+    .from("notes")
+    .delete()
+    .eq("id", noteId);
+
+  if (error) throw error;
+}
+
 export async function restoreNote(noteId: string): Promise<void> {
   const { error } = await getSupabase()
     .from("notes")

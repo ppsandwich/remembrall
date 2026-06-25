@@ -47,6 +47,8 @@ function ToolbarButton({
 export default function RichTextEditor({ body, onChange, onKeyDown, placeholder, autoFocus, compact }: Props) {
   const editorRef = useRef<HTMLDivElement>(null);
   const initializedRef = useRef(false);
+  const bodyRef = useRef(body);
+  bodyRef.current = body;
 
   const handleInput = useCallback(() => {
     if (!editorRef.current) return;
@@ -118,15 +120,15 @@ export default function RichTextEditor({ body, onChange, onKeyDown, placeholder,
       return;
     }
     (editorRef as React.MutableRefObject<HTMLDivElement | null>).current = node;
-    if (!initializedRef.current && body) {
-      const html = isHtml(body) ? body : plainTextToHtml(body);
+    if (!initializedRef.current && bodyRef.current) {
+      const html = isHtml(bodyRef.current) ? bodyRef.current : plainTextToHtml(bodyRef.current);
       node.innerHTML = html;
       initializedRef.current = true;
     }
     if (autoFocus) {
       node.focus();
     }
-  }, [body, autoFocus]);
+  }, [autoFocus]);
 
   return (
     <div>
@@ -156,6 +158,7 @@ export default function RichTextEditor({ body, onChange, onKeyDown, placeholder,
         ref={setRef}
         contentEditable
         suppressContentEditableWarning
+        dir="ltr"
         role="textbox"
         aria-label="Note editor"
         aria-multiline
@@ -169,6 +172,9 @@ export default function RichTextEditor({ body, onChange, onKeyDown, placeholder,
           background: "transparent",
           color: "var(--text)",
           wordBreak: "break-word",
+          direction: "ltr",
+          unicodeBidi: "isolate-override",
+          textAlign: "left",
         }}
         data-placeholder={placeholder || "Start typing…"}
       />

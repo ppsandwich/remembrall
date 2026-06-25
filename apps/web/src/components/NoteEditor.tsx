@@ -208,12 +208,12 @@ export default function NoteEditor() {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-6"
+      className="fixed inset-0 z-50 flex items-center justify-center md:p-6"
       style={{ background: "rgba(0,0,0,0.25)", backdropFilter: "blur(2px)" }}
       onClick={handleClose}
     >
       <div
-        className="w-full max-w-2xl rounded-xl shadow-xl overflow-hidden flex flex-col"
+        className="w-full h-full md:h-auto md:max-w-2xl md:rounded-xl md:shadow-xl overflow-hidden flex flex-col"
         style={{ background: "var(--surface)", border: "1px solid var(--border)" }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -273,6 +273,7 @@ export default function NoteEditor() {
               value={title}
               onChange={(e) => handleTitleChange(e.target.value)}
               placeholder="Title (optional)"
+              dir="ltr"
               className="w-full text-sm font-medium outline-none bg-transparent"
               style={{ color: "var(--text)" }}
             />
@@ -284,6 +285,7 @@ export default function NoteEditor() {
         </div>
 
         <RichTextEditor
+          key={editingId || "new"}
           body={bodyHtml}
           onChange={scheduleSave}
           onKeyDown={handleKeyDown}

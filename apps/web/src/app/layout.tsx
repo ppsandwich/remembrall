@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "../styles/globals.css";
 
 export const metadata: Metadata = {
@@ -9,6 +9,15 @@ export const metadata: Metadata = {
     icon: "/favicon.svg",
     apple: "/apple-touch-icon.svg",
   },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Brall",
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#D4AF37",
 };
 
 export default function RootLayout({
@@ -17,14 +26,22 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" dir="ltr" suppressHydrationWarning>
       <head>
         <link
           href="https://fonts.googleapis.com/css2?family=Almendra:wght@400;700&display=swap"
           rel="stylesheet"
         />
+        <link rel="apple-touch-icon" href="/apple-touch-icon.svg" />
       </head>
-      <body suppressHydrationWarning>{children}</body>
+      <body suppressHydrationWarning>
+        {children}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js')}`,
+          }}
+        />
+      </body>
     </html>
   );
 }

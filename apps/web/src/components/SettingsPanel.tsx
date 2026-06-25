@@ -2,15 +2,19 @@
 
 import { useUIStore } from "@/state/useUIStore";
 import { useAuthStore } from "@/state/useAuthStore";
-import { useNotesStore, NOTE_COLORS, DARK_NOTE_COLORS, DEFAULT_COLOR_NAMES, getColorDisplayName } from "@/state/useNotesStore";
+import { useNotesStore, NOTE_COLORS, DARK_NOTE_COLORS, DEFAULT_COLOR_NAMES, getColorDisplayName, seedWelcomeNotes } from "@/state/useNotesStore";
 import { useState, useRef } from "react";
+import { testApiKey } from "@/lib/openrouter";
 import ExportMenu from "./ExportMenu";
 
 export default function SettingsPanel({ onClose }: { onClose: () => void }) {
-  const { theme, setTheme, resolvedTheme, showArchived, setShowArchived } = useUIStore();
+  const { theme, setTheme, resolvedTheme, showArchived, setShowArchived, showToast } = useUIStore();
   const { user, signOut } = useAuthStore();
-  const { colorNames, colorOrder, setColorName, resetColorName, setColorOrder } = useNotesStore();
+  const { colorNames, colorOrder, setColorName, resetColorName, setColorOrder, openrouterKey, setOpenrouterKey } = useNotesStore();
   const [showExport, setShowExport] = useState(false);
+  const [showKey, setShowKey] = useState(false);
+  const [keyInput, setKeyInput] = useState("");
+  const [testStatus, setTestStatus] = useState<"idle" | "testing" | "ok" | "fail">("idle");
   const colors = resolvedTheme === "dark" ? DARK_NOTE_COLORS : NOTE_COLORS;
   const colorMap = new Map(colors.map((c) => [c.name, c.hex]));
   const dragIndex = useRef<number | null>(null);
@@ -89,6 +93,130 @@ export default function SettingsPanel({ onClose }: { onClose: () => void }) {
 
           <div>
             <label className="text-xs font-medium mb-2.5 block" style={{ color: "var(--text-secondary)" }}>
+              Voice transcription
+            </label>
+            <p className="text-xs mb-3" style={{ color: "var(--text-muted)" }}>
+              Transcribe voice recordings into notes using your own OpenRouter API key.
+            </p>
+            {openrouterKey && !keyInput ? (
+              <div className="flex items-center gap-2">
+                <span className="text-xs" style={{ color: "var(--text-muted)" }}>Key saved</span>
+                <button
+                  onClick={() => {
+                    setKeyInput(openrouterKey);
+                    setTestStatus("idle");
+                  }}
+                  className="text-xs px-2 py-0.5 rounded transition-colors"
+                  style={{ color: "var(--text-muted)", border: "1px solid var(--border)" }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = "var(--surface-subtle)"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+                >
+                  Change
+                </button>
+                <button
+                  onClick={() => {
+                    setOpenrouterKey(null);
+                    setKeyInput("");
+                    setTestStatus("idle");
+                  }}
+                  className="text-xs px-2 py-0.5 rounded transition-colors"
+                  style={{ color: "#EF4444", border: "1px solid var(--border)" }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(239,68,68,0.1)"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+                >
+                  Remove
+                </button>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-2">
+                <div className="flex gap-2">
+                  <div className="relative flex-1">
+                    <input
+                      type={showKey ? "text" : "password"}
+                      value={keyInput}
+                      onChange={(e) => { setKeyInput(e.target.value); setTestStatus("idle"); }}
+                      placeholder="sk-or-..."
+                      className="w-full px-3 py-1.5 pr-8 rounded-md text-xs outline-none"
+                      style={{
+                        background: "var(--surface-subtle)",
+                        border: "1px solid var(--border)",
+                        color: "var(--text)",
+                      }}
+                      onFocus={(e) => (e.currentTarget.style.borderColor = "var(--border-strong)")}
+                      onBlur={(e) => (e.currentTarget.style.borderColor = "var(--border)")}
+                    />
+                    <button
+                      onClick={() => setShowKey(!showKey)}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 text-xs"
+                      style={{ color: "var(--text-muted)" }}
+                      title={showKey ? "Hide" : "Show"}
+                    >
+                      {showKey ? "Hide" : "Show"}
+                    </button>
+                  </div>
+                  <button
+                    onClick={async () => {
+                      if (!keyInput.trim()) return;
+                      setTestStatus("testing");
+                      const ok = await testApiKey(keyInput.trim());
+                      setTestStatus(ok ? "ok" : "fail");
+                    }}
+                    disabled={!keyInput.trim() || testStatus === "testing"}
+                    className="text-xs px-3 py-1.5 rounded-md transition-colors shrink-0"
+                    style={{
+                      color: "var(--text-muted)",
+                      border: "1px solid var(--border)",
+                      opacity: !keyInput.trim() || testStatus === "testing" ? 0.5 : 1,
+                    }}
+                    onMouseEnter={(e) => { if (keyInput.trim()) e.currentTarget.style.background = "var(--surface-subtle)"; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+                  >
+                    {testStatus === "testing" ? "..." : "Test"}
+                  </button>
+                </div>
+                <div className="flex items-center gap-2">
+                  {testStatus === "ok" && (
+                    <span className="text-xs" style={{ color: "#22C55E" }}>Connected</span>
+                  )}
+                  {testStatus === "fail" && (
+                    <span className="text-xs" style={{ color: "#EF4444" }}>Invalid key</span>
+                  )}
+                  {testStatus === "ok" && (
+                    <button
+                      onClick={() => {
+                        setOpenrouterKey(keyInput.trim());
+                        setKeyInput("");
+                        setTestStatus("idle");
+                      }}
+                      className="text-xs px-2 py-0.5 rounded transition-colors"
+                      style={{ color: "#22C55E", border: "1px solid #22C55E" }}
+                      onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(34,197,94,0.1)"; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+                    >
+                      Save key
+                    </button>
+                  )}
+                  {openrouterKey && (
+                    <button
+                      onClick={() => {
+                        setKeyInput("");
+                        setTestStatus("idle");
+                      }}
+                      className="text-xs px-2 py-0.5 rounded transition-colors ml-auto"
+                      style={{ color: "var(--text-muted)" }}
+                      onMouseEnter={(e) => { e.currentTarget.style.background = "var(--surface-subtle)"; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+                    >
+                      Cancel
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div>
+            <label className="text-xs font-medium mb-2.5 block" style={{ color: "var(--text-secondary)" }}>
               Colours
             </label>
             <p className="text-xs mb-3" style={{ color: "var(--text-muted)" }}>
@@ -152,6 +280,19 @@ export default function SettingsPanel({ onClose }: { onClose: () => void }) {
             </button>
             {showExport && <ExportMenu onClose={() => setShowExport(false)} />}
           </div>
+
+          <button
+            onClick={async () => {
+              await seedWelcomeNotes(true);
+              showToast("Welcome notes added.");
+            }}
+            className="w-full text-left text-xs py-2 px-3 rounded-md transition-colors"
+            style={{ color: "var(--text-muted)", border: "1px solid var(--border)" }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = "var(--surface-subtle)"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+          >
+            Restore welcome notes
+          </button>
 
           <div>
             <label className="text-xs font-medium mb-2.5 block" style={{ color: "var(--text-secondary)" }}>

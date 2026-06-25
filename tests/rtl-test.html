@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+  <title>RTL Test</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      font-size: 16px;
+      line-height: 1.5;
+      margin: 2rem;
+    }
+    .editor {
+      width: 100%;
+      padding: 1rem;
+      font-size: 0.875rem;
+      outline: none;
+      line-height: 1.625;
+      min-height: 300px;
+      max-height: 70vh;
+      overflow-y: auto;
+      background: #fff;
+      color: #111;
+      word-break: break-word;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+    }
+    .editor:empty::before {
+      content: attr(data-placeholder);
+      color: #999;
+      pointer-events: none;
+    }
+    h2 { margin-top: 2rem; }
+    #results { margin-top: 1rem; font-family: monospace; white-space: pre; }
+  </style>
+</head>
+<body>
+  <h1>ContentEditable Text Direction Test</h1>
+
+  <h2>Test 1: No direction set</h2>
+  <div id="editor1" contenteditable class="editor" data-placeholder="Type here (no dir)"></div>
+
+  <h2>Test 2: dir="ltr" attribute</h2>
+  <div id="editor2" contenteditable class="editor" dir="ltr" data-placeholder="Type here (dir=ltr)"></div>
+
+  <h2>Test 3: CSS direction: ltr</h2>
+  <div id="editor3" contenteditable class="editor" style="direction: ltr;" data-placeholder="Type here (CSS direction:ltr)"></div>
+
+  <h2>Test 4: CSS direction: ltr + unicode-bidi: isolate-override</h2>
+  <div id="editor4" contenteditable class="editor" style="direction: ltr; unicode-bidi: isolate-override;" data-placeholder="Type here (CSS direction:ltr + bidi)"></div>
+
+  <h2>Test 5: dir="ltr" + CSS direction: ltr + unicode-bidi: isolate-override</h2>
+  <div id="editor5" contenteditable class="editor" dir="ltr" style="direction: ltr; unicode-bidi: isolate-override;" data-placeholder="Type here (all combined)"></div>
+
+  <h2>Test 6: textarea (control)</h2>
+  <textarea class="editor" data-placeholder="Type here (textarea)"></textarea>
+
+  <button id="checkBtn" style="margin-top: 1rem; padding: 0.5rem 1rem; cursor: pointer;">Check Computed Directions</button>
+  <div id="results"></div>
+
+  <script>
+    document.getElementById('checkBtn').addEventListener('click', () => {
+      const ids = ['editor1', 'editor2', 'editor3', 'editor4', 'editor5'];
+      const results = [];
+      for (const id of ids) {
+        const el = document.getElementById(id);
+        const style = getComputedStyle(el);
+        results.push(`${id}: direction="${style.direction}", unicodeBidi="${style.unicodeBidi}", dir attr="${el.getAttribute('dir')}"`);
+      }
+      const ta = document.querySelector('textarea');
+      const taStyle = getComputedStyle(ta);
+      results.push(`textarea: direction="${taStyle.direction}", unicodeBidi="${taStyle.unicodeBidi}"`);
+      document.getElementById('results').textContent = results.join('\n');
+    });
+  </script>
+</body>
+</html>
