@@ -4,6 +4,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { useAuthStore } from "@/state/useAuthStore";
 import { useUIStore } from "@/state/useUIStore";
 import { useNotesStore } from "@/state/useNotesStore";
+import { addTag } from "@brall/core";
 import { useVoiceRecording } from "@/lib/useVoiceRecording";
 import { transcribeAudio } from "@/lib/openrouter";
 import { Sun, Moon, HelpCircle, Settings, LogOut, CheckSquare, Square, Layers, Volleyball, Search, X, Plus, Minus, ChevronDown, TableOfContents, Pencil, AudioLines } from "./Icons";
@@ -55,7 +56,8 @@ export default function Header() {
         setTranscribing(true);
         const text = await transcribeAudio(openrouterKey!, blob);
         if (text) {
-          const noteId = await createNote(text, "desktop");
+          const tagged = addTag(text, "voice");
+          const noteId = await createNote(tagged, "desktop");
           const activePage = pages.find((p) => p.id === activePageId);
           const tabName = activePage?.name || "notes";
           const preview = text.length > 32 ? text.slice(0, 32) + "…" : text;
