@@ -170,6 +170,8 @@ export default function RichTextEditor({ body, onChange, onKeyDown, placeholder,
           background: "transparent",
           color: "var(--text)",
           wordBreak: "break-word",
+          direction: "ltr",
+          unicodeBidi: "isolate-override",
         }}
         data-placeholder={placeholder || "Start typing…"}
       />
