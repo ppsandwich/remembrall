@@ -219,6 +219,166 @@ export default function NoteCard({ note, index, highlighted, onHighlightEnd }: P
     document.addEventListener("mouseup", handleMouseUp);
   }, [note.id, note.page_id, index, startDrag, updateDrag, endDrag, selectMode, toggleSelect, setEditingId, updateNoteColor, moveNoteToPage, clusterMode, setDragging, dragState]);
 
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    const target = e.target as HTMLElement;
+    if (target.closest("button") || target.closest("input") || target.closest("[data-color-picker]") || target.closest("[data-color-dropdown]")) return;
+
+    const touch = e.touches[0];
+    const startX = touch.clientX;
+    const startY = touch.clientY;
+    let isDragging = false;
+    let cancelled = false;
+    let hoveredTab: HTMLElement | null = null;
+
+    const clearTabHighlight = () => {
+      if (hoveredTab) {
+        hoveredTab.style.outline = "";
+        hoveredTab.style.outlineOffset = "";
+        hoveredTab = null;
+        setHoveredTabName(null);
+      }
+    };
+
+    const holdTimer = setTimeout(() => {
+      if (cancelled) return;
+      document.removeEventListener("touchmove", checkMovement);
+      document.removeEventListener("touchend", cancelHold);
+      document.removeEventListener("touchcancel", cancelHold);
+
+      isDragging = true;
+      originalColorRef.current = noteColorRef.current;
+      setDragging(true);
+      const rect = cardRef.current?.getBoundingClientRect();
+      startDrag(note.id, index, { clientX: startX, clientY: startY }, rect?.width || 0, rect?.height || 0);
+      if (clusterMode) {
+        const origin = { x: startX, y: startY };
+        setRadialOrigin(origin);
+        radialOriginRef.current = origin;
+      }
+      document.addEventListener("touchmove", onTouchMove, { passive: false });
+      document.addEventListener("touchend", onTouchEnd);
+      document.addEventListener("touchcancel", onTouchCancel);
+    }, 500);
+
+    function checkMovement(moveEvent: TouchEvent) {
+      const t = moveEvent.touches[0];
+      const dx = t.clientX - startX;
+      const dy = t.clientY - startY;
+      if (Math.abs(dx) > 5 || Math.abs(dy) > 5) cancelHold();
+    }
+
+    function cancelHold() {
+      if (cancelled) return;
+      cancelled = true;
+      clearTimeout(holdTimer);
+      document.removeEventListener("touchmove", checkMovement);
+      document.removeEventListener("touchend", cancelHold);
+      document.removeEventListener("touchcancel", cancelHold);
+    }
+
+    function onTouchMove(moveEvent: TouchEvent) {
+      if (!isDragging) return;
+      moveEvent.preventDefault();
+      const t = moveEvent.touches[0];
+      updateDrag({ clientX: t.clientX, clientY: t.clientY });
+      setMousePos({ x: t.clientX, y: t.clientY });
+
+      if (radialOriginRef.current) {
+        const dx = t.clientX - radialOriginRef.current.x;
+        const dy = t.clientY - radialOriginRef.current.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        setDragHint(dist > 250 ? "Turn off Sort by Colour to drag and drop notes" : null);
+      }
+
+      const draggedEl = cardRef.current;
+      if (draggedEl) draggedEl.style.pointerEvents = "none";
+      const elemBelow = document.elementFromPoint(t.clientX, t.clientY);
+      if (draggedEl) draggedEl.style.pointerEvents = "";
+
+      clearTabHighlight();
+
+      if (elemBelow) {
+        const tabBelow = elemBelow.closest("[data-tab-id]") as HTMLElement | null;
+        if (tabBelow) {
+          hoveredTab = tabBelow;
+          hoveredTab.style.outline = "2px solid var(--accent)";
+          hoveredTab.style.outlineOffset = "-2px";
+          if (tabBelow.hasAttribute("data-move-to-item")) {
+            setHoveredTabName(null);
+          } else {
+            const tabName = tabBelow.getAttribute("data-tab-name") || tabBelow.textContent?.trim() || null;
+            setHoveredTabName(tabName);
+          }
+        } else {
+          clearTabHighlight();
+          const cardBelow = elemBelow.closest("[data-note-card]");
+          if (cardBelow) {
+            const belowIndex = parseInt(cardBelow.getAttribute("data-note-index") || "-1", 10);
+            if (belowIndex >= 0) setTargetIndex(belowIndex);
+          }
+        }
+      }
+    }
+
+    function onTouchEnd(upEvent: TouchEvent) {
+      document.removeEventListener("touchmove", onTouchMove);
+      document.removeEventListener("touchend", onTouchEnd);
+      document.removeEventListener("touchcancel", onTouchCancel);
+      setDragHint(null);
+
+      if (isDragging) {
+        const droppedOnTab = hoveredTab;
+        const targetPageId = droppedOnTab?.getAttribute("data-tab-id");
+        clearTabHighlight();
+
+        const t = upEvent.changedTouches[0];
+        const dropX = t.clientX;
+        const dropY = t.clientY;
+        const originX = radialOriginRef.current?.x ?? 0;
+        const originY = radialOriginRef.current?.y ?? 0;
+        const dropDist = Math.sqrt((dropX - originX) ** 2 + (dropY - originY) ** 2);
+        const isOutOfRange = dropDist > 250;
+
+        setTimeout(() => {
+          if (radialColorRef.current && !isOutOfRange) {
+            updateNoteColor(note.id, radialColorRef.current === "none" ? "" : radialColorRef.current);
+          }
+          radialColorRef.current = null;
+          setDragging(false);
+          endDrag();
+          setRadialOrigin(null);
+          radialOriginRef.current = null;
+
+          if (targetPageId && targetPageId !== note.page_id) {
+            moveNoteToPage(note.id, targetPageId);
+          }
+        }, 0);
+      } else {
+        if (selectMode) {
+          toggleSelect(note.id);
+        } else {
+          setEditingId(note.id);
+        }
+      }
+    }
+
+    function onTouchCancel() {
+      document.removeEventListener("touchmove", onTouchMove);
+      document.removeEventListener("touchend", onTouchEnd);
+      document.removeEventListener("touchcancel", onTouchCancel);
+      if (isDragging) {
+        setDragging(false);
+        endDrag();
+        setRadialOrigin(null);
+        radialOriginRef.current = null;
+      }
+    }
+
+    document.addEventListener("touchmove", checkMovement, { passive: true });
+    document.addEventListener("touchend", cancelHold, { once: true });
+    document.addEventListener("touchcancel", cancelHold, { once: true });
+  }, [note.id, note.page_id, index, startDrag, updateDrag, endDrag, selectMode, toggleSelect, setEditingId, updateNoteColor, moveNoteToPage, clusterMode, setDragging, dragState]);
+
   const timeAgo = formatTimeAgo(note.updated_at);
   const noteTags = extractTags(note.body);
   const cleanPreview = stripTags(note.preview);
@@ -243,6 +403,7 @@ export default function NoteCard({ note, index, highlighted, onHighlightEnd }: P
       className={`rounded-lg p-5 group relative ${getCardClassName(note.id)}`}
       style={style}
       onMouseDown={handleMouseDown}
+      onTouchStart={handleTouchStart}
       onMouseEnter={(e) => {
         if (!isSelected && !dragState.isDragging) e.currentTarget.style.borderColor = "var(--border-strong)";
       }}

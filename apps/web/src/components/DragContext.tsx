@@ -13,10 +13,12 @@ interface DragState {
   isDragging: boolean;
 }
 
+interface Point { clientX: number; clientY: number }
+
 interface DragContextValue {
   dragState: DragState;
-  startDrag: (id: string, index: number, e: React.MouseEvent, cardWidth: number, cardHeight: number) => void;
-  updateDrag: (e: React.MouseEvent) => void;
+  startDrag: (id: string, index: number, e: Point, cardWidth: number, cardHeight: number) => void;
+  updateDrag: (e: Point) => void;
   setTargetIndex: (index: number) => void;
   endDrag: () => void;
   getCardStyle: (id: string, index: number) => React.CSSProperties;
@@ -50,7 +52,7 @@ export function DragProvider({ children, onReorder }: { children: ReactNode; onR
   onReorderRef.current = onReorder;
   const cardSizeRef = useRef({ width: 0, height: 0, gap: 12 });
 
-  const startDrag = useCallback((id: string, index: number, e: React.MouseEvent, cardWidth: number, cardHeight: number) => {
+  const startDrag = useCallback((id: string, index: number, e: Point, cardWidth: number, cardHeight: number) => {
     cardSizeRef.current = { width: cardWidth, height: cardHeight, gap: 12 };
     const newState: DragState = {
       draggedId: id,
@@ -68,7 +70,7 @@ export function DragProvider({ children, onReorder }: { children: ReactNode; onR
     document.body.style.userSelect = "none";
   }, []);
 
-  const updateDrag = useCallback((e: React.MouseEvent) => {
+  const updateDrag = useCallback((e: Point) => {
     if (!dragRef.current.isDragging) return;
 
     cancelAnimationFrame(animFrameRef.current);
