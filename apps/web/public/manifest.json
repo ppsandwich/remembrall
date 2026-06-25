@@ -4,7 +4,7 @@
   "description": "Open. Type or paste. Done.",
   "start_url": "/",
   "display": "standalone",
-  "theme_color": "#D4AF37",
+  "theme_color": "#FFFFFF",
   "background_color": "#FAFAF8",
   "icons": [
     {
