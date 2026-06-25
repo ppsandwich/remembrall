@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { createPortal } from "react-dom";
 import { useNotesStore } from "@/state/useNotesStore";
-import { Plus, Minus, ChevronDown, Pencil } from "./Icons";
+import { Plus, Minus, ChevronDown, Pencil, Settings } from "./Icons";
 
 const MAX_INLINE_TABS = 3;
 
@@ -14,6 +14,7 @@ export default function TabBar() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [editMode, setEditMode] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
   const [dropdownPos, setDropdownPos] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
   const [dragIndex, setDragIndex] = useState<number | null>(null);
@@ -319,70 +320,89 @@ export default function TabBar() {
             )}
           </div>
         )}
-        {creating ? (
-          <input
-            ref={newInputRef}
-            type="text"
-            value={newName}
-            onChange={(e) => setNewName(e.target.value)}
-            onBlur={handleCreate}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") handleCreate();
-              if (e.key === "Escape") { setCreating(false); setNewName(""); }
-            }}
-            placeholder="Page name"
-            className="px-2 py-1 text-xs outline-none rounded-md"
-            style={{
-              background: "var(--surface-subtle)",
-              color: "var(--text)",
-              border: "1px solid var(--border)",
-              width: "6rem",
-            }}
-          />
-        ) : (
-          <button
-            onClick={() => setCreating(true)}
-            className="p-1 rounded-md transition-colors"
-            style={{ color: "var(--text-muted)", border: "1px solid var(--border)" }}
-            title="New page"
-            aria-label="New page"
-            onMouseEnter={(e) => { e.currentTarget.style.background = "var(--surface-subtle)"; e.currentTarget.style.color = "var(--text-secondary)"; }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--text-muted)"; }}
-          >
-            <Plus size={14} />
-          </button>
-        )}
-        {activePageId && (
-          <button
-            onClick={() => {
-              const page = pages.find((p) => p.id === activePageId);
-              if (page) {
-                setEditingId(page.id);
-                setEditName(page.name);
-              }
-            }}
-            className="p-1 rounded-md transition-colors"
-            style={{ color: "var(--text-muted)", border: "1px solid var(--border)" }}
-            title="Rename active page"
-            aria-label="Rename active page"
-            onMouseEnter={(e) => { e.currentTarget.style.background = "var(--surface-subtle)"; e.currentTarget.style.color = "var(--text-secondary)"; }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--text-muted)"; }}
-          >
-            <Pencil size={14} />
-          </button>
-        )}
-        {pages.length > 1 && (
-          <button
-            onClick={() => setShowDeleteConfirm(true)}
-            className="p-1 rounded-md transition-colors"
-            style={{ color: "var(--text-muted)", border: "1px solid var(--border)" }}
-            title="Delete active page"
-            aria-label="Delete active page"
-            onMouseEnter={(e) => { e.currentTarget.style.background = "var(--surface-subtle)"; e.currentTarget.style.color = "var(--text-secondary)"; }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--text-muted)"; }}
-          >
-            <Minus size={14} />
-          </button>
+        <button
+          onClick={() => setEditMode(!editMode)}
+          className="p-1 rounded-md transition-colors"
+          style={{
+            color: editMode ? "var(--text)" : "var(--text-muted)",
+            border: "1px solid var(--border)",
+            background: editMode ? "var(--surface)" : "transparent",
+          }}
+          title="Edit pages"
+          aria-label="Edit pages"
+          onMouseEnter={(e) => { if (!editMode) { e.currentTarget.style.background = "var(--surface-subtle)"; e.currentTarget.style.color = "var(--text-secondary)"; } }}
+          onMouseLeave={(e) => { if (!editMode) { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--text-muted)"; } }}
+        >
+          <Settings size={14} />
+        </button>
+        {editMode && (
+          <>
+            {creating ? (
+              <input
+                ref={newInputRef}
+                type="text"
+                value={newName}
+                onChange={(e) => setNewName(e.target.value)}
+                onBlur={handleCreate}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") handleCreate();
+                  if (e.key === "Escape") { setCreating(false); setNewName(""); }
+                }}
+                placeholder="Page name"
+                className="px-2 py-1 text-xs outline-none rounded-md"
+                style={{
+                  background: "var(--surface-subtle)",
+                  color: "var(--text)",
+                  border: "1px solid var(--border)",
+                  width: "6rem",
+                }}
+              />
+            ) : (
+              <button
+                onClick={() => setCreating(true)}
+                className="p-1 rounded-md transition-colors"
+                style={{ color: "var(--text-muted)", border: "1px solid var(--border)" }}
+                title="New page"
+                aria-label="New page"
+                onMouseEnter={(e) => { e.currentTarget.style.background = "var(--surface-subtle)"; e.currentTarget.style.color = "var(--text-secondary)"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--text-muted)"; }}
+              >
+                <Plus size={14} />
+              </button>
+            )}
+            {activePageId && (
+              <button
+                onClick={() => {
+                  const page = pages.find((p) => p.id === activePageId);
+                  if (page) {
+                    setEditingId(page.id);
+                    setEditName(page.name);
+                  }
+                }}
+                className="p-1 rounded-md transition-colors"
+                style={{ color: "var(--text-muted)", border: "1px solid var(--border)" }}
+                title="Rename active page"
+                aria-label="Rename active page"
+                onMouseEnter={(e) => { e.currentTarget.style.background = "var(--surface-subtle)"; e.currentTarget.style.color = "var(--text-secondary)"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--text-muted)"; }}
+              >
+                <Pencil size={14} />
+              </button>
+            )}
+            {pages.length > 1 && (
+              <button
+                onClick={() => setShowDeleteConfirm(true)}
+                className="p-1 rounded-md transition-colors"
+                style={{ color: "var(--text-muted)", border: "1px solid var(--border)" }}
+                title="Delete active page"
+                aria-label="Delete active page"
+                onMouseEnter={(e) => { e.currentTarget.style.background = "var(--surface-subtle)"; e.currentTarget.style.color = "var(--text-secondary)"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--text-muted)"; }}
+              >
+                <Minus size={14} />
+              </button>
+            )}
+          </>
         )}
       </div>
 

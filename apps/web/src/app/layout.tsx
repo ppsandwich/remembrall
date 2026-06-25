@@ -28,6 +28,11 @@ export default function RootLayout({
   return (
     <html lang="en" dir="ltr" suppressHydrationWarning>
       <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var t=localStorage.getItem("remembrall-theme");if(!t){t=window.matchMedia("(prefers-color-scheme:dark)").matches?"dark":"light"}if(t==="dark"){document.documentElement.classList.add("dark")}var m=document.querySelector('meta[name="theme-color"]');if(m)m.setAttribute("content",t==="dark"?"#1A1A1A":"#FFFFFF")}catch(e){}})()`,
+          }}
+        />
         <link
           href="https://fonts.googleapis.com/css2?family=Almendra:wght@400;700&display=swap"
           rel="stylesheet"

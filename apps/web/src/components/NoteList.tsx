@@ -7,6 +7,7 @@ import { useUIStore } from "@/state/useUIStore";
 import { DragProvider } from "./DragContext";
 import NoteCard from "./NoteCard";
 import EmptyState from "./EmptyState";
+import { Plus } from "./Icons";
 
 const GRID_CLASS = "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 3xl:grid-cols-7 gap-3";
 
@@ -17,6 +18,7 @@ export default function NoteList() {
     lastRecoloredId, clearLastRecoloredId,
     highlightNoteId, setHighlightNoteId,
     setActivePage, scrollToPageId, setScrollToPageId,
+    createPage,
   } = useNotesStore();
   const showArchived = useUIStore((s) => s.showArchived);
 
@@ -26,6 +28,9 @@ export default function NoteList() {
   const positionsRef = useRef<Map<string, DOMRect>>(new Map());
   const [highlightedId, setHighlightedId] = useState<string | null>(null);
   const highlightTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [creatingSection, setCreatingSection] = useState(false);
+  const [newSectionName, setNewSectionName] = useState("");
+  const newSectionInputRef = useRef<HTMLInputElement>(null);
 
   const sections = useMemo(() => {
     const base = showArchived
@@ -199,6 +204,20 @@ export default function NoteList() {
     }
   }, [highlightNoteId, setHighlightNoteId]);
 
+  const handleCreateSection = () => {
+    if (newSectionName.trim()) {
+      createPage(newSectionName.trim());
+    }
+    setNewSectionName("");
+    setCreatingSection(false);
+  };
+
+  useEffect(() => {
+    if (creatingSection && newSectionInputRef.current) {
+      newSectionInputRef.current.focus();
+    }
+  }, [creatingSection]);
+
   if (loading) {
     return (
       <div className="py-16 text-center text-sm" style={{ color: "var(--text-muted)" }}>
@@ -282,6 +301,42 @@ export default function NoteList() {
 
           return sectionEl;
         })}
+        {creatingSection ? (
+          <div className="flex justify-center mt-8 mb-4">
+            <input
+              ref={newSectionInputRef}
+              type="text"
+              value={newSectionName}
+              onChange={(e) => setNewSectionName(e.target.value)}
+              onBlur={handleCreateSection}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") handleCreateSection();
+                if (e.key === "Escape") { setCreatingSection(false); setNewSectionName(""); }
+              }}
+              placeholder="Section name"
+              className="px-3 py-1.5 text-xs outline-none rounded-md"
+              style={{
+                background: "var(--surface-subtle)",
+                color: "var(--text)",
+                border: "1px solid var(--border)",
+              }}
+            />
+          </div>
+        ) : (
+          <div className="flex justify-center mt-8 mb-4">
+            <button
+              onClick={() => setCreatingSection(true)}
+              className="w-8 h-8 rounded-full flex items-center justify-center transition-colors"
+              style={{ color: "var(--text-muted)", border: "1px solid var(--border)" }}
+              title="Add section"
+              aria-label="Add section"
+              onMouseEnter={(e) => { e.currentTarget.style.background = "var(--surface-subtle)"; e.currentTarget.style.color = "var(--text-secondary)"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--text-muted)"; }}
+            >
+              <Plus size={14} />
+            </button>
+          </div>
+        )}
       </div>
     </DragProvider>
   );

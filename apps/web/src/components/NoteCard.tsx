@@ -381,7 +381,7 @@ export default function NoteCard({ note, index, highlighted, onHighlightEnd }: P
 
   const timeAgo = formatTimeAgo(note.updated_at);
   const noteTags = extractTags(note.body);
-  const cleanPreview = stripTags(note.preview);
+  const cleanPreview = stripTags(note.preview).replace(/[\r\n]+/g, " ");
   const isPinned = note.pinned;
   const isDragged = dragState.isDragging && dragState.draggedId === note.id;
 
