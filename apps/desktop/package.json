@@ -1,6 +1,6 @@
 {
   "name": "@brall/desktop",
-  "version": "1.1.3",
+  "version": "1.1.4",
   "description": "Brall - Capture and organize your thoughts",
   "author": "Sandwich Codes",
   "private": true,
@@ -48,6 +48,7 @@
         "dmg",
         "zip"
       ],
+      "identity": null,
       "extendInfo": {
         "LSUIElement": true
       }
