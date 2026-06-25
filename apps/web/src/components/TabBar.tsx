@@ -218,6 +218,7 @@ export default function TabBar() {
             className="px-3 py-1.5 text-xs transition-colors relative whitespace-nowrap cursor-grab active:cursor-grabbing"
             style={{
               color: activePageId === page.id ? "var(--text)" : "var(--text-muted)",
+              background: activePageId === page.id ? "var(--surface)" : "transparent",
               borderRadius: "4px",
               margin: "2px",
             }}
@@ -259,8 +260,7 @@ export default function TabBar() {
               style={{
                 left: indicatorStyle.left,
                 width: indicatorStyle.width,
-                background: "var(--surface)",
-                boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+                background: "transparent",
                 pointerEvents: "none",
               }}
             />
