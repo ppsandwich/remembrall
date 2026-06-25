@@ -295,7 +295,7 @@ export default function Header() {
               <div className="relative hidden md:flex">
                 <button
                   onClick={handleVoiceToggle}
-                  className={`mr-1 rounded-full flex items-center justify-center transition-all relative ${isRecording ? "voice-throb overflow-hidden" : ""}`}
+                  className={`mr-1 rounded-full flex items-center justify-center transition-all relative ${isRecording ? "voice-throb" : ""}`}
                   style={{
                     width: isRecording ? "auto" : "2.25rem",
                     height: "2.25rem",
@@ -482,7 +482,7 @@ export default function Header() {
         >
           <button
             onClick={handleVoiceToggle}
-            className={`flex items-center justify-center transition-transform active:scale-95 relative rounded-full ${isRecording ? "voice-throb overflow-hidden" : ""}`}
+            className={`flex items-center justify-center transition-transform active:scale-95 relative rounded-full ${isRecording ? "voice-throb" : ""}`}
             style={{ width: isRecording ? "auto" : "2.75rem", height: "3.25rem", color: "white", opacity: transcribing ? 0.6 : 1, paddingInline: isRecording ? "0.75rem" : undefined, gap: isRecording ? "0.375rem" : 0, background: isRecording ? "#EF4444" : "#3B82F6" }}
             title={isRecording ? "Stop recording" : transcribing ? "Transcribing…" : "New from voice"}
             aria-label={isRecording ? "Stop recording" : transcribing ? "Transcribing" : "New from voice"}
