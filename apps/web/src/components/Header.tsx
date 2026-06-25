@@ -296,7 +296,6 @@ export default function Header() {
 
             {openrouterKey && isSupported && (
               <div className="relative hidden md:flex">
-                {isRecording && <div className="voice-swirl-ring" style={{ width: "2.25rem", height: "2.25rem" }} />}
                 <button
                   onClick={handleVoiceToggle}
                   className="mr-1 rounded-full flex items-center justify-center transition-all relative"
@@ -318,6 +317,7 @@ export default function Header() {
                   onMouseDown={(e) => { if (!isRecording) e.currentTarget.style.background = "#2563EB"; }}
                   onMouseUp={(e) => { if (!isRecording) e.currentTarget.style.background = "#3B82F6"; }}
                 >
+                  {isRecording && <div className="voice-swirl-ring" style={{ width: "calc(100% + 8px)", height: "calc(100% + 8px)" }} />}
                   {transcribing ? (
                     <svg className="animate-spin" width="20" height="20" viewBox="0 0 24 24" fill="none">
                       <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" opacity="0.3" />
@@ -480,18 +480,18 @@ export default function Header() {
       )}
       {openrouterKey && isSupported ? (
         <div
-          className="fixed bottom-6 right-6 z-40 md:hidden flex items-center rounded-full shadow-lg overflow-hidden transition-all"
+          className="fixed bottom-6 right-6 z-40 md:hidden flex items-center transition-all"
           style={{ height: "3.25rem" }}
         >
-          {isRecording && <div className="voice-swirl-ring" style={{ width: "3.25rem", height: "3.25rem" }} />}
           <button
             onClick={handleVoiceToggle}
-            className="flex items-center justify-center transition-transform active:scale-95"
+            className="flex items-center justify-center transition-transform active:scale-95 relative rounded-full"
             style={{ width: isRecording ? "auto" : "2.75rem", height: "3.25rem", color: "white", opacity: transcribing ? 0.6 : 1, paddingInline: isRecording ? "0.75rem" : undefined, gap: isRecording ? "0.375rem" : 0, background: isRecording ? "#EF4444" : "#3B82F6" }}
             title={isRecording ? "Stop recording" : transcribing ? "Transcribing…" : "New from voice"}
             aria-label={isRecording ? "Stop recording" : transcribing ? "Transcribing" : "New from voice"}
             disabled={transcribing}
           >
+            {isRecording && <div className="voice-swirl-ring" style={{ width: "calc(100% + 8px)", height: "calc(100% + 8px)" }} />}
             {transcribing ? (
               <svg className="animate-spin" width="22" height="22" viewBox="0 0 24 24" fill="none">
                 <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" opacity="0.3" />
@@ -509,7 +509,7 @@ export default function Header() {
           {!isRecording && !transcribing && (
             <button
               onClick={() => setShowQuickCapture(true)}
-              className="flex items-center justify-center transition-transform active:scale-95"
+              className="flex items-center justify-center transition-transform active:scale-95 rounded-full"
               style={{ width: "2.75rem", height: "3.25rem", color: "white", background: "#22C55E" }}
               title="New note"
               aria-label="New note"
