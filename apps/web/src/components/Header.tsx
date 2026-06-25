@@ -10,33 +10,6 @@ import { transcribeAudio } from "@/lib/openrouter";
 import { Sun, Moon, HelpCircle, Settings, LogOut, CheckSquare, Square, Layers, Volleyball, Search, X, Plus, Minus, ChevronDown, TableOfContents, Pencil, AudioLines } from "./Icons";
 import TabBar from "./TabBar";
 
-const LISTENING_TEXT = "Listening…";
-
-function ListeningLabel({ position }: { position: "above" | "below" }) {
-  return (
-    <div
-      className="absolute left-1/2 -translate-x-1/2 flex items-center justify-center whitespace-nowrap pointer-events-none"
-      style={{
-        [position === "above" ? "bottom" : "top"]: "100%",
-        marginTop: position === "below" ? 4 : 0,
-        marginBottom: position === "above" ? 4 : 0,
-      }}
-    >
-      <span className="text-xs font-medium" style={{ color: "#EF4444" }}>
-        {LISTENING_TEXT.split("").map((char, i) => (
-          <span
-            key={i}
-            className="listening-char"
-            style={{ animationDelay: `${i * 0.06}s` }}
-          >
-            {char === " " ? "\u00A0" : char}
-          </span>
-        ))}
-      </span>
-    </div>
-  );
-}
-
 export default function Header() {
   const signOut = useAuthStore((s) => s.signOut);
   const clearSelection = useNotesStore((s) => s.clearSelection);
@@ -323,9 +296,10 @@ export default function Header() {
 
             {openrouterKey && isSupported && (
               <div className="relative hidden md:flex">
+                {isRecording && <div className="voice-swirl-ring" style={{ width: "2.25rem", height: "2.25rem" }} />}
                 <button
                   onClick={handleVoiceToggle}
-                  className={`mr-1 rounded-full flex items-center justify-center transition-all ${isRecording ? "voice-pulse" : ""}`}
+                  className="mr-1 rounded-full flex items-center justify-center transition-all relative"
                   style={{
                     width: isRecording ? "auto" : "2.25rem",
                     height: "2.25rem",
@@ -358,7 +332,6 @@ export default function Header() {
                     <AudioLines size={20} />
                   )}
                 </button>
-                {isRecording && <ListeningLabel position="below" />}
               </div>
             )}
 
@@ -510,21 +483,7 @@ export default function Header() {
           className="fixed bottom-6 right-6 z-40 md:hidden flex items-center rounded-full shadow-lg overflow-hidden transition-all"
           style={{ height: "3.25rem" }}
         >
-          {isRecording && (
-            <div className="absolute right-0 flex items-center justify-center" style={{ bottom: "calc(100% + 4px)" }}>
-              <span className="text-xs font-medium" style={{ color: "#EF4444" }}>
-                {LISTENING_TEXT.split("").map((char, i) => (
-                  <span
-                    key={i}
-                    className="listening-char"
-                    style={{ animationDelay: `${i * 0.06}s` }}
-                  >
-                    {char === " " ? "\u00A0" : char}
-                  </span>
-                ))}
-              </span>
-            </div>
-          )}
+          {isRecording && <div className="voice-swirl-ring" style={{ width: "3.25rem", height: "3.25rem" }} />}
           <button
             onClick={handleVoiceToggle}
             className="flex items-center justify-center transition-transform active:scale-95"

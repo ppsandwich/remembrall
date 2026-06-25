@@ -153,3 +153,29 @@ input[type="checkbox"] {
   display: inline-block;
   animation: listening-wave 1.2s ease-in-out infinite;
 }
+
+@keyframes voice-swirl {
+  0% { transform: translate(-50%, -50%) rotate(0deg); }
+  100% { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+.voice-swirl-ring {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: -1;
+  background: conic-gradient(
+    from 0deg,
+    #EF4444,
+    #F97316,
+    #F59E0B,
+    #EF4444,
+    transparent 60%
+  );
+  animation: voice-swirl 1s linear infinite;
+  opacity: 0.8;
+  filter: blur(3px);
+}
