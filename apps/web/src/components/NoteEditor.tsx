@@ -40,7 +40,13 @@ export default function NoteEditor() {
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout>>(null);
 
   useEffect(() => {
-    if (!editingId) return;
+    if (!isOpen) return;
+    if (!editingId) {
+      setTitle("");
+      setBodyHtml("");
+      setTags([]);
+      return;
+    }
     const current = useNotesStore.getState().notes.find((n) => n.id === editingId);
     if (current) {
       setTitle(current.title || "");
@@ -49,8 +55,12 @@ export default function NoteEditor() {
       const cleanBody = stripTagsFromHtml(fullBody);
       setBodyHtml(cleanBody);
       setTags(extractedTags);
+    } else {
+      setTitle("");
+      setBodyHtml("");
+      setTags([]);
     }
-  }, [editingId]);
+  }, [editingId, isOpen]);
 
   const scheduleSave = useCallback((newHtml: string) => {
     setBodyHtml(newHtml);

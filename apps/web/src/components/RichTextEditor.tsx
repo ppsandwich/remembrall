@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useCallback } from "react";
+import { useRef, useCallback, useEffect } from "react";
 import { Bold, Italic, UnderlineIcon, ListUnordered, ListOrdered } from "./Icons";
 import { plainTextToHtml, isHtml } from "@/lib/html";
 
@@ -49,6 +49,14 @@ export default function RichTextEditor({ body, onChange, onKeyDown, placeholder,
   const initializedRef = useRef(false);
   const bodyRef = useRef(body);
   bodyRef.current = body;
+
+  useEffect(() => {
+    if (!editorRef.current) return;
+    const html = body ? (isHtml(body) ? body : plainTextToHtml(body)) : "";
+    if (editorRef.current.innerHTML !== html) {
+      editorRef.current.innerHTML = html;
+    }
+  }, [body]);
 
   const handleInput = useCallback(() => {
     if (!editorRef.current) return;
