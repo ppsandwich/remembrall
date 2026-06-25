@@ -526,6 +526,73 @@ export default function Header() {
           <Plus size={24} />
         </button>
       )}
+
+      {openrouterKey && isSupported ? (
+        <div
+          className="fixed bottom-6 right-6 z-40 hidden md:flex items-center rounded-full overflow-hidden"
+          style={{ height: "3rem", backdropFilter: "blur(12px)", background: "color-mix(in srgb, var(--surface) 50%, transparent)" }}
+        >
+          <button
+            onClick={handleVoiceToggle}
+            className={`flex items-center justify-center transition-all active:scale-95 relative rounded-l-full ${isRecording ? "voice-throb" : ""}`}
+            style={{
+              width: isRecording ? "auto" : "2.5rem",
+              height: "3rem",
+              paddingInline: isRecording ? "0.75rem" : undefined,
+              gap: isRecording ? "0.375rem" : 0,
+              color: isRecording ? "white" : "#3B82F6",
+              background: isRecording ? "#EF4444" : "transparent",
+              border: isRecording ? "1px solid #EF4444" : "none",
+              opacity: transcribing ? 0.6 : 1,
+            }}
+            title={isRecording ? "Stop recording" : transcribing ? "Transcribing…" : "New from voice"}
+            aria-label={isRecording ? "Stop recording" : transcribing ? "Transcribing" : "New from voice"}
+            disabled={transcribing}
+            onMouseEnter={(e) => { if (!isRecording) e.currentTarget.style.background = "rgba(59,130,246,0.1)"; }}
+            onMouseLeave={(e) => { if (!isRecording) e.currentTarget.style.background = "transparent"; }}
+          >
+            {isRecording && <div className="voice-highlight-scroll" />}
+            {transcribing ? (
+              <svg className="animate-spin" width="20" height="20" viewBox="0 0 24 24" fill="none">
+                <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" opacity="0.3" />
+                <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+              </svg>
+            ) : isRecording ? (
+              <>
+                <Square size={14} />
+                <span className="text-xs font-medium tabular-nums">{remaining}s remaining</span>
+              </>
+            ) : (
+              <AudioLines size={20} />
+            )}
+          </button>
+          {!isRecording && !transcribing && (
+            <button
+              onClick={() => setShowQuickCapture(true)}
+              className="flex items-center justify-center transition-all active:scale-95 rounded-r-full"
+              style={{ width: "2.5rem", height: "3rem", color: "#22C55E", background: "transparent" }}
+              title="New note"
+              aria-label="New note"
+              onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(34,197,94,0.1)"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+            >
+              <Plus size={22} />
+            </button>
+          )}
+        </div>
+      ) : (
+        <button
+          onClick={() => setShowQuickCapture(true)}
+          className="fixed bottom-6 right-6 z-40 hidden md:flex rounded-full items-center justify-center transition-all active:scale-95"
+          style={{ width: "3rem", height: "3rem", color: "#22C55E", background: "transparent", border: "1px solid #22C55E", backdropFilter: "blur(12px)" }}
+          title="New note"
+          aria-label="New note"
+          onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(34,197,94,0.1)"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+        >
+          <Plus size={22} />
+        </button>
+      )}
     </>
   );
 }

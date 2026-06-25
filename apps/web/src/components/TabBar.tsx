@@ -324,12 +324,12 @@ export default function TabBar() {
           onClick={() => setEditMode(!editMode)}
           className="p-1 rounded-md transition-colors"
           style={{
-            color: editMode ? "var(--text)" : "var(--text-muted)",
-            border: "1px solid var(--border)",
-            background: editMode ? "var(--surface)" : "transparent",
+            color: editMode ? "#3B82F6" : "var(--text-muted)",
+            border: `1px solid ${editMode ? "#3B82F6" : "var(--border)"}`,
+            background: editMode ? "rgba(59, 130, 246, 0.1)" : "transparent",
           }}
-          title="Edit pages"
-          aria-label="Edit pages"
+          title="Edit sections"
+          aria-label="Edit sections"
           onMouseEnter={(e) => { if (!editMode) { e.currentTarget.style.background = "var(--surface-subtle)"; e.currentTarget.style.color = "var(--text-secondary)"; } }}
           onMouseLeave={(e) => { if (!editMode) { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--text-muted)"; } }}
         >
@@ -337,6 +337,19 @@ export default function TabBar() {
         </button>
         {editMode && (
           <>
+            {pages.length > 1 && (
+              <button
+                onClick={() => setShowDeleteConfirm(true)}
+                className="p-1 rounded-md transition-colors"
+                style={{ color: "var(--text-muted)", border: "1px solid var(--border)" }}
+                title="Delete active page"
+                aria-label="Delete active page"
+                onMouseEnter={(e) => { e.currentTarget.style.background = "var(--surface-subtle)"; e.currentTarget.style.color = "var(--text-secondary)"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--text-muted)"; }}
+              >
+                <Minus size={14} />
+              </button>
+            )}
             {creating ? (
               <input
                 ref={newInputRef}
@@ -387,19 +400,6 @@ export default function TabBar() {
                 onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--text-muted)"; }}
               >
                 <Pencil size={14} />
-              </button>
-            )}
-            {pages.length > 1 && (
-              <button
-                onClick={() => setShowDeleteConfirm(true)}
-                className="p-1 rounded-md transition-colors"
-                style={{ color: "var(--text-muted)", border: "1px solid var(--border)" }}
-                title="Delete active page"
-                aria-label="Delete active page"
-                onMouseEnter={(e) => { e.currentTarget.style.background = "var(--surface-subtle)"; e.currentTarget.style.color = "var(--text-secondary)"; }}
-                onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--text-muted)"; }}
-              >
-                <Minus size={14} />
               </button>
             )}
           </>
