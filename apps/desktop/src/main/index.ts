@@ -152,7 +152,7 @@ function createTray(): void {
   tray = new Tray(icon.resize({ width: 16, height: 16 }));
 
   const isMac = process.platform === "darwin";
-  const shortcutLabel = isMac ? "⌘⇧C" : "Ctrl+Shift+C";
+  const shortcutLabel = isMac ? "⌘⇧B" : "Ctrl+Shift+B";
 
   const contextMenu = Menu.buildFromTemplate([
     {
@@ -202,7 +202,7 @@ function createNoteFromClipboard(): void {
 }
 
 function registerGlobalShortcut(): void {
-  const shortcut = "CommandOrControl+Shift+C";
+  const shortcut = "CommandOrControl+Shift+B";
 
   globalShortcut.register(shortcut, async () => {
     // Save current clipboard content
