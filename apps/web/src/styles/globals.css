@@ -154,28 +154,34 @@ input[type="checkbox"] {
   animation: listening-wave 1.2s ease-in-out infinite;
 }
 
-@keyframes voice-swirl {
-  0% { transform: translate(-50%, -50%) rotate(0deg); }
-  100% { transform: translate(-50%, -50%) rotate(360deg); }
+@keyframes voice-highlight-scroll {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
 }
 
-.voice-swirl-ring {
+.voice-highlight-scroll {
   position: absolute;
-  top: 50%;
-  left: 50%;
-  border-radius: 50%;
+  inset: 0;
+  border-radius: inherit;
   pointer-events: none;
-  z-index: -1;
-  background: conic-gradient(
-    from 0deg,
+  z-index: 1;
+  background: linear-gradient(
+    90deg,
     transparent 0%,
-    #EF4444 15%,
-    #F97316 25%,
-    #F59E0B 35%,
-    transparent 40%,
+    rgba(255, 255, 255, 0.15) 25%,
+    rgba(255, 255, 255, 0.35) 50%,
+    rgba(255, 255, 255, 0.15) 75%,
     transparent 100%
   );
-  animation: voice-swirl 0.8s linear infinite;
-  -webkit-mask: radial-gradient(circle, transparent 65%, black 66%);
-  mask: radial-gradient(circle, transparent 65%, black 66%);
+  background-size: 200% 100%;
+  animation: voice-highlight-scroll 1.5s ease-in-out infinite;
+}
+
+@keyframes voice-throb {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.06); }
+}
+
+.voice-throb {
+  animation: voice-throb 1.2s ease-in-out infinite;
 }
