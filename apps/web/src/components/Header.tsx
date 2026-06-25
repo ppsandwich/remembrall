@@ -30,6 +30,22 @@ export default function Header() {
 
   const { isRecording, start, stop, isSupported } = useVoiceRecording();
   const [transcribing, setTranscribing] = useState(false);
+  const [elapsed, setElapsed] = useState(0);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    if (isRecording) {
+      setElapsed(0);
+      timerRef.current = setInterval(() => setElapsed((s) => s + 1), 1000);
+    } else {
+      if (timerRef.current) clearInterval(timerRef.current);
+      timerRef.current = null;
+      setElapsed(0);
+    }
+    return () => { if (timerRef.current) clearInterval(timerRef.current); };
+  }, [isRecording]);
+
+  const formatTime = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 
   const handleVoiceToggle = useCallback(async () => {
     if (transcribing) return;
@@ -268,22 +284,24 @@ export default function Header() {
             {openrouterKey && isSupported && (
               <button
                 onClick={handleVoiceToggle}
-                className={`mr-1 rounded-full flex items-center justify-center transition-colors hidden md:flex ${isRecording ? "voice-pulse" : ""}`}
+                className={`mr-1 rounded-full flex items-center justify-center transition-all hidden md:flex ${isRecording ? "voice-pulse" : ""}`}
                 style={{
-                  width: "2.25rem",
+                  width: isRecording ? "auto" : "2.25rem",
                   height: "2.25rem",
+                  paddingInline: isRecording ? "0.625rem" : undefined,
                   background: isRecording ? "#EF4444" : "transparent",
-                  color: isRecording ? "white" : "#22C55E",
-                  border: isRecording ? "1px solid #EF4444" : "1px solid #22C55E",
+                  color: isRecording ? "white" : "#3B82F6",
+                  border: isRecording ? "1px solid #EF4444" : "1px solid #3B82F6",
                   opacity: transcribing ? 0.6 : 1,
+                  gap: isRecording ? "0.375rem" : 0,
                 }}
                 title={isRecording ? "Stop recording" : transcribing ? "Transcribing…" : "New from voice"}
                 aria-label={isRecording ? "Stop recording" : transcribing ? "Transcribing" : "New from voice"}
                 disabled={transcribing}
-                onMouseEnter={(e) => { if (!isRecording) { e.currentTarget.style.background = "#22C55E"; e.currentTarget.style.color = "var(--surface)"; } }}
-                onMouseLeave={(e) => { if (!isRecording) { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "#22C55E"; } }}
-                onMouseDown={(e) => { if (!isRecording) e.currentTarget.style.background = "#16A34A"; }}
-                onMouseUp={(e) => { if (!isRecording) e.currentTarget.style.background = "#22C55E"; }}
+                onMouseEnter={(e) => { if (!isRecording) { e.currentTarget.style.background = "#3B82F6"; e.currentTarget.style.color = "var(--surface)"; } }}
+                onMouseLeave={(e) => { if (!isRecording) { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "#3B82F6"; } }}
+                onMouseDown={(e) => { if (!isRecording) e.currentTarget.style.background = "#2563EB"; }}
+                onMouseUp={(e) => { if (!isRecording) e.currentTarget.style.background = "#3B82F6"; }}
               >
                 {transcribing ? (
                   <svg className="animate-spin" width="20" height="20" viewBox="0 0 24 24" fill="none">
@@ -291,7 +309,10 @@ export default function Header() {
                     <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
                   </svg>
                 ) : isRecording ? (
-                  <Square size={16} />
+                  <>
+                    <Square size={14} />
+                    <span className="text-xs font-medium tabular-nums">{formatTime(elapsed)}</span>
+                  </>
                 ) : (
                   <AudioLines size={20} />
                 )}
@@ -443,13 +464,13 @@ export default function Header() {
       )}
       {openrouterKey && isSupported ? (
         <div
-          className="fixed bottom-6 right-6 z-40 md:hidden flex items-center rounded-full shadow-lg overflow-hidden"
-          style={{ background: isRecording ? "#EF4444" : "#22C55E", height: "3.25rem" }}
+          className="fixed bottom-6 right-6 z-40 md:hidden flex items-center rounded-full shadow-lg overflow-hidden transition-all"
+          style={{ background: isRecording ? "#EF4444" : "#3B82F6", height: "3.25rem" }}
         >
           <button
             onClick={handleVoiceToggle}
             className="flex items-center justify-center transition-transform active:scale-95"
-            style={{ width: "2.75rem", height: "3.25rem", color: "white", opacity: transcribing ? 0.6 : 1 }}
+            style={{ width: isRecording ? "auto" : "2.75rem", height: "3.25rem", color: "white", opacity: transcribing ? 0.6 : 1, paddingInline: isRecording ? "0.75rem" : undefined, gap: isRecording ? "0.375rem" : 0 }}
             title={isRecording ? "Stop recording" : transcribing ? "Transcribing…" : "New from voice"}
             aria-label={isRecording ? "Stop recording" : transcribing ? "Transcribing" : "New from voice"}
             disabled={transcribing}
@@ -460,21 +481,28 @@ export default function Header() {
                 <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
               </svg>
             ) : isRecording ? (
-              <Square size={20} />
+              <>
+                <Square size={18} />
+                <span className="text-xs font-medium tabular-nums">{formatTime(elapsed)}</span>
+              </>
             ) : (
               <AudioLines size={22} />
             )}
           </button>
-          <div style={{ width: "1px", height: "60%", background: "rgba(255,255,255,0.3)" }} />
-          <button
-            onClick={() => setShowQuickCapture(true)}
-            className="flex items-center justify-center transition-transform active:scale-95"
-            style={{ width: "2.75rem", height: "3.25rem", color: "white" }}
-            title="New note"
-            aria-label="New note"
-          >
-            <Plus size={24} />
-          </button>
+          {!isRecording && !transcribing && (
+            <>
+              <div style={{ width: "1px", height: "60%", background: "rgba(255,255,255,0.3)" }} />
+              <button
+                onClick={() => setShowQuickCapture(true)}
+                className="flex items-center justify-center transition-transform active:scale-95"
+                style={{ width: "2.75rem", height: "3.25rem", color: "white" }}
+                title="New note"
+                aria-label="New note"
+              >
+                <Plus size={24} />
+              </button>
+            </>
+          )}
         </div>
       ) : (
         <button

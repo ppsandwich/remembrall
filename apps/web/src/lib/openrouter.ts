@@ -12,15 +12,23 @@ export async function testApiKey(apiKey: string): Promise<boolean> {
 }
 
 export async function transcribeAudio(apiKey: string, blob: Blob): Promise<string> {
-  const form = new FormData();
-  const ext = blob.type.includes("webm") ? "webm" : "mp4";
-  form.append("file", blob, `recording.${ext}`);
-  form.append("model", "openai/whisper-1");
+  const buffer = await blob.arrayBuffer();
+  const base64 = btoa(String.fromCharCode(...new Uint8Array(buffer)));
+  const format = blob.type.includes("webm") ? "webm" : "mp4";
 
   const res = await fetch(`${BASE}/audio/transcriptions`, {
     method: "POST",
-    headers: { Authorization: `Bearer ${apiKey}` },
-    body: form,
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model: "openai/whisper-1",
+      input_audio: {
+        data: base64,
+        format,
+      },
+    }),
   });
 
   if (!res.ok) {
