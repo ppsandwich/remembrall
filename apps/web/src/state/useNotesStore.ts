@@ -82,6 +82,7 @@ interface NotesState {
   colorNames: Record<string, string>;
   colorOrder: string[];
   openrouterKey: string | null;
+  scrollToPageId: string | null;
 
   fetchAll: () => Promise<void>;
   fetchPages: () => Promise<void>;
@@ -114,6 +115,7 @@ interface NotesState {
   resetColorName: (name: string) => void;
   setColorOrder: (order: string[]) => void;
   setOpenrouterKey: (key: string | null) => void;
+  setScrollToPageId: (id: string | null) => void;
   toggleSelect: (id: string) => void;
   selectAll: () => void;
   clearSelection: () => void;
@@ -144,6 +146,7 @@ export const useNotesStore = create<NotesState>((set, get) => ({
   colorNames: { ...DEFAULT_COLOR_NAMES },
   colorOrder: [...DEFAULT_COLOR_ORDER],
   openrouterKey: null,
+  scrollToPageId: null,
 
   fetchAll: async () => {
     const user = useAuthStore.getState().user;
@@ -272,7 +275,7 @@ export const useNotesStore = create<NotesState>((set, get) => ({
 
   setActivePage: (id: string) => {
     try { localStorage.setItem("activePageId", id); } catch {}
-    set({ activePageId: id, selectedIds: new Set() });
+    set({ activePageId: id, selectedIds: new Set(), scrollToPageId: id });
   },
 
   createNote: async (body: string, source: NoteSource = "web", title: string = "") => {
@@ -580,6 +583,10 @@ export const useNotesStore = create<NotesState>((set, get) => ({
     if (user) {
       prefApi.upsertPreferences(user.id, { openrouter_api_key: key }).catch(() => {});
     }
+  },
+
+  setScrollToPageId: (id: string | null) => {
+    set({ scrollToPageId: id });
   },
 
   toggleSelect: (id: string) => {
