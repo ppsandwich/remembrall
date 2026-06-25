@@ -169,13 +169,14 @@ input[type="checkbox"] {
   z-index: -1;
   background: conic-gradient(
     from 0deg,
-    #EF4444,
-    #F97316,
-    #F59E0B,
-    #EF4444,
-    transparent 60%
+    transparent 0%,
+    #EF4444 15%,
+    #F97316 25%,
+    #F59E0B 35%,
+    transparent 40%,
+    transparent 100%
   );
-  animation: voice-swirl 1s linear infinite;
-  opacity: 0.8;
-  filter: blur(3px);
+  animation: voice-swirl 0.8s linear infinite;
+  -webkit-mask: radial-gradient(circle, transparent 65%, black 66%);
+  mask: radial-gradient(circle, transparent 65%, black 66%);
 }
