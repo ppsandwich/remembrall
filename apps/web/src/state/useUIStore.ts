@@ -24,6 +24,17 @@ interface UIState {
   setShowArchived: (show: boolean) => void;
 }
 
+function setThemeColorMeta(theme: "light" | "dark") {
+  const color = theme === "dark" ? "#1A1A1A" : "#FFFFFF";
+  let meta = document.querySelector('meta[name="theme-color"]');
+  if (!meta) {
+    meta = document.createElement("meta");
+    meta.setAttribute("name", "theme-color");
+    document.head.appendChild(meta);
+  }
+  meta.setAttribute("content", color);
+}
+
 export const useUIStore = create<UIState>((set) => ({
   theme: "light",
   resolvedTheme: "light",
@@ -39,6 +50,7 @@ export const useUIStore = create<UIState>((set) => ({
   setTheme: (theme) => {
     document.documentElement.classList.toggle("dark", theme === "dark");
     localStorage.setItem("remembrall-theme", theme);
+    setThemeColorMeta(theme);
     set({ theme, resolvedTheme: theme });
   },
 
@@ -66,6 +78,7 @@ export function initTheme() {
   const prefersDark = typeof window !== "undefined" && window.matchMedia("(prefers-color-scheme: dark)").matches;
   const theme = stored || (prefersDark ? "dark" : "light");
   document.documentElement.classList.toggle("dark", theme === "dark");
+  setThemeColorMeta(theme);
 
   const storedEnter = localStorage.getItem("remembrall-enter-to-save");
   const enterToSave = storedEnter === null ? true : storedEnter === "1";

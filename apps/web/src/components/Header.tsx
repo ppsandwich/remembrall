@@ -173,7 +173,7 @@ export default function Header() {
                 style={{
                   letterSpacing: "-0.01em",
                   fontFamily: "var(--font-almendra), serif",
-                  color: "white",
+                  color: "var(--text)",
                 }}
               >
                 Brall
