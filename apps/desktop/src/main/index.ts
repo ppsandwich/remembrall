@@ -204,36 +204,23 @@ function createNoteFromClipboard(): void {
 function registerGlobalShortcut(): void {
   const shortcut = "CommandOrControl+Shift+B";
 
-  globalShortcut.register(shortcut, async () => {
-    // Save current clipboard content
-    const previousClipboard = clipboard.readText();
-
+  globalShortcut.register(shortcut, () => {
     if (isMac) {
-      // On Mac, use AppleScript to simulate Cmd+C
       exec('osascript -e "tell application \\"System Events\\" to keystroke \\"c\\" using command down"', () => {
         setTimeout(() => {
-          const selectedText = clipboard.readText();
-          if (selectedText && selectedText.trim() && selectedText !== previousClipboard) {
-            createNoteWithText(selectedText);
+          const text = clipboard.readText();
+          if (text && text.trim()) {
+            createNoteWithText(text);
           }
-          // Restore original clipboard after a delay
-          setTimeout(() => {
-            if (previousClipboard) clipboard.writeText(previousClipboard);
-          }, 100);
         }, 200);
       });
     } else {
-      // On Windows, use PowerShell to simulate Ctrl+C
       exec('powershell -command "Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.SendKeys]::SendWait(\'^c\')"', () => {
         setTimeout(() => {
-          const selectedText = clipboard.readText();
-          if (selectedText && selectedText.trim() && selectedText !== previousClipboard) {
-            createNoteWithText(selectedText);
+          const text = clipboard.readText();
+          if (text && text.trim()) {
+            createNoteWithText(text);
           }
-          // Restore original clipboard after a delay
-          setTimeout(() => {
-            if (previousClipboard) clipboard.writeText(previousClipboard);
-          }, 100);
         }, 300);
       });
     }
