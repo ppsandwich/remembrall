@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useNotesStore, initColorSettings, initOpenrouterKey } from "@/state/useNotesStore";
 import { useUIStore, initTheme } from "@/state/useUIStore";
 import { useAuthStore } from "@/state/useAuthStore";
@@ -14,6 +14,7 @@ import BulkToolbar from "./BulkToolbar";
 import UndoToast from "./UndoToast";
 import ShortcutsPanel from "./ShortcutsPanel";
 import SettingsPanel from "./SettingsPanel";
+import DesktopFab from "./DesktopFab";
 
 export default function AppShell() {
   const { fetchAll, fetchPages, createNote, editingId, selectedIds, deleteNote, duplicateNote, clearSelection, selectAll, pages, activePageId, setHighlightNoteId } =
@@ -118,6 +119,21 @@ export default function AppShell() {
   }, [createNote, deleteNote, duplicateNote, selectedIds, editingId, clearSelection, selectAll, setShowShortcuts, setShowQuickCapture, showToast, setSelectMode]);
 
   const isDesktop = typeof window !== "undefined" && !!(window as any).electronAPI;
+  const mainRef = useRef<HTMLElement>(null);
+  const [fabRight, setFabRight] = useState(24);
+
+  const updateFabRight = useCallback(() => {
+    if (mainRef.current) {
+      const rect = mainRef.current.getBoundingClientRect();
+      setFabRight(window.innerWidth - rect.right + 15);
+    }
+  }, []);
+
+  useEffect(() => {
+    updateFabRight();
+    window.addEventListener("resize", updateFabRight);
+    return () => window.removeEventListener("resize", updateFabRight);
+  }, [updateFabRight]);
 
   if (!ready) {
     return (
@@ -133,10 +149,13 @@ export default function AppShell() {
       style={{ background: "var(--bg)", ...(isDesktop ? { zoom: 0.8 } : {}) }}
     >
       <Header />
-      <main className="flex-1 max-w-7xl w-full mx-auto px-8 py-6 flex flex-col gap-4">
+      <main ref={mainRef} className="flex-1 max-w-7xl w-full mx-auto px-8 py-6 flex flex-col gap-4 relative">
         <TagFilter />
         <BulkToolbar />
         <NoteList />
+        <div className="hidden md:block">
+          <DesktopFab right={fabRight} />
+        </div>
       </main>
       <footer className="px-8 py-4 text-right">
         <span className="text-xs" style={{ color: "var(--text-muted)", opacity: 0.5 }}>
