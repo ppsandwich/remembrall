@@ -343,7 +343,7 @@ export default function NoteCard({ note, index, highlighted, onHighlightEnd }: P
         <CardButton onClick={() => togglePin(note.id)} title={note.pinned ? "Unpin" : "Pin"}>
           {note.pinned ? <PinOff /> : <Pin />}
         </CardButton>
-        <CardButton onClick={handleExport} title="Export">
+        <CardButton onClick={handleExport} title="Export" className="hidden md:flex">
           <Download />
         </CardButton>
         <div className="relative" data-color-picker>
@@ -403,11 +403,11 @@ export default function NoteCard({ note, index, highlighted, onHighlightEnd }: P
   );
 }
 
-function CardButton({ onClick, title, danger, children }: { onClick: () => void; title: string; danger?: boolean; children: React.ReactNode }) {
+function CardButton({ onClick, title, danger, children, className }: { onClick: () => void; title: string; danger?: boolean; children: React.ReactNode; className?: string }) {
   return (
     <button
       onClick={onClick}
-      className="p-1.5 rounded transition-colors"
+      className={`p-1.5 rounded transition-colors ${className ?? ""}`}
       style={{ color: danger ? "var(--danger)" : "var(--text-secondary)" }}
       title={title}
       aria-label={title}

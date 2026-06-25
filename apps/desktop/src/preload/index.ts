@@ -7,4 +7,6 @@ contextBridge.exposeInMainWorld("electronAPI", {
   onCreateNote: (callback: (text: string) => void) => {
     ipcRenderer.on("create-note", (_event, text) => callback(text));
   },
+  showNotification: (title: string, body: string) =>
+    ipcRenderer.send("show-notification", title, body),
 });

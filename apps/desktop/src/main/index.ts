@@ -1,4 +1,4 @@
-import { app, BrowserWindow, Tray, Menu, globalShortcut, clipboard, ipcMain, nativeImage, screen, shell } from "electron";
+import { app, BrowserWindow, Tray, Menu, globalShortcut, clipboard, ipcMain, nativeImage, screen, shell, Notification } from "electron";
 import path from "path";
 import fs from "fs";
 import { exec } from "child_process";
@@ -151,6 +151,9 @@ function createTray(): void {
   const icon = createTrayIcon();
   tray = new Tray(icon.resize({ width: 16, height: 16 }));
 
+  const isMac = process.platform === "darwin";
+  const shortcutLabel = isMac ? "⌘⇧C" : "Ctrl+Shift+C";
+
   const contextMenu = Menu.buildFromTemplate([
     {
       label: "Show Brall",
@@ -158,7 +161,7 @@ function createTray(): void {
     },
     { type: "separator" },
     {
-      label: "Create Note from Clipboard",
+      label: `Paste note: ${shortcutLabel}`,
       click: () => createNoteFromClipboard(),
     },
     { type: "separator" },
@@ -199,7 +202,7 @@ function createNoteFromClipboard(): void {
 }
 
 function registerGlobalShortcut(): void {
-  const shortcut = "CommandOrControl+Shift+R";
+  const shortcut = "CommandOrControl+Shift+C";
 
   globalShortcut.register(shortcut, async () => {
     // Save current clipboard content
@@ -284,6 +287,10 @@ ipcMain.on("resize-popover", (_event, width: number, height: number) => {
   if (popoverWindow) {
     popoverWindow.setSize(width, height);
   }
+});
+
+ipcMain.on("show-notification", (_event, title: string, body: string) => {
+  new Notification({ title, body }).show();
 });
 
 app.whenReady().then(() => {

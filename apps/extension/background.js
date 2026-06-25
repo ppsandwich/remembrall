@@ -3,7 +3,7 @@ const REMEMBRALL_URL = "https://remembrall-web.vercel.app/";
 chrome.runtime.onInstalled.addListener(() => {
   chrome.contextMenus.create({
     id: "send-to-remembrall",
-    title: "Send to Remembrall",
+    title: "Send to Brall",
     contexts: ["selection"],
   });
 });

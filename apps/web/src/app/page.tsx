@@ -20,6 +20,16 @@ export default function Home() {
     }
   }, [user, initialize]);
 
+  useEffect(() => {
+    const electronAPI = (window as any).electronAPI;
+    if (!electronAPI?.onCreateNote) return;
+    electronAPI.onCreateNote((text: string) => {
+      if (!user) {
+        electronAPI.showNotification("Brall", "Sign in to Brall to create new notes.");
+      }
+    });
+  }, [user]);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-screen" style={{ background: "var(--bg)" }}>

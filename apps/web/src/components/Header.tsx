@@ -89,35 +89,33 @@ export default function Header() {
         style={{ background: "var(--surface)", borderColor: "var(--border)" }}
       >
         <div className="max-w-7xl w-full mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3 shrink-0">
-            {!(window as any).electronAPI && (
-              <>
-                <svg width="0" height="0" style={{ position: "absolute" }}>
-                  <defs>
-                    <linearGradient id="header-gold" x1="0%" y1="0%" x2="0%" y2="100%">
-                      <stop offset="0%" stopColor="#D4AF37" />
-                      <stop offset="50%" stopColor="#B8860B" />
-                      <stop offset="100%" stopColor="#996515" />
-                    </linearGradient>
-                  </defs>
-                </svg>
-                <Volleyball size={24} strokeWidth={1.5} style={{ stroke: "url(#header-gold)", fill: "none" }} />
-                <h1
-                  className="text-lg font-bold tracking-tight hidden sm:block"
-                  style={{
-                    letterSpacing: "-0.01em",
-                    fontFamily: "var(--font-almendra), serif",
-                    background: "linear-gradient(to bottom, #D4AF37, #B8860B, #996515)",
-                    WebkitBackgroundClip: "text",
-                    WebkitTextFillColor: "transparent",
-                    backgroundClip: "text",
-                  }}
-                >
-                  Brall
-                </h1>
-              </>
-            )}
-          </div>
+          {!(window as any).electronAPI && (
+            <div className="flex items-center gap-3 shrink-0">
+              <svg width="0" height="0" style={{ position: "absolute" }}>
+                <defs>
+                  <linearGradient id="header-gold" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stopColor="#D4AF37" />
+                    <stop offset="50%" stopColor="#B8860B" />
+                    <stop offset="100%" stopColor="#996515" />
+                  </linearGradient>
+                </defs>
+              </svg>
+              <Volleyball size={24} strokeWidth={1.5} style={{ stroke: "url(#header-gold)", fill: "none" }} />
+              <h1
+                className="text-lg font-bold tracking-tight hidden sm:block"
+                style={{
+                  letterSpacing: "-0.01em",
+                  fontFamily: "var(--font-almendra), serif",
+                  background: "linear-gradient(to bottom, #D4AF37, #B8860B, #996515)",
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                  backgroundClip: "text",
+                }}
+              >
+                Brall
+              </h1>
+            </div>
+          )}
 
           <div className="flex items-center gap-0.5 flex-1 min-w-0 ml-[30px]">
             <div className="hidden lg:flex flex-1 min-w-0 overflow-x-auto">
