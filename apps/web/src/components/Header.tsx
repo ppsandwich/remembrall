@@ -156,7 +156,7 @@ export default function Header() {
         style={{ background: "var(--surface)", borderColor: "var(--border)" }}
       >
         <div className="max-w-7xl w-full mx-auto flex items-center justify-between">
-          {!(window as any).electronAPI && (
+          {!(window as any).electronAPI && !window.matchMedia("(display-mode: standalone)").matches && (
             <div className="flex items-center gap-3 shrink-0">
               <svg width="0" height="0" style={{ position: "absolute" }}>
                 <defs>

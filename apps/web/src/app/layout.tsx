@@ -2,11 +2,17 @@ import type { Metadata, Viewport } from "next";
 import "../styles/globals.css";
 
 export const metadata: Metadata = {
+  title: "Brall",
   description: "Open. Type or paste. Done.",
   manifest: "/manifest.json",
+  icons: {
+    icon: "/favicon.svg",
+    apple: "/apple-touch-icon.svg",
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
+    title: "Brall",
   },
 };
 
