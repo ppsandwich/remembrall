@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useAuthStore } from "@/state/useAuthStore";
 import { useEncryptionStore } from "@/state/useEncryptionStore";
 import LoginScreen from "@/components/LoginScreen";
@@ -9,6 +9,8 @@ import AppShell from "@/components/AppShell";
 export default function Home() {
   const { user, loading, init } = useAuthStore();
   const { isReady, initialize } = useEncryptionStore();
+  const userRef = useRef(user);
+  userRef.current = user;
 
   useEffect(() => {
     init();
@@ -24,11 +26,11 @@ export default function Home() {
     const electronAPI = (window as any).electronAPI;
     if (!electronAPI?.onCreateNote) return;
     electronAPI.onCreateNote((text: string) => {
-      if (!user) {
+      if (!userRef.current) {
         electronAPI.showNotification("Brall", "Sign in to Brall to create new notes.");
       }
     });
-  }, [user]);
+  }, []);
 
   if (loading) {
     return (

@@ -7,7 +7,7 @@ import NoteCard from "./NoteCard";
 import EmptyState from "./EmptyState";
 
 export default function NoteList() {
-  const { loading, getFilteredNotes, moveNote, saveNoteOrder, clusterMode, lastRecoloredId, clearLastRecoloredId } = useNotesStore();
+  const { loading, getFilteredNotes, moveNote, saveNoteOrder, clusterMode, lastRecoloredId, clearLastRecoloredId, highlightNoteId, setHighlightNoteId } = useNotesStore();
   const notes = getFilteredNotes();
   const gridRef = useRef<HTMLDivElement>(null);
   const positionsRef = useRef<Map<string, DOMRect>>(new Map());
@@ -88,6 +88,20 @@ export default function NoteList() {
     }, 210);
     return () => { if (highlightTimerRef.current) clearTimeout(highlightTimerRef.current); };
   }, [lastRecoloredId, notes, capturePositions, animateReflow, clearLastRecoloredId]);
+
+  useEffect(() => {
+    if (!highlightNoteId) return;
+    const el = gridRef.current?.querySelector(`[data-note-card="${highlightNoteId}"]`);
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+      setTimeout(() => {
+        setHighlightedId(highlightNoteId);
+        setHighlightNoteId(null);
+      }, 300);
+    } else {
+      setHighlightNoteId(null);
+    }
+  }, [highlightNoteId, setHighlightNoteId]);
 
   if (loading) {
     return (

@@ -16,7 +16,7 @@ import ShortcutsPanel from "./ShortcutsPanel";
 import SettingsPanel from "./SettingsPanel";
 
 export default function AppShell() {
-  const { fetchAll, fetchPages, createNote, editingId, selectedIds, deleteNote, duplicateNote, clearSelection, selectAll, pages, activePageId } =
+  const { fetchAll, fetchPages, createNote, editingId, selectedIds, deleteNote, duplicateNote, clearSelection, selectAll, pages, activePageId, setHighlightNoteId } =
     useNotesStore();
   const { showSettings, setShowSettings, setShowShortcuts, setShowQuickCapture, showToast, setSelectMode, dragHint } = useUIStore();
   const { user } = useAuthStore();
@@ -38,11 +38,14 @@ export default function AppShell() {
     if (electronAPI?.onCreateNote) {
       electronAPI.onCreateNote(async (text: string) => {
         if (text && text.trim()) {
-          await createNote(text, "desktop");
+          const noteId = await createNote(text, "desktop");
           const activePage = pages.find((p) => p.id === activePageId);
           const tabName = activePage?.name || "notes";
           const preview = text.trim().length > 32 ? text.trim().slice(0, 32) + "…" : text.trim();
           showToast(`Pasted to new Brall note in ${tabName}: ${preview}`);
+          if (noteId) {
+            setHighlightNoteId(noteId);
+          }
         }
       });
     }

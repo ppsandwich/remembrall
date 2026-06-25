@@ -78,6 +78,7 @@ interface NotesState {
   frozenOrderIds: string[] | null;
   colorChangeFrozenIds: string[] | null;
   lastRecoloredId: string | null;
+  highlightNoteId: string | null;
   colorNames: Record<string, string>;
   colorOrder: string[];
 
@@ -88,7 +89,7 @@ interface NotesState {
   deletePage: (id: string) => Promise<void>;
   reorderPages: (pageId: string, targetIndex: number) => Promise<void>;
   setActivePage: (id: string) => void;
-  createNote: (body: string, source?: NoteSource, title?: string) => Promise<void>;
+  createNote: (body: string, source?: NoteSource, title?: string) => Promise<string | null>;
   updateNote: (id: string, body: string) => Promise<void>;
   updateNoteTitle: (id: string, title: string) => Promise<void>;
   updateNoteColor: (id: string, color: string) => Promise<void>;
@@ -106,6 +107,7 @@ interface NotesState {
   setDragging: (isDragging: boolean) => void;
   freezeColorChange: () => void;
   clearLastRecoloredId: () => void;
+  setHighlightNoteId: (id: string | null) => void;
   setColorName: (name: string, displayName: string) => void;
   resetColorName: (name: string) => void;
   setColorOrder: (order: string[]) => void;
@@ -135,6 +137,7 @@ export const useNotesStore = create<NotesState>((set, get) => ({
   frozenOrderIds: null,
   colorChangeFrozenIds: null,
   lastRecoloredId: null,
+  highlightNoteId: null,
   colorNames: { ...DEFAULT_COLOR_NAMES },
   colorOrder: [...DEFAULT_COLOR_ORDER],
 
@@ -268,7 +271,7 @@ export const useNotesStore = create<NotesState>((set, get) => ({
   createNote: async (body: string, source: NoteSource = "web", title: string = "") => {
     const user = useAuthStore.getState().user;
     const { encryptText } = useEncryptionStore.getState();
-    if (!user || !body.trim()) return;
+    if (!user || !body.trim()) return null;
 
     const { color, cleanedBody } = detectColorFromTags(body);
     const encryptedBody = await encryptText(cleanedBody);
@@ -308,6 +311,7 @@ export const useNotesStore = create<NotesState>((set, get) => ({
     };
 
     set((s) => ({ notes: [note, ...s.notes] }));
+    return created.id;
   },
 
   updateNote: async (id: string, body: string) => {
@@ -519,6 +523,8 @@ export const useNotesStore = create<NotesState>((set, get) => ({
   },
 
   clearLastRecoloredId: () => set({ lastRecoloredId: null }),
+
+  setHighlightNoteId: (id: string | null) => set({ highlightNoteId: id }),
 
   setColorName: (name: string, displayName: string) => {
     const names = { ...get().colorNames, [name]: displayName };
