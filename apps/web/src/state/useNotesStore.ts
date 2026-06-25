@@ -7,6 +7,7 @@ import { useUIStore } from "./useUIStore";
 import * as api from "@/lib/notesApi";
 import * as prefApi from "@/lib/preferencesApi";
 import * as pagesApi from "@/lib/pagesApi";
+import * as shareApi from "@/lib/shareApi";
 
 export const NOTE_COLORS = [
   { name: "none", hex: "" },
@@ -83,9 +84,11 @@ interface NotesState {
   colorOrder: string[];
   openrouterKey: string | null;
   scrollToPageId: string | null;
+  sectionPermissions: Map<string, string>;
 
   fetchAll: () => Promise<void>;
   fetchPages: () => Promise<void>;
+  fetchSharedPages: () => Promise<void>;
   createPage: (name: string) => Promise<void>;
   updatePage: (id: string, name: string) => Promise<void>;
   deletePage: (id: string) => Promise<void>;
@@ -147,6 +150,7 @@ export const useNotesStore = create<NotesState>((set, get) => ({
   colorOrder: [...DEFAULT_COLOR_ORDER],
   openrouterKey: null,
   scrollToPageId: null,
+  sectionPermissions: new Map(),
 
   fetchAll: async () => {
     const user = useAuthStore.getState().user;
@@ -218,6 +222,24 @@ export const useNotesStore = create<NotesState>((set, get) => ({
         const restored = saved && pages.some((p) => p.id === saved) ? saved : pages[0].id;
         set({ activePageId: restored });
       }
+    } catch {}
+  },
+
+  fetchSharedPages: async () => {
+    try {
+      const shared = await shareApi.fetchSharedPages();
+      const permissions = new Map<string, string>();
+      for (const { page, permission } of shared) {
+        permissions.set(page.id, permission);
+      }
+      const ownPages = get().pages;
+      const sharedPages = shared
+        .map((s) => s.page)
+        .filter((p) => !ownPages.some((op) => op.id === p.id));
+      set({
+        pages: [...ownPages, ...sharedPages],
+        sectionPermissions: permissions,
+      });
     } catch {}
   },
 

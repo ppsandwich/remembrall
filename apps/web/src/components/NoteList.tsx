@@ -7,7 +7,8 @@ import { useUIStore } from "@/state/useUIStore";
 import { DragProvider } from "./DragContext";
 import NoteCard from "./NoteCard";
 import EmptyState from "./EmptyState";
-import { Plus } from "./Icons";
+import ShareDialog from "./ShareDialog";
+import { Plus, Share2 } from "./Icons";
 
 const GRID_CLASS = "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 3xl:grid-cols-7 gap-3";
 
@@ -18,7 +19,7 @@ export default function NoteList() {
     lastRecoloredId, clearLastRecoloredId,
     highlightNoteId, setHighlightNoteId,
     setActivePage, scrollToPageId, setScrollToPageId,
-    createPage,
+    createPage, sectionPermissions,
   } = useNotesStore();
   const showArchived = useUIStore((s) => s.showArchived);
 
@@ -31,6 +32,7 @@ export default function NoteList() {
   const [creatingSection, setCreatingSection] = useState(false);
   const [newSectionName, setNewSectionName] = useState("");
   const newSectionInputRef = useRef<HTMLInputElement>(null);
+  const [sharingSection, setSharingSection] = useState<{ id: string; name: string } | null>(null);
 
   const sections = useMemo(() => {
     const base = showArchived
@@ -244,6 +246,7 @@ export default function NoteList() {
             <section
               key={section.page.id}
               data-section-id={section.page.id}
+              className="group"
               ref={(el) => {
                 if (el) sectionRefs.current.set(section.page.id, el);
                 else sectionRefs.current.delete(section.page.id);
@@ -252,12 +255,27 @@ export default function NoteList() {
               {sectionIdx > 0 && (
                 <hr className="border-0 my-8" style={{ borderTop: "1px solid var(--border)" }} />
               )}
-              <h2
-                className="text-sm font-medium mb-3 ml-1"
-                style={{ color: "var(--text-secondary)" }}
-              >
-                {section.page.name}
-              </h2>
+              <div className="flex items-center gap-1.5 mb-3 ml-1">
+                <h2
+                  className="text-sm font-medium"
+                  style={{ color: "var(--text-secondary)" }}
+                >
+                  {section.page.name}
+                </h2>
+                {!sectionPermissions.has(section.page.id) && (
+                  <button
+                    onClick={() => setSharingSection({ id: section.page.id, name: section.page.name })}
+                    className="p-1 rounded transition-colors opacity-0 group-hover:opacity-100"
+                    style={{ color: "var(--text-muted)" }}
+                    title="Share section"
+                    aria-label="Share section"
+                    onMouseEnter={(e) => { e.currentTarget.style.color = "var(--text-secondary)"; e.currentTarget.style.background = "var(--surface-subtle)"; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.color = "var(--text-muted)"; e.currentTarget.style.background = "transparent"; }}
+                  >
+                    <Share2 size={13} />
+                  </button>
+                )}
+              </div>
               {pinned.length > 0 && (
                 <>
                   <h3 className="text-xs font-medium mb-2 ml-1" style={{ color: "var(--text-muted)" }}>Pinned</h3>
@@ -338,6 +356,13 @@ export default function NoteList() {
           </div>
         )}
       </div>
+      {sharingSection && (
+        <ShareDialog
+          sectionId={sharingSection.id}
+          sectionName={sharingSection.name}
+          onClose={() => setSharingSection(null)}
+        />
+      )}
     </DragProvider>
   );
 }

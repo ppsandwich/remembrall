@@ -89,3 +89,15 @@ export interface UserEncryptionKey {
   created_at: string;
   updated_at: string;
 }
+
+export interface SectionShare {
+  id: string;
+  share_token: string;
+  section_id: string;
+  owner_id: string;
+  shared_with_email: string;
+  shared_with_user_id: string | null;
+  permission: "viewer" | "editor";
+  status: "pending" | "accepted";
+  created_at: string;
+}

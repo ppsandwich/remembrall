@@ -6,6 +6,7 @@ export type {
   NotePage,
   UserPreferences,
   UserEncryptionKey,
+  SectionShare,
 } from "./types";
 
 export {

@@ -1,11 +1,10 @@
 import { getSupabase } from "./supabaseClient";
 import type { Note, EncryptedPayload, NoteSource } from "@brall/core";
 
-export async function fetchNotes(userId: string): Promise<Note[]> {
+export async function fetchNotes(_userId: string): Promise<Note[]> {
   const { data, error } = await getSupabase()
     .from("notes")
     .select("*")
-    .eq("user_id", userId)
     .is("deleted_at", null)
     .order("updated_at", { ascending: false });
 

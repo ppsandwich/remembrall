@@ -33,6 +33,7 @@ import {
   TableOfContents as LucideTableOfContents,
   Pencil as LucidePencil,
   AudioLines as LucideAudioLines,
+  Share2 as LucideShare2,
   type LucideProps,
 } from "lucide-react";
 
@@ -73,3 +74,4 @@ export const ChevronDown = (props: LucideProps) => <LucideChevronDown {...p} {..
 export const TableOfContents = (props: LucideProps) => <LucideTableOfContents {...p} {...props} />;
 export const Pencil = (props: LucideProps) => <LucidePencil {...p} {...props} />;
 export const AudioLines = (props: LucideProps) => <LucideAudioLines {...p} {...props} />;
+export const Share2 = (props: LucideProps) => <LucideShare2 {...p} {...props} />;

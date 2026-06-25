@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNotesStore, initColorSettings, initOpenrouterKey } from "@/state/useNotesStore";
 import { useUIStore, initTheme } from "@/state/useUIStore";
 import { useAuthStore } from "@/state/useAuthStore";
@@ -17,7 +17,7 @@ import SettingsPanel from "./SettingsPanel";
 import DesktopFab from "./DesktopFab";
 
 export default function AppShell() {
-  const { fetchAll, fetchPages, createNote, editingId, selectedIds, deleteNote, duplicateNote, clearSelection, selectAll, pages, activePageId, setHighlightNoteId } =
+  const { fetchAll, fetchPages, fetchSharedPages, createNote, editingId, selectedIds, deleteNote, duplicateNote, clearSelection, selectAll, pages, activePageId, setHighlightNoteId } =
     useNotesStore();
   const { showSettings, setShowSettings, setShowShortcuts, setShowQuickCapture, showToast, setSelectMode, dragHint } = useUIStore();
   const { user } = useAuthStore();
@@ -30,8 +30,8 @@ export default function AppShell() {
 
   useEffect(() => {
     fetchAll().then(() => setReady(true));
-    fetchPages();
-  }, [fetchAll, fetchPages]);
+    fetchPages().then(() => fetchSharedPages());
+  }, [fetchAll, fetchPages, fetchSharedPages]);
 
   // Listen for notes created from desktop app (Electron IPC)
   useEffect(() => {
@@ -122,18 +122,16 @@ export default function AppShell() {
   const mainRef = useRef<HTMLElement>(null);
   const [fabRight, setFabRight] = useState(24);
 
-  const updateFabRight = useCallback(() => {
-    if (mainRef.current) {
-      const rect = mainRef.current.getBoundingClientRect();
-      setFabRight(window.innerWidth - rect.right + 15);
-    }
-  }, []);
-
   useEffect(() => {
-    updateFabRight();
-    window.addEventListener("resize", updateFabRight);
-    return () => window.removeEventListener("resize", updateFabRight);
-  }, [updateFabRight]);
+    const el = mainRef.current;
+    if (!el) return;
+    const observer = new ResizeObserver(() => {
+      const rect = el.getBoundingClientRect();
+      setFabRight(window.innerWidth - rect.right + 15);
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
 
   if (!ready) {
     return (

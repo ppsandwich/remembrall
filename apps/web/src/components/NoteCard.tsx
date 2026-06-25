@@ -19,7 +19,7 @@ interface Props {
 }
 
 export default function NoteCard({ note, index, highlighted, onHighlightEnd }: Props) {
-  const { toggleSelect, selectedIds, setEditingId, deleteNote, dismissWelcomeNote, restoreNote, togglePin, updateNoteColor, moveNoteToPage, clusterMode, setDragging, colorNames, pages, activePageId } =
+  const { toggleSelect, selectedIds, setEditingId, deleteNote, dismissWelcomeNote, restoreNote, togglePin, updateNoteColor, moveNoteToPage, clusterMode, setDragging, colorNames, pages, activePageId, sectionPermissions } =
     useNotesStore();
   const { showToast, selectMode, resolvedTheme, setDragHint, showArchived } = useUIStore();
   const isSelected = selectedIds.has(note.id);
@@ -207,7 +207,12 @@ export default function NoteCard({ note, index, highlighted, onHighlightEnd }: P
         if (selectMode) {
           toggleSelect(note.id);
         } else {
-          setEditingId(note.id);
+          const perm = note.page_id ? sectionPermissions.get(note.page_id) : undefined;
+          if (perm === "viewer") {
+            showToast("Viewers cannot edit notes in shared sections");
+          } else {
+            setEditingId(note.id);
+          }
         }
       }
 
@@ -217,7 +222,7 @@ export default function NoteCard({ note, index, highlighted, onHighlightEnd }: P
 
     document.addEventListener("mousemove", handleMouseMove);
     document.addEventListener("mouseup", handleMouseUp);
-  }, [note.id, note.page_id, index, startDrag, updateDrag, endDrag, selectMode, toggleSelect, setEditingId, updateNoteColor, moveNoteToPage, clusterMode, setDragging, dragState]);
+  }, [note.id, note.page_id, index, startDrag, updateDrag, endDrag, selectMode, toggleSelect, setEditingId, updateNoteColor, moveNoteToPage, clusterMode, setDragging, dragState, sectionPermissions, showToast]);
 
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
     const target = e.target as HTMLElement;
@@ -357,7 +362,12 @@ export default function NoteCard({ note, index, highlighted, onHighlightEnd }: P
         if (selectMode) {
           toggleSelect(note.id);
         } else {
-          setEditingId(note.id);
+          const perm = note.page_id ? sectionPermissions.get(note.page_id) : undefined;
+          if (perm === "viewer") {
+            showToast("Viewers cannot edit notes in shared sections");
+          } else {
+            setEditingId(note.id);
+          }
         }
       }
     }
@@ -377,7 +387,7 @@ export default function NoteCard({ note, index, highlighted, onHighlightEnd }: P
     document.addEventListener("touchmove", checkMovement, { passive: true });
     document.addEventListener("touchend", cancelHold, { once: true });
     document.addEventListener("touchcancel", cancelHold, { once: true });
-  }, [note.id, note.page_id, index, startDrag, updateDrag, endDrag, selectMode, toggleSelect, setEditingId, updateNoteColor, moveNoteToPage, clusterMode, setDragging, dragState]);
+  }, [note.id, note.page_id, index, startDrag, updateDrag, endDrag, selectMode, toggleSelect, setEditingId, updateNoteColor, moveNoteToPage, clusterMode, setDragging, dragState, sectionPermissions, showToast]);
 
   const timeAgo = formatTimeAgo(note.updated_at);
   const noteTags = extractTags(note.body);
