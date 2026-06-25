@@ -1,18 +1,114 @@
 "use client";
 
-import { useCallback, useRef, useState, useEffect } from "react";
+import { useCallback, useRef, useState, useEffect, useMemo } from "react";
 import { useNotesStore } from "@/state/useNotesStore";
+import { searchNotes as filterNotes, extractTags } from "@brall/core";
+import { useUIStore } from "@/state/useUIStore";
 import { DragProvider } from "./DragContext";
 import NoteCard from "./NoteCard";
 import EmptyState from "./EmptyState";
 
+const GRID_CLASS = "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 3xl:grid-cols-7 gap-3";
+
 export default function NoteList() {
-  const { loading, getFilteredNotes, moveNote, saveNoteOrder, clusterMode, lastRecoloredId, clearLastRecoloredId, highlightNoteId, setHighlightNoteId } = useNotesStore();
-  const notes = getFilteredNotes();
+  const {
+    loading, notes, pages, activePageId, searchQuery, filterTag, clusterMode,
+    colorOrder, moveNote, saveNoteOrder,
+    lastRecoloredId, clearLastRecoloredId,
+    highlightNoteId, setHighlightNoteId,
+    setActivePage, scrollToPageId, setScrollToPageId,
+  } = useNotesStore();
+  const showArchived = useUIStore((s) => s.showArchived);
+
   const gridRef = useRef<HTMLDivElement>(null);
+  const sectionRefs = useRef<Map<string, HTMLElement>>(new Map());
+  const scrollingRef = useRef(false);
   const positionsRef = useRef<Map<string, DOMRect>>(new Map());
   const [highlightedId, setHighlightedId] = useState<string | null>(null);
   const highlightTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const sections = useMemo(() => {
+    const base = showArchived
+      ? notes.filter((n) => !!n.deleted_at)
+      : searchQuery.trim()
+        ? notes.filter((n) => !n.deleted_at)
+        : notes.filter((n) => !n.deleted_at);
+
+    let filtered = filterNotes(base, searchQuery);
+    if (filterTag) {
+      filtered = filtered.filter((n) => extractTags(n.body).includes(filterTag));
+    }
+
+    return pages.map((page) => {
+      let pageNotes = filtered.filter((n) => n.page_id === page.id);
+
+      if (clusterMode && !searchQuery.trim()) {
+        const colorGroups = new Map<string, typeof pageNotes>();
+        const noColor: typeof pageNotes = [];
+        for (const note of pageNotes) {
+          if (note.color) {
+            const group = colorGroups.get(note.color) || [];
+            group.push(note);
+            colorGroups.set(note.color, group);
+          } else {
+            noColor.push(note);
+          }
+        }
+        const clustered: typeof pageNotes = [];
+        for (const color of colorOrder) {
+          const group = colorGroups.get(color);
+          if (group) clustered.push(...group);
+        }
+        clustered.push(...noColor);
+        pageNotes = clustered;
+      } else if (!searchQuery.trim()) {
+        pageNotes = pageNotes.sort((a, b) => {
+          if (a.position !== b.position) return a.position - b.position;
+          return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime();
+        });
+      }
+
+      return { page, notes: pageNotes };
+    }).filter((s) => s.notes.length > 0 || !searchQuery.trim());
+  }, [notes, pages, searchQuery, filterTag, clusterMode, colorOrder, showArchived]);
+
+  // IntersectionObserver: update activePageId when scrolling to a section
+  useEffect(() => {
+    const entries = sectionRefs.current;
+    if (entries.size === 0) return;
+
+    const observer = new IntersectionObserver(
+      (observed) => {
+        if (scrollingRef.current) return;
+        for (const entry of observed) {
+          if (entry.isIntersecting) {
+            const pageId = entry.target.getAttribute("data-section-id");
+            if (pageId && pageId !== useNotesStore.getState().activePageId) {
+              useNotesStore.setState({ activePageId: pageId });
+              try { localStorage.setItem("activePageId", pageId); } catch {}
+            }
+            break;
+          }
+        }
+      },
+      { rootMargin: "-20% 0px -70% 0px" }
+    );
+
+    entries.forEach((el) => observer.observe(el));
+    return () => observer.disconnect();
+  }, [sections]);
+
+  // Scroll to section when tab is clicked
+  useEffect(() => {
+    if (!scrollToPageId) return;
+    const el = sectionRefs.current.get(scrollToPageId);
+    if (el) {
+      scrollingRef.current = true;
+      el.scrollIntoView({ behavior: "smooth", block: "start" });
+      setTimeout(() => { scrollingRef.current = false; }, 800);
+    }
+    setScrollToPageId(null);
+  }, [scrollToPageId, setScrollToPageId]);
 
   const capturePositions = useCallback(() => {
     if (!gridRef.current) return;
@@ -111,36 +207,81 @@ export default function NoteList() {
     );
   }
 
-  if (notes.length === 0) {
+  const allNotes = sections.flatMap((s) => s.notes);
+  if (allNotes.length === 0) {
     return <EmptyState />;
   }
 
-  const pinned = notes.filter((n) => n.pinned);
-  const unpinned = notes.filter((n) => !n.pinned);
+  let globalIndex = 0;
 
   return (
     <DragProvider onReorder={handleReorder}>
       <div ref={gridRef}>
-        {pinned.length > 0 && (
-          <>
-            <h2 className="text-xs font-medium mb-2 ml-1" style={{ color: "var(--text-muted)" }}>Pinned</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 3xl:grid-cols-7 gap-3 mb-6">
-              {pinned.map((note, index) => (
-                <NoteCard key={note.id} note={note} index={index} highlighted={highlightedId === note.id} onHighlightEnd={() => setHighlightedId(null)} />
-              ))}
-            </div>
-          </>
-        )}
-        {pinned.length > 0 && unpinned.length > 0 && (
-          <h2 className="text-xs font-medium mb-2 ml-1" style={{ color: "var(--text-muted)" }}>Others</h2>
-        )}
-        {unpinned.length > 0 && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 3xl:grid-cols-7 gap-3">
-            {unpinned.map((note, index) => (
-              <NoteCard key={note.id} note={note} index={pinned.length + index} highlighted={highlightedId === note.id} onHighlightEnd={() => setHighlightedId(null)} />
-            ))}
-          </div>
-        )}
+        {sections.map((section, sectionIdx) => {
+          const pinned = section.notes.filter((n) => n.pinned);
+          const unpinned = section.notes.filter((n) => !n.pinned);
+
+          const sectionEl = (
+            <section
+              key={section.page.id}
+              data-section-id={section.page.id}
+              ref={(el) => {
+                if (el) sectionRefs.current.set(section.page.id, el);
+                else sectionRefs.current.delete(section.page.id);
+              }}
+            >
+              {sectionIdx > 0 && (
+                <hr className="border-0 my-8" style={{ borderTop: "1px solid var(--border)" }} />
+              )}
+              <h2
+                className="text-sm font-medium mb-3 ml-1"
+                style={{ color: "var(--text-secondary)" }}
+              >
+                {section.page.name}
+              </h2>
+              {pinned.length > 0 && (
+                <>
+                  <h3 className="text-xs font-medium mb-2 ml-1" style={{ color: "var(--text-muted)" }}>Pinned</h3>
+                  <div className={`${GRID_CLASS} mb-4`}>
+                    {pinned.map((note) => {
+                      const idx = globalIndex++;
+                      return (
+                        <NoteCard
+                          key={note.id}
+                          note={note}
+                          index={idx}
+                          highlighted={highlightedId === note.id}
+                          onHighlightEnd={() => setHighlightedId(null)}
+                        />
+                      );
+                    })}
+                  </div>
+                </>
+              )}
+              {pinned.length > 0 && unpinned.length > 0 && (
+                <h3 className="text-xs font-medium mb-2 ml-1" style={{ color: "var(--text-muted)" }}>Others</h3>
+              )}
+              {unpinned.length > 0 && (
+                <div className={GRID_CLASS}>
+                  {unpinned.map((note) => {
+                    const idx = globalIndex++;
+                    return (
+                      <NoteCard
+                        key={note.id}
+                        note={note}
+                        index={idx}
+                        highlighted={highlightedId === note.id}
+                        onHighlightEnd={() => setHighlightedId(null)}
+                      />
+                    );
+                  })}
+                </div>
+              )}
+            </section>
+          );
+
+          return sectionEl;
+        })}
       </div>
     </DragProvider>
   );
