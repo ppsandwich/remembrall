@@ -742,19 +742,19 @@ export async function initColorSettings(userId?: string) {
 
       const serverOrderRaw = prefs.color_order && prefs.color_order.length > 0
         ? prefs.color_order
-        : localOrder;
+        : localOrder.length > 0 ? localOrder : DEFAULT_COLOR_ORDER;
       const serverOrder = serverOrderRaw.filter((c: string) => validColorNames.has(c));
 
       useNotesStore.setState({
         colorNames: serverNames,
-        colorOrder: serverOrder,
+        colorOrder: serverOrder.length > 0 ? serverOrder : DEFAULT_COLOR_ORDER,
       });
       localStorage.setItem("remembrall-color-names", JSON.stringify(serverNames));
       localStorage.setItem("remembrall-color-order", JSON.stringify(serverOrder));
     } else if (Object.keys(localNames).length > 0 || localOrder.length > 0) {
       await prefApi.upsertPreferences(userId, {
-        color_names: localNames,
-        color_order: localOrder,
+        color_names: Object.keys(localNames).length > 0 ? localNames : DEFAULT_COLOR_NAMES,
+        color_order: localOrder.length > 0 ? localOrder : DEFAULT_COLOR_ORDER,
       });
     }
   } catch {}
