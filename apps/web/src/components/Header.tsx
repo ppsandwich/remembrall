@@ -477,12 +477,12 @@ export default function Header() {
       )}
       {openrouterKey && isSupported ? (
         <div
-          className="fixed bottom-6 right-6 z-40 md:hidden flex items-center transition-all"
+          className="fixed bottom-6 right-6 z-40 md:hidden flex items-center transition-all rounded-full overflow-hidden"
           style={{ height: "3.25rem" }}
         >
           <button
             onClick={handleVoiceToggle}
-            className={`flex items-center justify-center transition-transform active:scale-95 relative rounded-full ${isRecording ? "voice-throb" : ""}`}
+            className={`flex items-center justify-center transition-transform active:scale-95 relative rounded-l-full ${isRecording ? "voice-throb" : ""}`}
             style={{ width: isRecording ? "auto" : "2.75rem", height: "3.25rem", color: "white", opacity: transcribing ? 0.6 : 1, paddingInline: isRecording ? "0.75rem" : undefined, gap: isRecording ? "0.375rem" : 0, background: isRecording ? "#EF4444" : "#3B82F6" }}
             title={isRecording ? "Stop recording" : transcribing ? "Transcribing…" : "New from voice"}
             aria-label={isRecording ? "Stop recording" : transcribing ? "Transcribing" : "New from voice"}
@@ -506,7 +506,7 @@ export default function Header() {
           {!isRecording && !transcribing && (
             <button
               onClick={() => setShowQuickCapture(true)}
-              className="flex items-center justify-center transition-transform active:scale-95 rounded-full"
+              className="flex items-center justify-center transition-transform active:scale-95 rounded-r-full"
               style={{ width: "2.75rem", height: "3.25rem", color: "white", background: "#22C55E" }}
               title="New note"
               aria-label="New note"
