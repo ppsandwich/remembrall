@@ -777,8 +777,6 @@ export async function initOpenrouterKey(userId?: string) {
     if (prefs?.openrouter_api_key) {
       useNotesStore.setState({ openrouterKey: prefs.openrouter_api_key });
       localStorage.setItem("remembrall-openrouter-key", prefs.openrouter_api_key);
-    } else if (localKey) {
-      await prefApi.upsertPreferences(userId, { openrouter_api_key: localKey });
     }
   } catch {}
 }

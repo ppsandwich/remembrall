@@ -24,8 +24,7 @@ export default function AppShell() {
 
   useEffect(() => {
     initTheme();
-    initColorSettings(user?.id);
-    initOpenrouterKey(user?.id);
+    initColorSettings(user?.id).then(() => initOpenrouterKey(user?.id));
   }, [user?.id]);
 
   useEffect(() => {
