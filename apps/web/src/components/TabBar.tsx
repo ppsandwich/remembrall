@@ -23,6 +23,7 @@ export default function TabBar() {
   const newInputRef = useRef<HTMLInputElement>(null);
   const editInputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const dropdownMenuRef = useRef<HTMLDivElement>(null);
   const dropdownButtonRef = useRef<HTMLButtonElement>(null);
   const tabContainerRef = useRef<HTMLDivElement>(null);
   const [indicatorStyle, setIndicatorStyle] = useState<{ left: number; width: number }>({ left: 0, width: 0 });
@@ -43,7 +44,11 @@ export default function TabBar() {
   useEffect(() => {
     if (!showDropdown) return;
     const handleClickOutside = (e: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+      const target = e.target as Node;
+      if (
+        dropdownRef.current && !dropdownRef.current.contains(target) &&
+        dropdownMenuRef.current && !dropdownMenuRef.current.contains(target)
+      ) {
         setShowDropdown(false);
       }
     };
@@ -287,6 +292,7 @@ export default function TabBar() {
             </button>
             {showDropdown && createPortal(
               <div
+                ref={dropdownMenuRef}
                 className="fixed rounded-lg shadow-lg z-50 py-1 min-w-[8rem]"
                 style={{ background: "var(--surface)", border: "1px solid var(--border)", top: dropdownPos.top, left: dropdownPos.left }}
               >
