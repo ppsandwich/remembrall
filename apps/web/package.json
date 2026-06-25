@@ -1,6 +1,6 @@
 {
   "name": "@brall/web",
-  "version": "1.1.4",
+  "version": "1.1.8",
   "private": true,
   "scripts": {
     "dev": "next dev --experimental-https --experimental-https-key ./certs/key.pem --experimental-https-cert ./certs/cert.pem",
