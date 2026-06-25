@@ -1,10 +1,12 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { useAuthStore } from "@/state/useAuthStore";
 import { useUIStore } from "@/state/useUIStore";
 import { useNotesStore } from "@/state/useNotesStore";
-import { Sun, Moon, HelpCircle, Settings, LogOut, CheckSquare, Square, Layers, Volleyball, Search, X, Plus, Minus, ChevronDown, TableOfContents, Pencil } from "./Icons";
+import { useVoiceRecording } from "@/lib/useVoiceRecording";
+import { transcribeAudio } from "@/lib/openrouter";
+import { Sun, Moon, HelpCircle, Settings, LogOut, CheckSquare, Square, Layers, Volleyball, Search, X, Plus, Minus, ChevronDown, TableOfContents, Pencil, AudioLines } from "./Icons";
 import TabBar from "./TabBar";
 
 export default function Header() {
@@ -20,7 +22,43 @@ export default function Header() {
   const createPage = useNotesStore((s) => s.createPage);
   const deletePage = useNotesStore((s) => s.deletePage);
   const updatePage = useNotesStore((s) => s.updatePage);
-  const { theme, setTheme, setShowShortcuts, setShowSettings, selectMode, setSelectMode, showQuickCapture, setShowQuickCapture } = useUIStore();
+  const { theme, setTheme, setShowShortcuts, setShowSettings, selectMode, setSelectMode, showQuickCapture, setShowQuickCapture, showToast } = useUIStore();
+
+  const openrouterKey = useNotesStore((s) => s.openrouterKey);
+  const createNote = useNotesStore((s) => s.createNote);
+  const setHighlightNoteId = useNotesStore((s) => s.setHighlightNoteId);
+
+  const { isRecording, start, stop, isSupported } = useVoiceRecording();
+  const [transcribing, setTranscribing] = useState(false);
+
+  const handleVoiceToggle = useCallback(async () => {
+    if (transcribing) return;
+    if (isRecording) {
+      try {
+        const blob = await stop();
+        setTranscribing(true);
+        const text = await transcribeAudio(openrouterKey!, blob);
+        if (text) {
+          const noteId = await createNote(text, "desktop");
+          const activePage = pages.find((p) => p.id === activePageId);
+          const tabName = activePage?.name || "notes";
+          const preview = text.length > 32 ? text.slice(0, 32) + "…" : text;
+          showToast(`Pasted to new Brall note in ${tabName}: ${preview}`);
+          if (noteId) setHighlightNoteId(noteId);
+        }
+      } catch {
+        showToast("Transcription failed. Your recording was not saved.");
+      } finally {
+        setTranscribing(false);
+      }
+    } else {
+      try {
+        await start();
+      } catch {
+        showToast("Microphone access denied.");
+      }
+    }
+  }, [isRecording, stop, start, openrouterKey, createNote, pages, activePageId, showToast, setHighlightNoteId, transcribing]);
 
   const [searchOpen, setSearchOpen] = useState(false);
   const [pagesMenuOpen, setPagesMenuOpen] = useState(false);
@@ -227,6 +265,39 @@ export default function Header() {
               )}
             </div>
 
+            {openrouterKey && isSupported && (
+              <button
+                onClick={handleVoiceToggle}
+                className={`mr-1 rounded-full flex items-center justify-center transition-colors hidden md:flex ${isRecording ? "voice-pulse" : ""}`}
+                style={{
+                  width: "2.25rem",
+                  height: "2.25rem",
+                  background: isRecording ? "#EF4444" : "transparent",
+                  color: isRecording ? "white" : "#22C55E",
+                  border: isRecording ? "1px solid #EF4444" : "1px solid #22C55E",
+                  opacity: transcribing ? 0.6 : 1,
+                }}
+                title={isRecording ? "Stop recording" : transcribing ? "Transcribing…" : "New from voice"}
+                aria-label={isRecording ? "Stop recording" : transcribing ? "Transcribing" : "New from voice"}
+                disabled={transcribing}
+                onMouseEnter={(e) => { if (!isRecording) { e.currentTarget.style.background = "#22C55E"; e.currentTarget.style.color = "var(--surface)"; } }}
+                onMouseLeave={(e) => { if (!isRecording) { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "#22C55E"; } }}
+                onMouseDown={(e) => { if (!isRecording) e.currentTarget.style.background = "#16A34A"; }}
+                onMouseUp={(e) => { if (!isRecording) e.currentTarget.style.background = "#22C55E"; }}
+              >
+                {transcribing ? (
+                  <svg className="animate-spin" width="20" height="20" viewBox="0 0 24 24" fill="none">
+                    <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" opacity="0.3" />
+                    <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                  </svg>
+                ) : isRecording ? (
+                  <Square size={16} />
+                ) : (
+                  <AudioLines size={20} />
+                )}
+              </button>
+            )}
+
             <button
               onClick={() => setShowQuickCapture(true)}
               className="mr-2 rounded-full flex items-center justify-center transition-colors hidden md:flex"
@@ -370,15 +441,52 @@ export default function Header() {
           </div>
         </div>
       )}
-      <button
-        onClick={() => setShowQuickCapture(true)}
-        className="fixed bottom-6 right-6 z-40 md:hidden rounded-full flex items-center justify-center shadow-lg transition-transform active:scale-95"
-        style={{ width: "3.25rem", height: "3.25rem", background: "#22C55E", color: "white" }}
-        title="New note"
-        aria-label="New note"
-      >
-        <Plus size={24} />
-      </button>
+      {openrouterKey && isSupported ? (
+        <div
+          className="fixed bottom-6 right-6 z-40 md:hidden flex items-center rounded-full shadow-lg overflow-hidden"
+          style={{ background: isRecording ? "#EF4444" : "#22C55E", height: "3.25rem" }}
+        >
+          <button
+            onClick={handleVoiceToggle}
+            className="flex items-center justify-center transition-transform active:scale-95"
+            style={{ width: "2.75rem", height: "3.25rem", color: "white", opacity: transcribing ? 0.6 : 1 }}
+            title={isRecording ? "Stop recording" : transcribing ? "Transcribing…" : "New from voice"}
+            aria-label={isRecording ? "Stop recording" : transcribing ? "Transcribing" : "New from voice"}
+            disabled={transcribing}
+          >
+            {transcribing ? (
+              <svg className="animate-spin" width="22" height="22" viewBox="0 0 24 24" fill="none">
+                <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" opacity="0.3" />
+                <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+              </svg>
+            ) : isRecording ? (
+              <Square size={20} />
+            ) : (
+              <AudioLines size={22} />
+            )}
+          </button>
+          <div style={{ width: "1px", height: "60%", background: "rgba(255,255,255,0.3)" }} />
+          <button
+            onClick={() => setShowQuickCapture(true)}
+            className="flex items-center justify-center transition-transform active:scale-95"
+            style={{ width: "2.75rem", height: "3.25rem", color: "white" }}
+            title="New note"
+            aria-label="New note"
+          >
+            <Plus size={24} />
+          </button>
+        </div>
+      ) : (
+        <button
+          onClick={() => setShowQuickCapture(true)}
+          className="fixed bottom-6 right-6 z-40 md:hidden rounded-full flex items-center justify-center shadow-lg transition-transform active:scale-95"
+          style={{ width: "3.25rem", height: "3.25rem", background: "#22C55E", color: "white" }}
+          title="New note"
+          aria-label="New note"
+        >
+          <Plus size={24} />
+        </button>
+      )}
     </>
   );
 }

@@ -81,6 +81,7 @@ interface NotesState {
   highlightNoteId: string | null;
   colorNames: Record<string, string>;
   colorOrder: string[];
+  openrouterKey: string | null;
 
   fetchAll: () => Promise<void>;
   fetchPages: () => Promise<void>;
@@ -111,6 +112,7 @@ interface NotesState {
   setColorName: (name: string, displayName: string) => void;
   resetColorName: (name: string) => void;
   setColorOrder: (order: string[]) => void;
+  setOpenrouterKey: (key: string | null) => void;
   toggleSelect: (id: string) => void;
   selectAll: () => void;
   clearSelection: () => void;
@@ -140,6 +142,7 @@ export const useNotesStore = create<NotesState>((set, get) => ({
   highlightNoteId: null,
   colorNames: { ...DEFAULT_COLOR_NAMES },
   colorOrder: [...DEFAULT_COLOR_ORDER],
+  openrouterKey: null,
 
   fetchAll: async () => {
     const user = useAuthStore.getState().user;
@@ -555,6 +558,19 @@ export const useNotesStore = create<NotesState>((set, get) => ({
     }
   },
 
+  setOpenrouterKey: (key: string | null) => {
+    if (key) {
+      localStorage.setItem("remembrall-openrouter-key", key);
+    } else {
+      localStorage.removeItem("remembrall-openrouter-key");
+    }
+    set({ openrouterKey: key });
+    const user = useAuthStore.getState().user;
+    if (user) {
+      prefApi.upsertPreferences(user.id, { openrouter_api_key: key }).catch(() => {});
+    }
+  },
+
   toggleSelect: (id: string) => {
     set((s) => {
       const next = new Set(s.selectedIds);
@@ -740,6 +756,29 @@ export async function initColorSettings(userId?: string) {
         color_names: localNames,
         color_order: localOrder,
       });
+    }
+  } catch {}
+}
+
+export async function initOpenrouterKey(userId?: string) {
+  let localKey: string | null = null;
+  try {
+    const stored = localStorage.getItem("remembrall-openrouter-key");
+    if (stored) {
+      localKey = stored;
+      useNotesStore.setState({ openrouterKey: localKey });
+    }
+  } catch {}
+
+  if (!userId) return;
+
+  try {
+    const prefs = await prefApi.fetchPreferences(userId);
+    if (prefs?.openrouter_api_key) {
+      useNotesStore.setState({ openrouterKey: prefs.openrouter_api_key });
+      localStorage.setItem("remembrall-openrouter-key", prefs.openrouter_api_key);
+    } else if (localKey) {
+      await prefApi.upsertPreferences(userId, { openrouter_api_key: localKey });
     }
   } catch {}
 }

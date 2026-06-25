@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useNotesStore, initColorSettings } from "@/state/useNotesStore";
+import { useNotesStore, initColorSettings, initOpenrouterKey } from "@/state/useNotesStore";
 import { useUIStore, initTheme } from "@/state/useUIStore";
 import { useAuthStore } from "@/state/useAuthStore";
 import { readClipboard } from "@/lib/clipboard";
@@ -25,6 +25,7 @@ export default function AppShell() {
   useEffect(() => {
     initTheme();
     initColorSettings(user?.id);
+    initOpenrouterKey(user?.id);
   }, [user?.id]);
 
   useEffect(() => {
@@ -35,20 +36,20 @@ export default function AppShell() {
   // Listen for notes created from desktop app (Electron IPC)
   useEffect(() => {
     const electronAPI = (window as any).electronAPI;
-    if (electronAPI?.onCreateNote) {
-      electronAPI.onCreateNote(async (text: string) => {
-        if (text && text.trim()) {
-          const noteId = await createNote(text, "desktop");
-          const activePage = pages.find((p) => p.id === activePageId);
-          const tabName = activePage?.name || "notes";
-          const preview = text.trim().length > 32 ? text.trim().slice(0, 32) + "…" : text.trim();
-          showToast(`Pasted to new Brall note in ${tabName}: ${preview}`);
-          if (noteId) {
-            setHighlightNoteId(noteId);
-          }
+    if (!electronAPI?.onCreateNote) return;
+    const unsubscribe = electronAPI.onCreateNote(async (text: string) => {
+      if (text && text.trim()) {
+        const noteId = await createNote(text, "desktop");
+        const activePage = pages.find((p) => p.id === activePageId);
+        const tabName = activePage?.name || "notes";
+        const preview = text.trim().length > 32 ? text.trim().slice(0, 32) + "…" : text.trim();
+        showToast(`Pasted to new Brall note in ${tabName}: ${preview}`);
+        if (noteId) {
+          setHighlightNoteId(noteId);
         }
-      });
-    }
+      }
+    });
+    return unsubscribe;
   }, [createNote, showToast, pages, activePageId]);
 
   // Handle ?clip= param from Chrome extension

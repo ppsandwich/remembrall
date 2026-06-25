@@ -25,11 +25,12 @@ export default function Home() {
   useEffect(() => {
     const electronAPI = (window as any).electronAPI;
     if (!electronAPI?.onCreateNote) return;
-    electronAPI.onCreateNote((text: string) => {
+    const unsubscribe = electronAPI.onCreateNote((text: string) => {
       if (!userRef.current) {
         electronAPI.showNotification("Brall", "Sign in to Brall to create new notes.");
       }
     });
+    return unsubscribe;
   }, []);
 
   if (loading) {
