@@ -167,16 +167,13 @@ export default function Header() {
                   </linearGradient>
                 </defs>
               </svg>
-              <Volleyball size={24} strokeWidth={1.5} style={{ stroke: "url(#header-gold)", fill: "none" }} />
+              <Volleyball size={30} strokeWidth={1.5} style={{ stroke: "url(#header-gold)", fill: "none" }} />
               <h1
                 className="text-lg font-bold tracking-tight hidden sm:block"
                 style={{
                   letterSpacing: "-0.01em",
                   fontFamily: "var(--font-almendra), serif",
-                  background: "linear-gradient(to bottom, #D4AF37, #B8860B, #996515)",
-                  WebkitBackgroundClip: "text",
-                  WebkitTextFillColor: "transparent",
-                  backgroundClip: "text",
+                  color: "white",
                 }}
               >
                 Brall
@@ -537,7 +534,7 @@ function HeaderButton({ onClick, title, active, children, className, style, hove
   return (
     <button
       onClick={onClick}
-      className={`p-2 rounded-md transition-colors ${className ?? ""}`}
+      className={`p-2.5 rounded-md transition-colors ${className ?? ""}`}
       style={{ color: active ? "#3B82F6" : "var(--text-muted)", background: active ? "var(--surface-subtle)" : "transparent", ...style }}
       title={title}
       aria-label={title}

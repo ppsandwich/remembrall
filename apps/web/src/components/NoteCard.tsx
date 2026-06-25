@@ -425,7 +425,7 @@ export default function NoteCard({ note, index, highlighted, onHighlightEnd }: P
             </p>
           )}
           <p
-            className="text-sm whitespace-pre-wrap break-words leading-relaxed"
+            className="text-xs whitespace-pre-wrap break-words leading-relaxed"
             style={{
               color: "var(--text)",
               display: "-webkit-box",
