@@ -10,6 +10,33 @@ import { transcribeAudio } from "@/lib/openrouter";
 import { Sun, Moon, HelpCircle, Settings, LogOut, CheckSquare, Square, Layers, Volleyball, Search, X, Plus, Minus, ChevronDown, TableOfContents, Pencil, AudioLines } from "./Icons";
 import TabBar from "./TabBar";
 
+const LISTENING_TEXT = "Listening…";
+
+function ListeningLabel({ position }: { position: "above" | "below" }) {
+  return (
+    <div
+      className="absolute left-1/2 -translate-x-1/2 flex items-center justify-center whitespace-nowrap pointer-events-none"
+      style={{
+        [position === "above" ? "bottom" : "top"]: "100%",
+        marginTop: position === "below" ? 4 : 0,
+        marginBottom: position === "above" ? 4 : 0,
+      }}
+    >
+      <span className="text-xs font-medium" style={{ color: "#EF4444" }}>
+        {LISTENING_TEXT.split("").map((char, i) => (
+          <span
+            key={i}
+            className="listening-char"
+            style={{ animationDelay: `${i * 0.06}s` }}
+          >
+            {char === " " ? "\u00A0" : char}
+          </span>
+        ))}
+      </span>
+    </div>
+  );
+}
+
 export default function Header() {
   const signOut = useAuthStore((s) => s.signOut);
   const clearSelection = useNotesStore((s) => s.clearSelection);
@@ -284,41 +311,44 @@ export default function Header() {
             </div>
 
             {openrouterKey && isSupported && (
-              <button
-                onClick={handleVoiceToggle}
-                className={`mr-1 rounded-full flex items-center justify-center transition-all hidden md:flex ${isRecording ? "voice-pulse" : ""}`}
-                style={{
-                  width: isRecording ? "auto" : "2.25rem",
-                  height: "2.25rem",
-                  paddingInline: isRecording ? "0.625rem" : undefined,
-                  background: isRecording ? "#EF4444" : "transparent",
-                  color: isRecording ? "white" : "#3B82F6",
-                  border: isRecording ? "1px solid #EF4444" : "1px solid #3B82F6",
-                  opacity: transcribing ? 0.6 : 1,
-                  gap: isRecording ? "0.375rem" : 0,
-                }}
-                title={isRecording ? "Stop recording" : transcribing ? "Transcribing…" : "New from voice"}
-                aria-label={isRecording ? "Stop recording" : transcribing ? "Transcribing" : "New from voice"}
-                disabled={transcribing}
-                onMouseEnter={(e) => { if (!isRecording) { e.currentTarget.style.background = "#3B82F6"; e.currentTarget.style.color = "var(--surface)"; } }}
-                onMouseLeave={(e) => { if (!isRecording) { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "#3B82F6"; } }}
-                onMouseDown={(e) => { if (!isRecording) e.currentTarget.style.background = "#2563EB"; }}
-                onMouseUp={(e) => { if (!isRecording) e.currentTarget.style.background = "#3B82F6"; }}
-              >
-                {transcribing ? (
-                  <svg className="animate-spin" width="20" height="20" viewBox="0 0 24 24" fill="none">
-                    <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" opacity="0.3" />
-                    <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-                  </svg>
-                ) : isRecording ? (
-                  <>
-                    <Square size={14} />
-                    <span className="text-xs font-medium tabular-nums">{formatTime(elapsed)}</span>
-                  </>
-                ) : (
-                  <AudioLines size={20} />
-                )}
-              </button>
+              <div className="relative hidden md:flex">
+                <button
+                  onClick={handleVoiceToggle}
+                  className={`mr-1 rounded-full flex items-center justify-center transition-all ${isRecording ? "voice-pulse" : ""}`}
+                  style={{
+                    width: isRecording ? "auto" : "2.25rem",
+                    height: "2.25rem",
+                    paddingInline: isRecording ? "0.625rem" : undefined,
+                    background: isRecording ? "#EF4444" : "transparent",
+                    color: isRecording ? "white" : "#3B82F6",
+                    border: isRecording ? "1px solid #EF4444" : "1px solid #3B82F6",
+                    opacity: transcribing ? 0.6 : 1,
+                    gap: isRecording ? "0.375rem" : 0,
+                  }}
+                  title={isRecording ? "Stop recording" : transcribing ? "Transcribing…" : "New from voice"}
+                  aria-label={isRecording ? "Stop recording" : transcribing ? "Transcribing" : "New from voice"}
+                  disabled={transcribing}
+                  onMouseEnter={(e) => { if (!isRecording) { e.currentTarget.style.background = "#3B82F6"; e.currentTarget.style.color = "var(--surface)"; } }}
+                  onMouseLeave={(e) => { if (!isRecording) { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "#3B82F6"; } }}
+                  onMouseDown={(e) => { if (!isRecording) e.currentTarget.style.background = "#2563EB"; }}
+                  onMouseUp={(e) => { if (!isRecording) e.currentTarget.style.background = "#3B82F6"; }}
+                >
+                  {transcribing ? (
+                    <svg className="animate-spin" width="20" height="20" viewBox="0 0 24 24" fill="none">
+                      <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" opacity="0.3" />
+                      <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                    </svg>
+                  ) : isRecording ? (
+                    <>
+                      <Square size={14} />
+                      <span className="text-xs font-medium tabular-nums">{formatTime(elapsed)}</span>
+                    </>
+                  ) : (
+                    <AudioLines size={20} />
+                  )}
+                </button>
+                {isRecording && <ListeningLabel position="below" />}
+              </div>
             )}
 
             <button
@@ -469,6 +499,21 @@ export default function Header() {
           className="fixed bottom-6 right-6 z-40 md:hidden flex items-center rounded-full shadow-lg overflow-hidden transition-all"
           style={{ height: "3.25rem" }}
         >
+          {isRecording && (
+            <div className="absolute right-0 flex items-center justify-center" style={{ bottom: "calc(100% + 4px)" }}>
+              <span className="text-xs font-medium" style={{ color: "#EF4444" }}>
+                {LISTENING_TEXT.split("").map((char, i) => (
+                  <span
+                    key={i}
+                    className="listening-char"
+                    style={{ animationDelay: `${i * 0.06}s` }}
+                  >
+                    {char === " " ? "\u00A0" : char}
+                  </span>
+                ))}
+              </span>
+            </div>
+          )}
           <button
             onClick={handleVoiceToggle}
             className="flex items-center justify-center transition-transform active:scale-95"

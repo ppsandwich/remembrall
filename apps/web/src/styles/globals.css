@@ -143,3 +143,13 @@ input[type="checkbox"] {
 .voice-pulse {
   animation: voice-pulse 1.5s ease-in-out infinite;
 }
+
+@keyframes listening-wave {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+
+.listening-char {
+  display: inline-block;
+  animation: listening-wave 1.2s ease-in-out infinite;
+}
