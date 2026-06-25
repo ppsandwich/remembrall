@@ -73,7 +73,6 @@ export default function RadialColorPicker({ centerX, centerY, currentColor, mous
           return pickerColors[i].name;
         }
       }
-      console.log("getHoveredColor: no match", { angle, step, pickerColorsLength: pickerColors.length, dist });
       return null;
     },
     [centerX, centerY, pickerColors],
@@ -82,7 +81,16 @@ export default function RadialColorPicker({ centerX, centerY, currentColor, mous
   useEffect(() => {
     const handleMove = (e: MouseEvent) => {
       const color = getHoveredColor(e.clientX, e.clientY);
-      console.log("RadialColorPicker handleMove", { clientX: e.clientX, clientY: e.clientY, centerX, centerY, color, pickerColorsLength: pickerColors.length });
+      if (color !== hoveredRef.current) {
+        hoveredRef.current = color;
+        setHoveredColor(color);
+      }
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      e.preventDefault();
+      const t = e.touches[0];
+      const color = getHoveredColor(t.clientX, t.clientY);
       if (color !== hoveredRef.current) {
         hoveredRef.current = color;
         setHoveredColor(color);
@@ -92,7 +100,9 @@ export default function RadialColorPicker({ centerX, centerY, currentColor, mous
     const handleUp = () => {
       document.removeEventListener("mousemove", handleMove);
       document.removeEventListener("mouseup", handleUp);
-      console.log("RadialColorPicker handleUp", { hoveredRef: hoveredRef.current });
+      document.removeEventListener("touchmove", handleTouchMove);
+      document.removeEventListener("touchend", handleUp);
+      document.removeEventListener("touchcancel", handleCancel);
       if (hoveredRef.current) {
         onReleaseRef.current(hoveredRef.current);
       } else {
@@ -100,11 +110,26 @@ export default function RadialColorPicker({ centerX, centerY, currentColor, mous
       }
     };
 
+    const handleCancel = () => {
+      document.removeEventListener("mousemove", handleMove);
+      document.removeEventListener("mouseup", handleUp);
+      document.removeEventListener("touchmove", handleTouchMove);
+      document.removeEventListener("touchend", handleUp);
+      document.removeEventListener("touchcancel", handleCancel);
+      onCancelRef.current();
+    };
+
     document.addEventListener("mousemove", handleMove);
     document.addEventListener("mouseup", handleUp);
+    document.addEventListener("touchmove", handleTouchMove, { passive: false });
+    document.addEventListener("touchend", handleUp);
+    document.addEventListener("touchcancel", handleCancel);
     return () => {
       document.removeEventListener("mousemove", handleMove);
       document.removeEventListener("mouseup", handleUp);
+      document.removeEventListener("touchmove", handleTouchMove);
+      document.removeEventListener("touchend", handleUp);
+      document.removeEventListener("touchcancel", handleCancel);
     };
   }, [getHoveredColor]);
 
