@@ -28,14 +28,14 @@ export async function uploadAttachment(
   file: File,
   onProgress?: (percent: number) => void,
 ): Promise<Attachment> {
-  const { signedUrl, gcsObjectPath, attachmentId } = await callEdgeFunction({
+  const { uploadUrl, fields, gcsObjectPath, attachmentId } = await callEdgeFunction({
     action: "upload",
     filename: file.name,
     contentType: file.type || "application/octet-stream",
     noteId,
   });
 
-  await uploadWithProgress(signedUrl, file, onProgress);
+  await uploadWithPostPolicy(uploadUrl, fields, file, onProgress);
 
   const supabase = getSupabase();
   const {
@@ -86,17 +86,26 @@ export async function downloadAttachment(
   gcsObjectPath: string,
   filename: string,
 ): Promise<void> {
-  const { signedUrl } = await callEdgeFunction({
+  const { downloadUrl, accessToken } = await callEdgeFunction({
     action: "download",
     gcsObjectPath,
   });
 
+  const res = await fetch(downloadUrl, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+
+  if (!res.ok) throw new Error(`Download failed: ${res.status}`);
+
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
-  a.href = signedUrl;
+  a.href = url;
   a.download = filename;
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 }
 
 export async function deleteAttachment(attachmentId: string, gcsObjectPath: string): Promise<void> {
@@ -180,15 +189,22 @@ export async function cloneAttachmentsForNote(
   return (inserted ?? []) as Attachment[];
 }
 
-function uploadWithProgress(
-  signedUrl: string,
+function uploadWithPostPolicy(
+  uploadUrl: string,
+  fields: Record<string, string>,
   file: File,
   onProgress?: (percent: number) => void,
 ): Promise<void> {
   return new Promise((resolve, reject) => {
+    const form = new FormData();
+    for (const [key, value] of Object.entries(fields)) {
+      form.append(key, value);
+    }
+    // File must be last
+    form.append("file", file);
+
     const xhr = new XMLHttpRequest();
-    xhr.open("PUT", signedUrl);
-    xhr.setRequestHeader("Content-Type", file.type || "application/octet-stream");
+    xhr.open("POST", uploadUrl);
 
     xhr.upload.onprogress = (e) => {
       if (e.lengthComputable && onProgress) {
@@ -198,10 +214,10 @@ function uploadWithProgress(
 
     xhr.onload = () => {
       if (xhr.status >= 200 && xhr.status < 300) resolve();
-      else reject(new Error(`Upload failed: ${xhr.status}`));
+      else reject(new Error(`Upload failed: ${xhr.status} ${xhr.statusText}`));
     };
 
-    xhr.onerror = () => reject(new Error("Upload failed"));
-    xhr.send(file);
+    xhr.onerror = () => reject(new Error("Upload failed — network error"));
+    xhr.send(form);
   });
 }

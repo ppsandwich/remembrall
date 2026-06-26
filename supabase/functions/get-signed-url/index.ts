@@ -3,7 +3,6 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
 const QUOTA_BYTES = 2 * 1024 * 1024 * 1024; // 2 GB
-const SIGNED_URL_EXPIRY_SECONDS = 900; // 15 minutes
 
 const ALLOWED_MIME_PREFIXES = [
   "image/",
@@ -42,14 +41,18 @@ function jsonResp(
 }
 
 // ---------------------------------------------------------------------------
-// GCS V4 signed URL helpers (pure Deno, no SDK required)
+// Helpers
 // ---------------------------------------------------------------------------
 
-function base64url(buf: ArrayBuffer): string {
-  return btoa(String.fromCharCode(...new Uint8Array(buf)))
-    .replace(/\+/g, "-")
-    .replace(/\//g, "_")
-    .replace(/=+$/, "");
+function base64Encode(buf: ArrayBuffer | Uint8Array): string {
+  const bytes = buf instanceof Uint8Array ? buf : new Uint8Array(buf);
+  let binary = "";
+  for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+  return btoa(binary);
+}
+
+function base64url(buf: ArrayBuffer | Uint8Array): string {
+  return base64Encode(buf).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 }
 
 async function importPrivateKey(pem: string): Promise<CryptoKey> {
@@ -67,99 +70,23 @@ async function importPrivateKey(pem: string): Promise<CryptoKey> {
   );
 }
 
-async function sign(privateKey: CryptoKey, data: string): Promise<string> {
+async function signData(privateKey: CryptoKey, data: string): Promise<string> {
   const sig = await crypto.subtle.sign(
     "RSASSA-PKCS1-v1_5",
     privateKey,
     new TextEncoder().encode(data)
   );
-  return base64url(sig);
-}
-
-function toAmzDate(d: Date): string {
-  return d.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}Z$/, "Z");
-}
-
-async function generateSignedUrl(opts: {
-  method: "PUT" | "GET";
-  bucket: string;
-  object: string;
-  contentType?: string;
-  serviceAccountEmail: string;
-  privateKey: string;
-  expiresIn?: number;
-}): Promise<string> {
-  const {
-    method,
-    bucket,
-    object,
-    contentType,
-    serviceAccountEmail,
-    privateKey,
-    expiresIn = SIGNED_URL_EXPIRY_SECONDS,
-  } = opts;
-
-  const now = new Date();
-  const dateStamp = toAmzDate(now).slice(0, 8);
-  const amzDate = toAmzDate(now);
-  const credentialScope = `${dateStamp}/auto/storage/goog4_request`;
-
-  const host = "storage.googleapis.com";
-  const canonicalUri = `/${bucket}/${encodeURIComponent(object).replace(/%2F/g, "/")}`;
-
-  const params: Record<string, string> = {
-    "X-Goog-Algorithm": "GOOG4-RSA-SHA256",
-    "X-Goog-Credential": `${serviceAccountEmail}/${credentialScope}`,
-    "X-Goog-Date": amzDate,
-    "X-Goog-Expires": String(expiresIn),
-    "X-Goog-SignedHeaders": contentType ? "content-type;host" : "host",
-  };
-
-  const sortedKeys = Object.keys(params).sort();
-  const canonicalQueryString = sortedKeys
-    .map((k) => `${encodeURIComponent(k)}=${encodeURIComponent(params[k])}`)
-    .join("&");
-
-  const canonicalHeaders = contentType
-    ? `content-type:${contentType}\nhost:${host}\n`
-    : `host:${host}\n`;
-  const signedHeaders = contentType ? "content-type;host" : "host";
-
-  const canonicalRequest = [
-    method,
-    canonicalUri,
-    canonicalQueryString,
-    canonicalHeaders,
-    signedHeaders,
-    "UNSIGNED-PAYLOAD",
-  ].join("\n");
-
-  const stringToSign = [
-    "GOOG4-RSA-SHA256",
-    amzDate,
-    credentialScope,
-    base64url(
-      await crypto.subtle.digest(
-        "SHA-256",
-        new TextEncoder().encode(canonicalRequest)
-      )
-    ),
-  ].join("\n");
-
-  const key = await importPrivateKey(privateKey);
-  const signature = await sign(key, stringToSign);
-
-  return `https://${host}${canonicalUri}?${canonicalQueryString}&X-Goog-Signature=${signature}`;
+  return base64Encode(sig);
 }
 
 // ---------------------------------------------------------------------------
-// Service account OAuth2 access token (for GCS JSON API calls)
+// Service account OAuth2 access token (for GCS JSON API calls like delete)
 // ---------------------------------------------------------------------------
 
 async function getServiceAccountAccessToken(saKeyJson: Record<string, string>): Promise<string> {
   const now = Math.floor(Date.now() / 1000);
-  const jwtHeader = base64url(new TextEncoder().encode(JSON.stringify({ alg: "RS256", typ: "JWT" })));
-  const jwtClaimSet = base64url(
+  const header = base64url(new TextEncoder().encode(JSON.stringify({ alg: "RS256", typ: "JWT" })));
+  const claims = base64url(
     new TextEncoder().encode(
       JSON.stringify({
         iss: saKeyJson.client_email,
@@ -170,14 +97,10 @@ async function getServiceAccountAccessToken(saKeyJson: Record<string, string>): 
       })
     )
   );
-  const signingInput = `${jwtHeader}.${jwtClaimSet}`;
+  const signingInput = `${header}.${claims}`;
   const key = await importPrivateKey(saKeyJson.private_key);
-  const sig = await crypto.subtle.sign(
-    "RSASSA-PKCS1-v1_5",
-    key,
-    new TextEncoder().encode(signingInput)
-  );
-  const jwt = `${signingInput}.${base64url(sig)}`;
+  const sig = await signData(key, signingInput);
+  const jwt = `${signingInput}.${sig.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "")}`;
 
   const tokenRes = await fetch("https://oauth2.googleapis.com/token", {
     method: "POST",
@@ -191,6 +114,48 @@ async function getServiceAccountAccessToken(saKeyJson: Record<string, string>): 
 
   const { access_token } = await tokenRes.json();
   return access_token;
+}
+
+// ---------------------------------------------------------------------------
+// POST policy for direct browser upload to GCS
+// ---------------------------------------------------------------------------
+
+async function generatePostPolicy(opts: {
+  bucket: string;
+  object: string;
+  contentType: string;
+  saKeyJson: Record<string, string>;
+  expiresIn?: number;
+}) {
+  const { bucket, object, contentType, saKeyJson, expiresIn = 900 } = opts;
+  const expiration = new Date(Date.now() + expiresIn * 1000).toISOString();
+
+  const conditions = [
+    ["starts-with", "$key", ""],
+    ["eq", "$Content-Type", contentType],
+    ["content-length-range", 1, MAX_FILE_SIZE],
+  ];
+
+  const policy = {
+    expiration,
+    conditions,
+  };
+
+  const policyBase64 = btoa(JSON.stringify(policy));
+
+  const key = await importPrivateKey(saKeyJson.private_key);
+  const signature = await signData(key, policyBase64);
+
+  return {
+    url: `https://storage.googleapis.com/${bucket}`,
+    fields: {
+      key: object,
+      "Content-Type": contentType,
+      GoogleAccessId: saKeyJson.client_email,
+      policy: policyBase64,
+      signature,
+    },
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -228,19 +193,17 @@ serve(async (req) => {
     const bucket = Deno.env.get("GCS_BUCKET_NAME")!;
     const saKeyJson = JSON.parse(Deno.env.get("GCS_SERVICE_ACCOUNT_KEY")!);
 
-    // --- Upload ---
+    // --- Upload (POST policy) ---
     if (action === "upload") {
       if (!filename || !contentType || !noteId) {
         return jsonResp(req, { error: "Missing filename, contentType, or noteId" }, 400);
       }
 
-      // Validate mime type
       const allowed = ALLOWED_MIME_PREFIXES.some((p) => contentType.startsWith(p));
       if (!allowed) {
         return jsonResp(req, { error: `File type not allowed: ${contentType}` }, 400);
       }
 
-      // Check quota
       const supabaseAdmin = createClient(
         Deno.env.get("SUPABASE_URL")!,
         Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
@@ -257,35 +220,31 @@ serve(async (req) => {
         return jsonResp(req, { error: "Storage quota exceeded (2 GB limit)" }, 403);
       }
 
-      // Build object path
       const sanitized = filename.replace(/[^a-zA-Z0-9._-]/g, "_");
       const attachmentId = crypto.randomUUID();
       const objectPath = `${user.id}/${noteId}/${attachmentId}/${sanitized}`;
 
-      const signedUrl = await generateSignedUrl({
-        method: "PUT",
+      const policy = await generatePostPolicy({
         bucket,
         object: objectPath,
         contentType,
-        serviceAccountEmail: saKeyJson.client_email,
-        privateKey: saKeyJson.private_key,
+        saKeyJson,
       });
 
       return jsonResp(req, {
-        signedUrl,
+        uploadUrl: policy.url,
+        fields: policy.fields,
         gcsObjectPath: objectPath,
         attachmentId,
-        expiresInSeconds: SIGNED_URL_EXPIRY_SECONDS,
       });
     }
 
-    // --- Download ---
+    // --- Download (access token) ---
     if (action === "download") {
       if (!gcsObjectPath) {
         return jsonResp(req, { error: "Missing gcsObjectPath" }, 400);
       }
 
-      // Verify ownership
       const supabaseAdmin = createClient(
         Deno.env.get("SUPABASE_URL")!,
         Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
@@ -301,17 +260,13 @@ serve(async (req) => {
         return jsonResp(req, { error: "Not found" }, 404);
       }
 
-      const signedUrl = await generateSignedUrl({
-        method: "GET",
-        bucket,
-        object: gcsObjectPath,
-        serviceAccountEmail: saKeyJson.client_email,
-        privateKey: saKeyJson.private_key,
-      });
+      const accessToken = await getServiceAccountAccessToken(saKeyJson);
+      const downloadUrl = `https://storage.googleapis.com/${bucket}/${gcsObjectPath}`;
 
       return jsonResp(req, {
-        signedUrl,
-        expiresInSeconds: SIGNED_URL_EXPIRY_SECONDS,
+        downloadUrl,
+        accessToken,
+        expiresIn: 3600,
       });
     }
 
@@ -321,7 +276,6 @@ serve(async (req) => {
         return jsonResp(req, { error: "Missing gcsObjectPath" }, 400);
       }
 
-      // Verify ownership
       const supabaseAdmin = createClient(
         Deno.env.get("SUPABASE_URL")!,
         Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
@@ -337,10 +291,7 @@ serve(async (req) => {
         return jsonResp(req, { error: "Not found" }, 404);
       }
 
-      // Get OAuth2 access token from service account
       const accessToken = await getServiceAccountAccessToken(saKeyJson);
-
-      // Delete the GCS object
       const encodedPath = gcsObjectPath.split("/").map(encodeURIComponent).join("/");
       const deleteRes = await fetch(
         `https://storage.googleapis.com/storage/v1/b/${bucket}/o/${encodedPath}`,
@@ -361,6 +312,6 @@ serve(async (req) => {
     return jsonResp(req, { error: `Unknown action: ${action}` }, 400);
   } catch (err) {
     console.error("get-signed-url error:", err);
-    return jsonResp(req, { error: "Internal server error" }, 500);
+    return jsonResp(req, { error: err instanceof Error ? err.message : "Internal server error" }, 500);
   }
 });

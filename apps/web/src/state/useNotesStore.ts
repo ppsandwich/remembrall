@@ -808,7 +808,7 @@ export const useNotesStore = create<NotesState>((set, get) => ({
 
       useUIStore.getState().showToast(`Attached ${file.name}`);
     } catch (err: any) {
-      useUIStore.getState().showToast(err.message || "Upload failed");
+      useUIStore.getState().showToast(err.message || "Upload failed", 10000);
     }
   },
 
@@ -842,7 +842,7 @@ export const useNotesStore = create<NotesState>((set, get) => ({
       });
       useUIStore.getState().showToast("Attachment removed");
     } catch {
-      useUIStore.getState().showToast("Failed to delete attachment");
+      useUIStore.getState().showToast("Failed to delete attachment", 10000);
     }
   },
 

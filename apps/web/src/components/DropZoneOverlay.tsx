@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useNotesStore } from "@/state/useNotesStore";
 import { useUIStore } from "@/state/useUIStore";
 import { Paperclip } from "./Icons";
@@ -10,50 +10,65 @@ export default function DropZoneOverlay() {
   const uploadAttachment = useNotesStore((s) => s.uploadAttachment);
   const showToast = useUIStore((s) => s.showToast);
   const [visible, setVisible] = useState(false);
+  const dragCountRef = useRef(0);
 
-  const handleDragOver = useCallback((e: DragEvent) => {
-    if (e.dataTransfer?.types.includes("Files")) {
+  useEffect(() => {
+    const handleDragEnter = (e: DragEvent) => {
+      if (!e.dataTransfer?.types.includes("Files")) return;
+      e.preventDefault();
+      dragCountRef.current++;
+      setVisible(true);
+    };
+
+    const handleDragOver = (e: DragEvent) => {
+      if (!e.dataTransfer?.types.includes("Files")) return;
       e.preventDefault();
       e.dataTransfer.dropEffect = "copy";
-      setVisible(true);
-    }
-  }, []);
+    };
 
-  const handleDragLeave = useCallback((e: DragEvent) => {
-    if (e.relatedTarget === null || !(e.currentTarget as Element)?.contains(e.relatedTarget as Node)) {
-      setVisible(false);
-    }
-  }, []);
+    const handleDragLeave = (e: DragEvent) => {
+      if (!e.dataTransfer?.types.includes("Files")) return;
+      dragCountRef.current--;
+      if (dragCountRef.current <= 0) {
+        dragCountRef.current = 0;
+        setVisible(false);
+      }
+    };
 
-  const handleDrop = useCallback(
-    async (e: DragEvent) => {
+    const handleDrop = async (e: DragEvent) => {
       e.preventDefault();
+      dragCountRef.current = 0;
       setVisible(false);
 
       const files = e.dataTransfer?.files;
       if (!files || files.length === 0) return;
 
       for (const file of files) {
-        const noteId = await createNote("", "web", file.name);
-        if (noteId) {
-          await uploadAttachment(noteId, file);
-          showToast(`Note created with ${file.name}`);
+        try {
+          const noteId = await createNote(`📎 ${file.name}`, "web", file.name);
+          if (noteId) {
+            await uploadAttachment(noteId, file);
+            showToast(`Note created with ${file.name}`);
+          } else {
+            showToast("Failed to create note");
+          }
+        } catch (err) {
+          showToast("Failed to create note with attachment");
         }
       }
-    },
-    [createNote, uploadAttachment, showToast],
-  );
+    };
 
-  useEffect(() => {
+    document.addEventListener("dragenter", handleDragEnter);
     document.addEventListener("dragover", handleDragOver);
     document.addEventListener("dragleave", handleDragLeave);
     document.addEventListener("drop", handleDrop);
     return () => {
+      document.removeEventListener("dragenter", handleDragEnter);
       document.removeEventListener("dragover", handleDragOver);
       document.removeEventListener("dragleave", handleDragLeave);
       document.removeEventListener("drop", handleDrop);
     };
-  }, [handleDragOver, handleDragLeave, handleDrop]);
+  }, [createNote, uploadAttachment, showToast]);
 
   if (!visible) return null;
 

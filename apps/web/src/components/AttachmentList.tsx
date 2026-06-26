@@ -6,6 +6,8 @@ import { downloadAttachment } from "@/lib/attachmentsApi";
 import type { Attachment } from "@brall/core";
 import { FileIcon, FileImage, FileText, Download, Trash, Paperclip } from "./Icons";
 
+const EMPTY_ATTACHMENTS: never[] = [];
+
 function formatBytes(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
@@ -24,7 +26,7 @@ interface AttachmentListProps {
 }
 
 export default function AttachmentList({ noteId }: AttachmentListProps) {
-  const attachments = useNotesStore((s) => s.attachments.get(noteId) || []);
+  const attachments = useNotesStore((s) => s.attachments.get(noteId) ?? EMPTY_ATTACHMENTS);
   const uploadAttachment = useNotesStore((s) => s.uploadAttachment);
   const deleteAttachment = useNotesStore((s) => s.deleteAttachment);
   const fileInputRef = useRef<HTMLInputElement>(null);

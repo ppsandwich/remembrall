@@ -19,7 +19,7 @@ interface UIState {
   setSelectMode: (on: boolean) => void;
   setEnterToSave: (on: boolean) => void;
   setDragHint: (message: string | null) => void;
-  showToast: (message: string) => void;
+  showToast: (message: string, durationMs?: number) => void;
   clearToast: () => void;
   setShowArchived: (show: boolean) => void;
 }
@@ -64,9 +64,9 @@ export const useUIStore = create<UIState>((set) => ({
     set({ enterToSave: on });
   },
 
-  showToast: (message) => {
+  showToast: (message, durationMs?: number) => {
     set({ toastMessage: message });
-    setTimeout(() => set({ toastMessage: null }), 3000);
+    setTimeout(() => set({ toastMessage: null }), durationMs ?? 3000);
   },
 
   clearToast: () => set({ toastMessage: null }),

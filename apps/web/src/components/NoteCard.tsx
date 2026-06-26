@@ -9,7 +9,9 @@ import { exportSingleNote, downloadMarkdown, singleNoteFilename } from "@brall/e
 import { Copy, Pin, PinOff, Download, Trash, Palette, Undo, X, Paperclip } from "./Icons";
 import { useDragContext } from "./DragContext";
 import RadialColorPicker from "./RadialColorPicker";
-import { useRef, useCallback, useState, useEffect } from "react";
+import { useRef, useCallback, useState, useEffect, useMemo } from "react";
+
+const EMPTY_ATTACHMENTS: never[] = [];
 
 interface Props {
   note: DecryptedNote;
@@ -21,7 +23,7 @@ interface Props {
 export default function NoteCard({ note, index, highlighted, onHighlightEnd }: Props) {
   const { toggleSelect, selectedIds, setEditingId, deleteNote, dismissWelcomeNote, restoreNote, togglePin, updateNoteColor, moveNoteToPage, clusterMode, setDragging, colorNames, pages, activePageId, sectionPermissions } =
     useNotesStore();
-  const noteAttachments = useNotesStore((s) => s.attachments.get(note.id) || []);
+  const noteAttachments = useNotesStore((s) => s.attachments.get(note.id) ?? EMPTY_ATTACHMENTS);
   const { showToast, selectMode, resolvedTheme, setDragHint, showArchived } = useUIStore();
   const isSelected = selectedIds.has(note.id);
   const { startDrag, updateDrag, setTargetIndex, endDrag, getCardStyle, getCardClassName, dragState } = useDragContext();
