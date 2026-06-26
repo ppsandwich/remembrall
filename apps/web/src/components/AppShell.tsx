@@ -126,12 +126,20 @@ export default function AppShell() {
   useEffect(() => {
     const el = mainRef.current;
     if (!el) return;
-    const observer = new ResizeObserver(() => {
+    const update = () => {
       const rect = el.getBoundingClientRect();
       setFabRight(window.innerWidth - rect.right + 15);
-    });
+    };
+    update();
+    const observer = new ResizeObserver(update);
     observer.observe(el);
-    return () => observer.disconnect();
+    window.addEventListener("resize", update);
+    document.addEventListener("scroll", update, { passive: true });
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", update);
+      document.removeEventListener("scroll", update);
+    };
   }, []);
 
   if (!ready) {
