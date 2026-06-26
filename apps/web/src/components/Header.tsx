@@ -7,7 +7,7 @@ import { useNotesStore } from "@/state/useNotesStore";
 import { addTag } from "@brall/core";
 import { useVoiceRecording } from "@/lib/useVoiceRecording";
 import { transcribeAudio } from "@/lib/openrouter";
-import { Sun, Moon, HelpCircle, Settings, LogOut, CheckSquare, Square, Layers, Volleyball, Search, X, Plus, Minus, ChevronDown, TableOfContents, Pencil, AudioLines } from "./Icons";
+import { Sun, Moon, HelpCircle, Settings, LogOut, CheckSquare, Square, Layers, Search, X, Plus, Minus, ChevronDown, TableOfContents, Pencil, AudioLines } from "./Icons";
 import TabBar from "./TabBar";
 
 export default function Header() {
@@ -170,31 +170,18 @@ export default function Header() {
       >
         <div className="max-w-7xl w-full mx-auto flex items-center justify-between">
           {!(window as any).electronAPI && !window.matchMedia("(display-mode: standalone)").matches && (
-            <div className="flex items-center gap-3 shrink-0">
-              <svg width="0" height="0" style={{ position: "absolute" }}>
-                <defs>
-                  <linearGradient id="header-gold" x1="0%" y1="0%" x2="0%" y2="100%">
-                    <stop offset="0%" stopColor="#D4AF37" />
-                    <stop offset="50%" stopColor="#B8860B" />
-                    <stop offset="100%" stopColor="#996515" />
-                  </linearGradient>
-                </defs>
-              </svg>
-              <Volleyball size={30} strokeWidth={1.5} style={{ stroke: "url(#header-gold)", fill: "none" }} />
-              <h1
-                className="text-lg font-bold tracking-tight hidden sm:block"
-                style={{
-                  letterSpacing: "-0.01em",
-                  fontFamily: "var(--font-almendra), serif",
-                  color: "var(--text)",
-                }}
-              >
-                Brall
-              </h1>
-            </div>
+            <h1
+              className="text-lg font-bold tracking-tight shrink-0 mr-3 hidden sm:block"
+              style={{
+                letterSpacing: "-0.01em",
+                fontFamily: "var(--font-almendra), serif",
+                color: "var(--text)",
+              }}
+            >
+              Brall
+            </h1>
           )}
-
-          <div className="flex items-center gap-0.5 flex-1 min-w-0 ml-[30px]">
+          <div className="flex items-center gap-0.5 flex-1 min-w-0">
             <div className="hidden lg:flex flex-1 min-w-0 overflow-x-auto">
               <TabBar />
             </div>
