@@ -24,7 +24,7 @@ interface AttachmentListProps {
 }
 
 export default function AttachmentList({ noteId }: AttachmentListProps) {
-  const attachments = useNotesStore((s) => s.getNoteAttachments(noteId));
+  const attachments = useNotesStore((s) => s.attachments.get(noteId) || []);
   const uploadAttachment = useNotesStore((s) => s.uploadAttachment);
   const deleteAttachment = useNotesStore((s) => s.deleteAttachment);
   const fileInputRef = useRef<HTMLInputElement>(null);
