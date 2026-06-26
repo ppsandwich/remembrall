@@ -6,6 +6,7 @@ import { useUIStore } from "@/state/useUIStore";
 import * as shareApi from "@/lib/shareApi";
 import type { SectionShare } from "@brall/core";
 import { X, Copy } from "./Icons";
+import { useFocusTrap } from "@/lib/useFocusTrap";
 
 interface Props {
   sectionId: string;
@@ -27,6 +28,7 @@ export default function ShareDialog({ sectionId, sectionName, onClose }: Props) 
   const [lastLink, setLastLink] = useState<string | null>(null);
   const emailRef = useRef<HTMLInputElement>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
+  const focusTrapRef = useFocusTrap<HTMLDivElement>(onClose);
 
   const isOwner = !sectionPermissions.has(sectionId);
 
@@ -108,10 +110,13 @@ export default function ShareDialog({ sectionId, sectionName, onClose }: Props) 
 
   return (
     <div
-      ref={overlayRef}
+      ref={focusTrapRef}
       className="fixed inset-0 z-50 flex items-center justify-center p-6"
       style={{ background: "rgba(0,0,0,0.25)", backdropFilter: "blur(2px)" }}
       onClick={(e) => { if (e.target === overlayRef.current) onClose(); }}
+      role="dialog"
+      aria-modal="true"
+      aria-label={`Share ${sectionName}`}
     >
       <div
         className="w-full max-w-sm rounded-xl shadow-xl overflow-hidden"
@@ -127,6 +132,7 @@ export default function ShareDialog({ sectionId, sectionName, onClose }: Props) 
               onClick={onClose}
               className="p-1 rounded transition-colors"
               style={{ color: "var(--text-muted)" }}
+              aria-label="Close"
               onMouseEnter={(e) => { e.currentTarget.style.background = "var(--surface-subtle)"; }}
               onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
             >
@@ -232,6 +238,7 @@ export default function ShareDialog({ sectionId, sectionName, onClose }: Props) 
                 className="p-1 rounded transition-colors shrink-0"
                 style={{ color: "var(--text-muted)" }}
                 title="Copy link"
+                aria-label="Copy share link"
                 onMouseEnter={(e) => { e.currentTarget.style.color = "var(--text)"; }}
                 onMouseLeave={(e) => { e.currentTarget.style.color = "var(--text-muted)"; }}
               >
@@ -293,6 +300,7 @@ export default function ShareDialog({ sectionId, sectionName, onClose }: Props) 
                           className="p-1 rounded transition-colors"
                           style={{ color: "var(--text-muted)" }}
                           title="Remove"
+                          aria-label={`Remove ${share.shared_with_email}`}
                           onMouseEnter={(e) => { e.currentTarget.style.color = "var(--danger)"; }}
                           onMouseLeave={(e) => { e.currentTarget.style.color = "var(--text-muted)"; }}
                         >

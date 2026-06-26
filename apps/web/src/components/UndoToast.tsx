@@ -11,7 +11,7 @@ export default function UndoToast() {
   if (undoStack.length === 0 && !toastMessage) return null;
 
   return (
-    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex flex-col gap-2 items-center">
+    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex flex-col gap-2 items-center" role="status" aria-live="polite">
       {undoStack.length > 0 && (
         <div
           className="flex items-center gap-4 px-5 py-3 rounded-lg shadow-lg text-sm"

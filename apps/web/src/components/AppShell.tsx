@@ -145,7 +145,7 @@ export default function AppShell() {
   if (!ready) {
     return (
       <div className="flex items-center justify-center h-screen" style={{ background: "var(--bg)" }}>
-        <div className="text-sm" style={{ color: "var(--text-muted)" }}>Decrypting notes…</div>
+        <div className="text-sm" role="status" aria-live="polite" style={{ color: "var(--text-muted)" }}>Decrypting notes…</div>
       </div>
     );
   }

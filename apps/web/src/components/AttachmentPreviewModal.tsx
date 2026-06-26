@@ -13,6 +13,7 @@ import {
   RotateCw,
   Loader,
 } from "./Icons";
+import { useFocusTrap } from "@/lib/useFocusTrap";
 
 interface AttachmentPreviewModalProps {
   attachment: Attachment;
@@ -62,12 +63,17 @@ export default function AttachmentPreviewModal({
   }, [attachment.gcs_object_path, attachment.filename]);
 
   const category = getCategory(attachment.mime_type);
+  const focusTrapRef = useFocusTrap<HTMLDivElement>(onClose);
 
   return (
     <div
+      ref={focusTrapRef}
       className="fixed inset-0 z-50 flex items-center justify-center note-editor-overlay"
       style={{ background: "rgba(0,0,0,0.55)", backdropFilter: "blur(4px)" }}
       onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-label={`Preview: ${attachment.filename}`}
     >
       <div
         className="note-editor-panel flex flex-col w-full h-full sm:w-[92vw] sm:h-[90vh] sm:max-w-5xl sm:rounded-xl overflow-hidden"
@@ -102,6 +108,7 @@ export default function AttachmentPreviewModal({
               className="p-1.5 rounded-md transition-colors"
               style={{ color: "var(--text-muted)" }}
               title="Download"
+              aria-label="Download file"
               onMouseEnter={(e) => {
                 e.currentTarget.style.background = "var(--surface-subtle)";
                 e.currentTarget.style.color = "var(--text-secondary)";
@@ -118,6 +125,7 @@ export default function AttachmentPreviewModal({
               className="p-1.5 rounded-md transition-colors"
               style={{ color: "var(--text-muted)" }}
               title="Close"
+              aria-label="Close preview"
               onMouseEnter={(e) => {
                 e.currentTarget.style.background = "var(--surface-subtle)";
                 e.currentTarget.style.color = "var(--text-secondary)";

@@ -8,6 +8,7 @@ import { testApiKey } from "@/lib/openrouter";
 import ExportMenu from "./ExportMenu";
 import { HardDrive } from "./Icons";
 import { MAX_USER_STORAGE } from "@brall/core";
+import { useFocusTrap } from "@/lib/useFocusTrap";
 
 export default function SettingsPanel({ onClose }: { onClose: () => void }) {
   const { theme, setTheme, resolvedTheme, showArchived, setShowArchived, showToast } = useUIStore();
@@ -20,6 +21,7 @@ export default function SettingsPanel({ onClose }: { onClose: () => void }) {
   const colors = resolvedTheme === "dark" ? DARK_NOTE_COLORS : NOTE_COLORS;
   const colorMap = new Map(colors.map((c) => [c.name, c.hex]));
   const dragIndex = useRef<number | null>(null);
+  const focusTrapRef = useFocusTrap<HTMLDivElement>(onClose);
 
   const orderedColors = colorOrder
     .filter((name) => name !== "none")
@@ -45,9 +47,13 @@ export default function SettingsPanel({ onClose }: { onClose: () => void }) {
 
   return (
     <div
+      ref={focusTrapRef}
       className="fixed inset-0 z-50 flex items-center justify-center p-6"
       style={{ background: "rgba(0,0,0,0.25)", backdropFilter: "blur(2px)" }}
       onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Settings"
     >
       <div
         className="w-full max-w-md rounded-xl shadow-xl overflow-hidden flex flex-col"
@@ -63,6 +69,7 @@ export default function SettingsPanel({ onClose }: { onClose: () => void }) {
             onClick={onClose}
             className="text-sm px-2 py-1 rounded transition-colors"
             style={{ color: "var(--text-muted)" }}
+            aria-label="Close settings"
             onMouseEnter={(e) => (e.currentTarget.style.background = "var(--surface-subtle)")}
             onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
           >

@@ -29,6 +29,8 @@ export default function TagFilter() {
           key={tag}
           onClick={() => setFilterTag(filterTag === tag ? null : tag)}
           className="px-2.5 py-1 rounded-full text-xs transition-colors"
+          aria-pressed={filterTag === tag}
+          aria-label={`Filter by ${tag}`}
           style={{
             background: filterTag === tag ? "var(--accent)" : "var(--surface)",
             color: filterTag === tag ? "var(--surface)" : "var(--text-secondary)",

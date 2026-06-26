@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useNotesStore } from "@/state/useNotesStore";
+import { useFocusTrap } from "@/lib/useFocusTrap";
 import { writeClipboard, readClipboard } from "@/lib/clipboard";
 import { useUIStore } from "@/state/useUIStore";
 import { exportSingleNote, downloadMarkdown, singleNoteFilename } from "@brall/export";
@@ -223,12 +224,18 @@ export default function NoteEditor() {
   if (!isOpen) return null;
 
   const modKey = typeof navigator !== "undefined" && /Mac|iPhone|iPad|iPod/.test(navigator.userAgent) ? "⌘" : "Ctrl+";
+  const focusTrapRef = useFocusTrap<HTMLDivElement>(handleClose);
 
   return (
     <div
+      ref={focusTrapRef}
       className="note-editor-overlay fixed inset-0 z-50 flex items-center justify-center md:p-6"
       style={{ background: "rgba(0,0,0,0.25)", backdropFilter: "blur(2px)" }}
       onClick={handleClose}
+      onKeyDown={(e) => { if (e.key === "Escape") e.stopPropagation(); }}
+      role="dialog"
+      aria-modal="true"
+      aria-label={isNewNote ? "New note" : "Edit note"}
     >
       <div
         className="note-editor-panel w-full h-full md:h-auto md:max-w-2xl md:rounded-xl md:shadow-xl overflow-hidden flex flex-col"

@@ -1,6 +1,7 @@
 "use client";
 
 import { useUIStore } from "@/state/useUIStore";
+import { useFocusTrap } from "@/lib/useFocusTrap";
 
 const SHORTCUTS = [
   { key: "/", desc: "Focus search" },
@@ -19,11 +20,17 @@ export default function ShortcutsPanel() {
 
   if (!showShortcuts) return null;
 
+  const focusTrapRef = useFocusTrap<HTMLDivElement>(() => setShowShortcuts(false));
+
   return (
     <div
+      ref={focusTrapRef}
       className="fixed inset-0 z-50 flex items-center justify-center p-6"
       style={{ background: "rgba(0,0,0,0.25)", backdropFilter: "blur(2px)" }}
       onClick={() => setShowShortcuts(false)}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Keyboard shortcuts"
     >
       <div
         className="w-full max-w-sm rounded-xl shadow-xl overflow-hidden"

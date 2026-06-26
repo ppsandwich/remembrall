@@ -9,6 +9,7 @@ import { useVoiceRecording } from "@/lib/useVoiceRecording";
 import { transcribeAudio } from "@/lib/openrouter";
 import { Sun, Moon, HelpCircle, Settings, LogOut, CheckSquare, Square, Layers, Search, X, Plus, Minus, ChevronDown, TableOfContents, Pencil, AudioLines } from "./Icons";
 import TabBar from "./TabBar";
+import { useFocusTrap } from "@/lib/useFocusTrap";
 
 export default function Header() {
   const signOut = useAuthStore((s) => s.signOut);
@@ -443,51 +444,16 @@ export default function Header() {
       </header>
 
       {showMobileDeleteConfirm && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-6"
-          style={{ background: "rgba(0,0,0,0.25)", backdropFilter: "blur(2px)" }}
-          onClick={() => setShowMobileDeleteConfirm(false)}
-        >
-          <div
-            className="w-full max-w-sm rounded-xl shadow-xl overflow-hidden"
-            style={{ background: "var(--surface)", border: "1px solid var(--border)" }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="p-5">
-              <h3 className="text-sm font-medium mb-2" style={{ color: "var(--text)" }}>
-                Delete page
-              </h3>
-              <p className="text-xs mb-4" style={{ color: "var(--text-muted)" }}>
-                Are you sure you want to delete &ldquo;{pages.find((p) => p.id === activePageId)?.name}&rdquo;? Notes on this page will not be deleted.
-              </p>
-              <div className="flex justify-end gap-2">
-                <button
-                  onClick={() => setShowMobileDeleteConfirm(false)}
-                  className="px-3 py-1.5 text-xs rounded-md transition-colors"
-                  style={{ color: "var(--text-muted)", border: "1px solid var(--border)" }}
-                  onMouseEnter={(e) => { e.currentTarget.style.background = "var(--surface-subtle)"; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={() => {
-                    if (activePageId && pages.length > 1) {
-                      deletePage(activePageId);
-                    }
-                    setShowMobileDeleteConfirm(false);
-                  }}
-                  className="px-3 py-1.5 text-xs rounded-md transition-colors"
-                  style={{ background: "var(--danger, #EF4444)", color: "white" }}
-                  onMouseEnter={(e) => { e.currentTarget.style.opacity = "0.9"; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.opacity = "1"; }}
-                >
-                  Delete
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+        <DeleteConfirmDialog
+          pageName={pages.find((p) => p.id === activePageId)?.name || ""}
+          onCancel={() => setShowMobileDeleteConfirm(false)}
+          onConfirm={() => {
+            if (activePageId && pages.length > 1) {
+              deletePage(activePageId);
+            }
+            setShowMobileDeleteConfirm(false);
+          }}
+        />
       )}
       {openrouterKey && isSupported ? (
         <div
@@ -567,5 +533,55 @@ function HeaderButton({ onClick, title, active, children, className, style, hove
     >
       {children}
     </button>
+  );
+}
+
+function DeleteConfirmDialog({ pageName, onCancel, onConfirm }: { pageName: string; onCancel: () => void; onConfirm: () => void }) {
+  const focusTrapRef = useFocusTrap<HTMLDivElement>(onCancel);
+  return (
+    <div
+      ref={focusTrapRef}
+      className="fixed inset-0 z-50 flex items-center justify-center p-6"
+      style={{ background: "rgba(0,0,0,0.25)", backdropFilter: "blur(2px)" }}
+      onClick={onCancel}
+    >
+      <div
+        className="w-full max-w-sm rounded-xl shadow-xl overflow-hidden"
+        style={{ background: "var(--surface)", border: "1px solid var(--border)" }}
+        onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Delete page confirmation"
+      >
+        <div className="p-5">
+          <h3 className="text-sm font-medium mb-2" style={{ color: "var(--text)" }}>
+            Delete page
+          </h3>
+          <p className="text-xs mb-4" style={{ color: "var(--text-muted)" }}>
+            Are you sure you want to delete &ldquo;{pageName}&rdquo;? Notes on this page will not be deleted.
+          </p>
+          <div className="flex justify-end gap-2">
+            <button
+              onClick={onCancel}
+              className="px-3 py-1.5 text-xs rounded-md transition-colors"
+              style={{ color: "var(--text-muted)", border: "1px solid var(--border)" }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = "var(--surface-subtle)"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+            >
+              Cancel
+            </button>
+            <button
+              onClick={onConfirm}
+              className="px-3 py-1.5 text-xs rounded-md transition-colors"
+              style={{ background: "var(--danger, #EF4444)", color: "white" }}
+              onMouseEnter={(e) => { e.currentTarget.style.opacity = "0.9"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.opacity = "1"; }}
+            >
+              Delete
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
