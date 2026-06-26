@@ -222,21 +222,73 @@ input[type="checkbox"] {
   75% { background-position: 0% 100%; }
 }
 
-@keyframes landing-float-1 {
-  0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.3; }
-  33% { transform: translate(30px, -40px) scale(1.1); opacity: 0.5; }
-  66% { transform: translate(-20px, -20px) scale(0.95); opacity: 0.35; }
+@keyframes landing-orbit-1 {
+  0% { transform: translate(0, 0) scale(1); }
+  20% { transform: translate(60px, -80px) scale(1.15); }
+  40% { transform: translate(-40px, -50px) scale(0.9); }
+  60% { transform: translate(80px, 30px) scale(1.1); }
+  80% { transform: translate(-30px, 70px) scale(0.95); }
+  100% { transform: translate(0, 0) scale(1); }
 }
 
-@keyframes landing-float-2 {
-  0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.2; }
-  33% { transform: translate(-40px, 30px) scale(1.15); opacity: 0.4; }
-  66% { transform: translate(25px, -35px) scale(0.9); opacity: 0.25; }
+@keyframes landing-orbit-2 {
+  0% { transform: translate(0, 0) scale(1); }
+  25% { transform: translate(-70px, 50px) scale(1.2); }
+  50% { transform: translate(40px, 80px) scale(0.85); }
+  75% { transform: translate(60px, -40px) scale(1.1); }
+  100% { transform: translate(0, 0) scale(1); }
 }
 
-@keyframes landing-float-3 {
-  0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.25; }
-  50% { transform: translate(20px, 25px) scale(1.08); opacity: 0.45; }
+@keyframes landing-orbit-3 {
+  0% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(50px, 60px) scale(1.12); }
+  66% { transform: translate(-60px, -30px) scale(0.88); }
+  100% { transform: translate(0, 0) scale(1); }
+}
+
+@keyframes landing-orbit-4 {
+  0% { transform: translate(0, 0) scale(1) rotate(0deg); }
+  50% { transform: translate(-50px, -70px) scale(1.18) rotate(5deg); }
+  100% { transform: translate(0, 0) scale(1) rotate(0deg); }
+}
+
+@keyframes landing-orbit-5 {
+  0% { transform: translate(0, 0) scale(1); }
+  30% { transform: translate(40px, -60px) scale(0.9); }
+  60% { transform: translate(-70px, 40px) scale(1.15); }
+  100% { transform: translate(0, 0) scale(1); }
+}
+
+@keyframes landing-mesh-drift {
+  0% { transform: translate(0, 0) rotate(0deg); }
+  33% { transform: translate(30px, -20px) rotate(1deg); }
+  66% { transform: translate(-20px, 30px) rotate(-1deg); }
+  100% { transform: translate(0, 0) rotate(0deg); }
+}
+
+@keyframes landing-particle-rise {
+  0% { transform: translateY(0) translateX(0); opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { transform: translateY(-100vh) translateX(20px); opacity: 0; }
+}
+
+@keyframes landing-particle-drift {
+  0% { transform: translate(0, 0); opacity: 0; }
+  15% { opacity: 0.6; }
+  85% { opacity: 0.6; }
+  100% { transform: translate(80px, -120vh); opacity: 0; }
+}
+
+@keyframes landing-glow-pulse {
+  0%, 100% { opacity: 0.15; transform: scale(1); }
+  50% { opacity: 0.3; transform: scale(1.05); }
+}
+
+@keyframes landing-ring-expand {
+  0% { transform: scale(0.8); opacity: 0.3; }
+  50% { transform: scale(1.2); opacity: 0.1; }
+  100% { transform: scale(0.8); opacity: 0.3; }
 }
 
 @keyframes landing-shimmer {
@@ -250,8 +302,29 @@ input[type="checkbox"] {
 }
 
 @keyframes landing-star-pulse {
-  0%, 100% { opacity: 0.2; transform: scale(0.8); }
-  50% { opacity: 0.8; transform: scale(1.2); }
+  0%, 100% { opacity: 0.15; transform: scale(0.6); }
+  50% { opacity: 0.9; transform: scale(1.3); }
+}
+
+@keyframes landing-star-twinkle {
+  0%, 100% { opacity: 0.1; transform: scale(0.5); }
+  20% { opacity: 0.7; transform: scale(1.1); }
+  40% { opacity: 0.2; transform: scale(0.7); }
+  60% { opacity: 0.8; transform: scale(1.2); }
+  80% { opacity: 0.15; transform: scale(0.6); }
+}
+
+@keyframes landing-line-sweep {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(200%); }
+}
+
+@keyframes landing-aurora {
+  0% { background-position: 0% 50%; transform: translateX(0) scaleY(1); }
+  25% { background-position: 50% 100%; transform: translateX(20px) scaleY(1.1); }
+  50% { background-position: 100% 50%; transform: translateX(-10px) scaleY(0.95); }
+  75% { background-position: 50% 0%; transform: translateX(15px) scaleY(1.05); }
+  100% { background-position: 0% 50%; transform: translateX(0) scaleY(1); }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -259,7 +332,12 @@ input[type="checkbox"] {
   .landing-orb,
   .landing-shimmer,
   .landing-fade-up,
-  .landing-star {
+  .landing-star,
+  .landing-particle,
+  .landing-mesh,
+  .landing-aurora,
+  .landing-ring,
+  .landing-line-sweep {
     animation: none !important;
   }
 }
@@ -269,9 +347,40 @@ input[type="checkbox"] {
   animation: landing-gradient 20s ease infinite;
 }
 
-.landing-orb-1 { animation: landing-float-1 12s ease-in-out infinite; }
-.landing-orb-2 { animation: landing-float-2 15s ease-in-out infinite; }
-.landing-orb-3 { animation: landing-float-3 18s ease-in-out infinite; }
+.landing-orb-1 { animation: landing-orbit-1 14s ease-in-out infinite; }
+.landing-orb-2 { animation: landing-orbit-2 18s ease-in-out infinite; }
+.landing-orb-3 { animation: landing-orbit-3 22s ease-in-out infinite; }
+.landing-orb-4 { animation: landing-orbit-4 16s ease-in-out infinite; }
+.landing-orb-5 { animation: landing-orbit-5 20s ease-in-out infinite; }
+
+.landing-mesh {
+  animation: landing-mesh-drift 25s ease-in-out infinite;
+}
+
+.landing-aurora {
+  background-size: 300% 300%;
+  animation: landing-aurora 15s ease-in-out infinite;
+}
+
+.landing-glow {
+  animation: landing-glow-pulse 6s ease-in-out infinite;
+}
+
+.landing-ring {
+  animation: landing-ring-expand 8s ease-in-out infinite;
+}
+
+.landing-particle {
+  animation: landing-particle-rise linear infinite;
+}
+
+.landing-particle-drift {
+  animation: landing-particle-drift linear infinite;
+}
+
+.landing-line-sweep {
+  animation: landing-line-sweep 8s ease-in-out infinite;
+}
 
 .landing-shimmer {
   background-size: 200% auto;
@@ -290,4 +399,8 @@ input[type="checkbox"] {
 
 .landing-star {
   animation: landing-star-pulse 3s ease-in-out infinite;
+}
+
+.landing-star-twinkle {
+  animation: landing-star-twinkle 4s ease-in-out infinite;
 }

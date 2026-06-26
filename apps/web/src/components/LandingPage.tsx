@@ -139,7 +139,7 @@ function LandingHeader({ onSignIn, isReturning }: { onSignIn: () => void; isRetu
 function HeroSection({ onGetStarted, isReturning }: { onGetStarted: () => void; isReturning: boolean }) {
   return (
     <section className="relative overflow-hidden flex items-center justify-center" style={{ minHeight: "min(100vh, 720px)" }}>
-      {/* Animated gradient background */}
+      {/* Base gradient */}
       <div
         className="landing-animated-bg absolute inset-0"
         style={{
@@ -148,54 +148,183 @@ function HeroSection({ onGetStarted, isReturning }: { onGetStarted: () => void; 
         }}
       />
 
-      {/* Floating orbs */}
+      {/* Mesh grid overlay */}
+      <div
+        className="landing-mesh absolute inset-0 pointer-events-none"
+        style={{
+          backgroundImage: `
+            linear-gradient(color-mix(in srgb, var(--border) 8%, transparent) 1px, transparent 1px),
+            linear-gradient(90deg, color-mix(in srgb, var(--border) 8%, transparent) 1px, transparent 1px)
+          `,
+          backgroundSize: "60px 60px",
+          maskImage: "radial-gradient(ellipse 60% 50% at 50% 50%, black 20%, transparent 70%)",
+          WebkitMaskImage: "radial-gradient(ellipse 60% 50% at 50% 50%, black 20%, transparent 70%)",
+          opacity: 0.5,
+        }}
+      />
+
+      {/* Aurora band */}
+      <div
+        className="landing-aurora absolute pointer-events-none"
+        style={{
+          top: "20%",
+          left: "-10%",
+          right: "-10%",
+          height: "30%",
+          background: `linear-gradient(90deg, transparent 0%, color-mix(in srgb, ${GOLD_STOPS[0]} 5%, transparent) 20%, color-mix(in srgb, ${GOLD_STOPS[1]} 8%, transparent) 50%, color-mix(in srgb, ${GOLD_STOPS[0]} 5%, transparent) 80%, transparent 100%)`,
+          backgroundSize: "300% 100%",
+          filter: "blur(40px)",
+          borderRadius: "50%",
+        }}
+      />
+
+      {/* Large ambient orbs */}
       <div
         className="landing-orb-1 absolute rounded-full"
         style={{
-          width: "400px",
-          height: "400px",
-          top: "10%",
-          left: "15%",
-          background: `radial-gradient(circle, color-mix(in srgb, ${GOLD_STOPS[0]} 8%, transparent) 0%, transparent 70%)`,
-          filter: "blur(60px)",
+          width: "500px",
+          height: "500px",
+          top: "5%",
+          left: "10%",
+          background: `radial-gradient(circle, color-mix(in srgb, ${GOLD_STOPS[0]} 10%, transparent) 0%, transparent 65%)`,
+          filter: "blur(70px)",
         }}
       />
       <div
         className="landing-orb-2 absolute rounded-full"
         style={{
-          width: "350px",
-          height: "350px",
-          bottom: "15%",
-          right: "10%",
-          background: `radial-gradient(circle, color-mix(in srgb, ${GOLD_STOPS[1]} 6%, transparent) 0%, transparent 70%)`,
-          filter: "blur(50px)",
+          width: "450px",
+          height: "450px",
+          bottom: "10%",
+          right: "5%",
+          background: `radial-gradient(circle, color-mix(in srgb, ${GOLD_STOPS[1]} 8%, transparent) 0%, transparent 65%)`,
+          filter: "blur(60px)",
         }}
       />
       <div
         className="landing-orb-3 absolute rounded-full"
         style={{
-          width: "250px",
-          height: "250px",
-          top: "50%",
-          left: "60%",
-          background: `radial-gradient(circle, color-mix(in srgb, var(--accent) 4%, transparent) 0%, transparent 70%)`,
-          filter: "blur(40px)",
+          width: "350px",
+          height: "350px",
+          top: "40%",
+          left: "55%",
+          background: `radial-gradient(circle, color-mix(in srgb, ${GOLD_STOPS[2]} 7%, transparent) 0%, transparent 65%)`,
+          filter: "blur(50px)",
         }}
       />
+      <div
+        className="landing-orb-4 absolute rounded-full"
+        style={{
+          width: "300px",
+          height: "300px",
+          top: "15%",
+          right: "20%",
+          background: `radial-gradient(circle, color-mix(in srgb, var(--accent) 5%, transparent) 0%, transparent 65%)`,
+          filter: "blur(55px)",
+        }}
+      />
+      <div
+        className="landing-orb-5 absolute rounded-full"
+        style={{
+          width: "250px",
+          height: "250px",
+          bottom: "25%",
+          left: "25%",
+          background: `radial-gradient(circle, color-mix(in srgb, ${GOLD_STOPS[0]} 6%, transparent) 0%, transparent 65%)`,
+          filter: "blur(45px)",
+        }}
+      />
+
+      {/* Concentric glow rings */}
+      <div className="landing-ring absolute pointer-events-none" style={{ top: "50%", left: "50%", transform: "translate(-50%, -50%)" }}>
+        <div
+          style={{
+            width: "600px",
+            height: "600px",
+            borderRadius: "50%",
+            border: `1px solid color-mix(in srgb, ${GOLD_STOPS[0]} 6%, transparent)`,
+          }}
+        />
+      </div>
+      <div className="landing-ring absolute pointer-events-none" style={{ top: "50%", left: "50%", transform: "translate(-50%, -50%)", animationDelay: "2s" }}>
+        <div
+          style={{
+            width: "450px",
+            height: "450px",
+            borderRadius: "50%",
+            border: `1px solid color-mix(in srgb, ${GOLD_STOPS[1]} 5%, transparent)`,
+          }}
+        />
+      </div>
+      <div className="landing-ring absolute pointer-events-none" style={{ top: "50%", left: "50%", transform: "translate(-50%, -50%)", animationDelay: "4s" }}>
+        <div
+          style={{
+            width: "300px",
+            height: "300px",
+            borderRadius: "50%",
+            border: `1px solid color-mix(in srgb, ${GOLD_STOPS[0]} 4%, transparent)`,
+          }}
+        />
+      </div>
+
+      {/* Horizontal sweep line */}
+      <div className="landing-line-sweep absolute pointer-events-none" style={{ top: "35%", left: 0, right: 0, height: "1px" }}>
+        <div
+          style={{
+            width: "30%",
+            height: "100%",
+            background: `linear-gradient(90deg, transparent, color-mix(in srgb, ${GOLD_STOPS[0]} 15%, transparent), transparent)`,
+          }}
+        />
+      </div>
+      <div className="landing-line-sweep absolute pointer-events-none" style={{ top: "65%", left: 0, right: 0, height: "1px", animationDelay: "4s", animationDirection: "reverse" }}>
+        <div
+          style={{
+            width: "25%",
+            height: "100%",
+            background: `linear-gradient(90deg, transparent, color-mix(in srgb, ${GOLD_STOPS[1]} 12%, transparent), transparent)`,
+          }}
+        />
+      </div>
+
+      {/* Rising particles */}
+      {HERO_PARTICLES.map((p, i) => (
+        <div
+          key={`particle-${i}`}
+          className={`landing-particle absolute rounded-full pointer-events-none ${p.drift ? "landing-particle-drift" : ""}`}
+          style={{
+            width: `${p.size}px`,
+            height: `${p.size}px`,
+            left: `${p.x}%`,
+            bottom: "-5%",
+            background: p.color,
+            boxShadow: `0 0 ${p.size * 3}px ${p.color}`,
+            animationDuration: `${p.duration}s`,
+            animationDelay: `${p.delay}s`,
+            opacity: 0,
+          }}
+        />
+      ))}
+
+      {/* Floating stars */}
+      {HERO_STARS.map((s, i) => (
+        <LandingStar key={`star-${i}`} twinkle={s.twinkle} style={{ left: `${s.x}%`, top: `${s.y}%`, animationDelay: `${s.delay}s` }} />
+      ))}
 
       {/* Grain overlay */}
       <div
         className="absolute inset-0 pointer-events-none"
-        style={{ backgroundImage: GRAIN, backgroundRepeat: "repeat", opacity: 0.6 }}
+        style={{ backgroundImage: GRAIN, backgroundRepeat: "repeat", opacity: 0.5 }}
       />
 
-      {/* Decorative stars */}
-      <LandingStar style={{ top: "18%", left: "22%", animationDelay: "0s" }} />
-      <LandingStar style={{ top: "30%", right: "25%", animationDelay: "1.2s" }} />
-      <LandingStar style={{ bottom: "28%", left: "30%", animationDelay: "0.6s" }} />
-      <LandingStar style={{ top: "45%", right: "18%", animationDelay: "2s" }} />
-      <LandingStar style={{ bottom: "20%", right: "35%", animationDelay: "0.9s" }} />
-      <LandingStar style={{ top: "15%", left: "55%", animationDelay: "1.5s" }} />
+      {/* Vignette */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background: `radial-gradient(ellipse 70% 60% at 50% 50%, transparent 30%, var(--bg) 100%)`,
+          opacity: 0.6,
+        }}
+      />
 
       {/* Content */}
       <div className="relative z-10 text-center px-6 max-w-2xl mx-auto">
@@ -209,7 +338,17 @@ function HeroSection({ onGetStarted, isReturning }: { onGetStarted: () => void; 
               </linearGradient>
             </defs>
           </svg>
-          <Volleyball size={64} strokeWidth={1} style={{ stroke: "url(#hero-gold)", fill: "none", margin: "0 auto" }} />
+          <div className="relative inline-block">
+            <div
+              className="landing-glow absolute inset-0 rounded-full"
+              style={{
+                background: `radial-gradient(circle, color-mix(in srgb, ${GOLD_STOPS[0]} 20%, transparent) 0%, transparent 70%)`,
+                filter: "blur(20px)",
+                transform: "scale(2.5)",
+              }}
+            />
+            <Volleyball size={64} strokeWidth={1} style={{ stroke: "url(#hero-gold)", fill: "none", position: "relative" }} />
+          </div>
         </div>
 
         <h1
@@ -264,6 +403,7 @@ function HeroSection({ onGetStarted, isReturning }: { onGetStarted: () => void; 
               background: "transparent",
               color: "var(--text-secondary)",
               border: "1px solid var(--border)",
+              backdropFilter: "blur(8px)",
             }}
             onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--border-strong)"; e.currentTarget.style.color = "var(--text)"; e.currentTarget.style.transform = "translateY(-1px)"; }}
             onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.color = "var(--text-secondary)"; e.currentTarget.style.transform = "translateY(0)"; }}
@@ -289,10 +429,49 @@ function HeroSection({ onGetStarted, isReturning }: { onGetStarted: () => void; 
   );
 }
 
-function LandingStar({ style }: { style?: React.CSSProperties }) {
+const HERO_PARTICLES: { x: number; size: number; duration: number; delay: number; color: string; drift?: boolean }[] = [
+  { x: 8, size: 2, duration: 18, delay: 0, color: `color-mix(in srgb, ${GOLD_STOPS[0]} 40%, transparent)` },
+  { x: 15, size: 3, duration: 22, delay: 3, color: `color-mix(in srgb, ${GOLD_STOPS[1]} 35%, transparent)`, drift: true },
+  { x: 25, size: 2, duration: 16, delay: 6, color: `color-mix(in srgb, ${GOLD_STOPS[0]} 30%, transparent)` },
+  { x: 35, size: 4, duration: 25, delay: 1, color: `color-mix(in srgb, ${GOLD_STOPS[2]} 30%, transparent)`, drift: true },
+  { x: 45, size: 2, duration: 20, delay: 8, color: `color-mix(in srgb, ${GOLD_STOPS[0]} 35%, transparent)` },
+  { x: 55, size: 3, duration: 19, delay: 4, color: `color-mix(in srgb, ${GOLD_STOPS[1]} 40%, transparent)` },
+  { x: 65, size: 2, duration: 23, delay: 10, color: `color-mix(in srgb, ${GOLD_STOPS[0]} 25%, transparent)`, drift: true },
+  { x: 72, size: 3, duration: 17, delay: 2, color: `color-mix(in srgb, ${GOLD_STOPS[2]} 35%, transparent)` },
+  { x: 82, size: 2, duration: 21, delay: 7, color: `color-mix(in srgb, ${GOLD_STOPS[1]} 30%, transparent)` },
+  { x: 90, size: 4, duration: 24, delay: 5, color: `color-mix(in srgb, ${GOLD_STOPS[0]} 35%, transparent)`, drift: true },
+  { x: 12, size: 2, duration: 26, delay: 12, color: `color-mix(in srgb, ${GOLD_STOPS[1]} 25%, transparent)` },
+  { x: 48, size: 3, duration: 15, delay: 9, color: `color-mix(in srgb, ${GOLD_STOPS[0]} 30%, transparent)`, drift: true },
+  { x: 78, size: 2, duration: 20, delay: 14, color: `color-mix(in srgb, ${GOLD_STOPS[2]} 30%, transparent)` },
+  { x: 30, size: 3, duration: 28, delay: 11, color: `color-mix(in srgb, ${GOLD_STOPS[0]} 35%, transparent)` },
+  { x: 60, size: 2, duration: 19, delay: 16, color: `color-mix(in srgb, ${GOLD_STOPS[1]} 30%, transparent)`, drift: true },
+];
+
+const HERO_STARS: { x: number; y: number; delay: number; twinkle?: boolean }[] = [
+  { x: 12, y: 18, delay: 0 },
+  { x: 28, y: 32, delay: 1.2, twinkle: true },
+  { x: 42, y: 15, delay: 0.6 },
+  { x: 58, y: 28, delay: 2, twinkle: true },
+  { x: 72, y: 20, delay: 0.9 },
+  { x: 85, y: 35, delay: 1.5 },
+  { x: 18, y: 55, delay: 2.5, twinkle: true },
+  { x: 38, y: 65, delay: 1.8 },
+  { x: 62, y: 58, delay: 3, twinkle: true },
+  { x: 78, y: 62, delay: 0.3 },
+  { x: 8, y: 40, delay: 2.2 },
+  { x: 92, y: 48, delay: 1.1, twinkle: true },
+  { x: 50, y: 8, delay: 3.5 },
+  { x: 33, y: 75, delay: 0.7, twinkle: true },
+  { x: 68, y: 72, delay: 2.8 },
+  { x: 22, y: 82, delay: 1.4 },
+  { x: 88, y: 15, delay: 0.5, twinkle: true },
+  { x: 5, y: 68, delay: 3.2 },
+];
+
+function LandingStar({ style, twinkle }: { style?: React.CSSProperties; twinkle?: boolean }) {
   return (
     <div
-      className="landing-star absolute w-1 h-1 rounded-full pointer-events-none"
+      className={`landing-star absolute w-1 h-1 rounded-full pointer-events-none ${twinkle ? "landing-star-twinkle" : ""}`}
       style={{
         background: GOLD_STOPS[0],
         boxShadow: `0 0 6px 2px color-mix(in srgb, ${GOLD_STOPS[0]} 40%, transparent)`,
