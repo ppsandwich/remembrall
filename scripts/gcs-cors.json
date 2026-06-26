@@ -1,0 +1,8 @@
+[
+  {
+    "origin": ["https://brall.app", "http://localhost:3000"],
+    "method": ["PUT", "GET", "HEAD"],
+    "responseHeader": ["Content-Type", "Content-Length", "Content-Range"],
+    "maxAgeSeconds": 3600
+  }
+]

@@ -2,5 +2,7 @@ node_modules
 .next
 .env
 .env.local
+*.local
 apps/desktop/dist
 *.tsbuildinfo
+.gcs-sa-key.json
