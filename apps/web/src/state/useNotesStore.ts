@@ -1,6 +1,6 @@
 import { create } from "zustand";
-import type { DecryptedNote, NoteSource, EncryptedPayload, NotePage } from "@brall/core";
-import { derivePreview, searchNotes as filterNotes, extractTags, addTag, removeTag, stripTags } from "@brall/core";
+import type { DecryptedNote, NoteSource, EncryptedPayload, NotePage, Attachment } from "@brall/core";
+import { derivePreview, searchNotes as filterNotes, extractTags, addTag, removeTag, stripTags, MAX_ATTACHMENT_SIZE, ALLOWED_MIME_PREFIXES } from "@brall/core";
 import { useEncryptionStore } from "./useEncryptionStore";
 import { useAuthStore } from "./useAuthStore";
 import { useUIStore } from "./useUIStore";
@@ -8,6 +8,7 @@ import * as api from "@/lib/notesApi";
 import * as prefApi from "@/lib/preferencesApi";
 import * as pagesApi from "@/lib/pagesApi";
 import * as shareApi from "@/lib/shareApi";
+import * as attachApi from "@/lib/attachmentsApi";
 
 export const NOTE_COLORS = [
   { name: "none", hex: "" },
@@ -86,6 +87,8 @@ interface NotesState {
   scrollToPageId: string | null;
   sectionPermissions: Map<string, string>;
   sectionShares: Map<string, string[]>;
+  attachments: Map<string, Attachment[]>;
+  storageUsed: number;
 
   fetchAll: () => Promise<void>;
   fetchPages: () => Promise<void>;
@@ -130,6 +133,10 @@ interface NotesState {
   bulkCopy: () => string;
   getFilteredNotes: () => DecryptedNote[];
   getAllTags: () => string[];
+  fetchAllAttachments: () => Promise<void>;
+  uploadAttachment: (noteId: string, file: File) => Promise<void>;
+  deleteAttachment: (attachmentId: string) => Promise<void>;
+  getNoteAttachments: (noteId: string) => Attachment[];
 }
 
 export const useNotesStore = create<NotesState>((set, get) => ({
@@ -154,6 +161,8 @@ export const useNotesStore = create<NotesState>((set, get) => ({
   scrollToPageId: null,
   sectionPermissions: new Map(),
   sectionShares: new Map(),
+  attachments: new Map(),
+  storageUsed: 0,
 
   fetchAll: async () => {
     const user = useAuthStore.getState().user;
@@ -205,6 +214,7 @@ export const useNotesStore = create<NotesState>((set, get) => ({
         }
       }
       set({ notes: decrypted, loading: false });
+      get().fetchAllAttachments();
       if (decrypted.length === 0) {
         seedWelcomeNotes();
       }
@@ -730,6 +740,91 @@ export const useNotesStore = create<NotesState>((set, get) => ({
       }
     }
     return Array.from(tags).sort();
+  },
+
+  fetchAllAttachments: async () => {
+    try {
+      const all = await attachApi.fetchAllAttachments();
+      const map = new Map<string, Attachment[]>();
+      for (const att of all) {
+        const list = map.get(att.note_id) || [];
+        list.push(att);
+        map.set(att.note_id, list);
+      }
+      const totalBytes = all.reduce((sum, a) => sum + a.size_bytes, 0);
+      set({ attachments: map, storageUsed: totalBytes });
+    } catch {}
+  },
+
+  uploadAttachment: async (noteId: string, file: File) => {
+    if (file.size > MAX_ATTACHMENT_SIZE) {
+      useUIStore.getState().showToast(`File exceeds 10 MB limit`);
+      return;
+    }
+    const allowed = ALLOWED_MIME_PREFIXES.some((p) =>
+      (file.type || "application/octet-stream").startsWith(p)
+    );
+    if (!allowed) {
+      useUIStore.getState().showToast(`File type not allowed`);
+      return;
+    }
+
+    const toastId = useUIStore.getState().showToast(`Uploading ${file.name}…`);
+    try {
+      const attachment = await attachApi.uploadAttachment(noteId, file, (pct) => {
+        useUIStore.getState().showToast(`Uploading ${file.name}… ${pct}%`);
+      });
+
+      set((s) => {
+        const list = s.attachments.get(noteId) || [];
+        return {
+          attachments: new Map(s.attachments).set(noteId, [...list, attachment]),
+          storageUsed: s.storageUsed + attachment.size_bytes,
+        };
+      });
+
+      useUIStore.getState().showToast(`Attached ${file.name}`);
+    } catch (err: any) {
+      useUIStore.getState().showToast(err.message || "Upload failed");
+    }
+  },
+
+  deleteAttachment: async (attachmentId: string) => {
+    const { attachments } = get();
+    let found: Attachment | undefined;
+    let noteId = "";
+    for (const [nid, list] of attachments) {
+      const match = list.find((a) => a.id === attachmentId);
+      if (match) {
+        found = match;
+        noteId = nid;
+        break;
+      }
+    }
+    if (!found) return;
+
+    try {
+      await attachApi.deleteAttachment(attachmentId, found.gcs_object_path);
+      set((s) => {
+        const list = (s.attachments.get(noteId) || []).filter(
+          (a) => a.id !== attachmentId
+        );
+        const next = new Map(s.attachments);
+        if (list.length > 0) next.set(noteId, list);
+        else next.delete(noteId);
+        return {
+          attachments: next,
+          storageUsed: Math.max(0, s.storageUsed - found!.size_bytes),
+        };
+      });
+      useUIStore.getState().showToast("Attachment removed");
+    } catch {
+      useUIStore.getState().showToast("Failed to delete attachment");
+    }
+  },
+
+  getNoteAttachments: (noteId: string) => {
+    return get().attachments.get(noteId) || [];
   },
 }));
 

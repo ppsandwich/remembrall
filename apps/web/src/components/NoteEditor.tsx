@@ -10,6 +10,7 @@ import { htmlToPlainText, stripTagsFromHtml } from "@/lib/html";
 import { Copy, Pin, PinOff, Duplicate, Download, Trash, X, Save, Clipboard, Undo } from "./Icons";
 import TagInput from "./TagInput";
 import RichTextEditor from "./RichTextEditor";
+import AttachmentList, { AttachmentUploadButton } from "./AttachmentList";
 
 function buildBody(htmlBody: string, tags: string[]): string {
   let result = htmlBody.trim();
@@ -266,6 +267,7 @@ export default function NoteEditor() {
               <EditorButton onClick={() => note && duplicateNote(note.id)} title="Duplicate">
                 <Duplicate />
               </EditorButton>
+              {note && <AttachmentUploadButton noteId={note.id} />}
               <EditorButton onClick={handleExport} title="Export" className="hidden md:flex">
                 <Download />
               </EditorButton>
@@ -300,6 +302,8 @@ export default function NoteEditor() {
         <div className={`px-4 py-1.5 ${isNewNote ? "hidden md:block" : ""}`} style={{ borderBottom: "1px solid var(--border)" }}>
           <TagInput tags={tags} onChange={handleTagsChange} compact={isNewNote} />
         </div>
+
+        {!isNewNote && note && <AttachmentList noteId={note.id} />}
 
         <RichTextEditor
           key={editingId || "new"}

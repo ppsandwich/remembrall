@@ -15,6 +15,7 @@ import UndoToast from "./UndoToast";
 import ShortcutsPanel from "./ShortcutsPanel";
 import SettingsPanel from "./SettingsPanel";
 import DesktopFab from "./DesktopFab";
+import DropZoneOverlay from "./DropZoneOverlay";
 
 export default function AppShell() {
   const { fetchAll, fetchPages, fetchSharedPages, fetchSectionShares, createNote, editingId, selectedIds, deleteNote, duplicateNote, clearSelection, selectAll, pages, activePageId, setHighlightNoteId } =
@@ -171,6 +172,7 @@ export default function AppShell() {
       </footer>
       <NoteEditor />
       <UndoToast />
+      <DropZoneOverlay />
       {dragHint && (
         <div
           className="fixed bottom-4 left-1/2 -translate-x-1/2 px-4 py-2 rounded-lg shadow-lg text-sm"

@@ -6,7 +6,7 @@ import { useNotesStore, NOTE_COLORS, DARK_NOTE_COLORS, getColorDisplayName } fro
 import { writeClipboard } from "@/lib/clipboard";
 import { useUIStore } from "@/state/useUIStore";
 import { exportSingleNote, downloadMarkdown, singleNoteFilename } from "@brall/export";
-import { Copy, Pin, PinOff, Download, Trash, Palette, Undo, X } from "./Icons";
+import { Copy, Pin, PinOff, Download, Trash, Palette, Undo, X, Paperclip } from "./Icons";
 import { useDragContext } from "./DragContext";
 import RadialColorPicker from "./RadialColorPicker";
 import { useRef, useCallback, useState, useEffect } from "react";
@@ -21,6 +21,7 @@ interface Props {
 export default function NoteCard({ note, index, highlighted, onHighlightEnd }: Props) {
   const { toggleSelect, selectedIds, setEditingId, deleteNote, dismissWelcomeNote, restoreNote, togglePin, updateNoteColor, moveNoteToPage, clusterMode, setDragging, colorNames, pages, activePageId, sectionPermissions } =
     useNotesStore();
+  const noteAttachments = useNotesStore((s) => s.getNoteAttachments(note.id));
   const { showToast, selectMode, resolvedTheme, setDragHint, showArchived } = useUIStore();
   const isSelected = selectedIds.has(note.id);
   const { startDrag, updateDrag, setTargetIndex, endDrag, getCardStyle, getCardClassName, dragState } = useDragContext();
@@ -556,6 +557,12 @@ export default function NoteCard({ note, index, highlighted, onHighlightEnd }: P
             {note.source !== "web" && (
               <span className="text-xs" style={{ color: "var(--text-muted)" }}>
                 {note.source}
+              </span>
+            )}
+            {noteAttachments.length > 0 && (
+              <span className="inline-flex items-center gap-0.5 text-xs" style={{ color: "var(--text-muted)" }}>
+                <Paperclip size={10} />
+                {noteAttachments.length}
               </span>
             )}
           </div>

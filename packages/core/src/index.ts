@@ -7,6 +7,7 @@ export type {
   UserPreferences,
   UserEncryptionKey,
   SectionShare,
+  Attachment,
 } from "./types";
 
 export {
@@ -18,6 +19,9 @@ export {
   bulkDuplicateSchema,
   bulkCopySchema,
   NOTE_SOURCES,
+  MAX_ATTACHMENT_SIZE,
+  MAX_USER_STORAGE,
+  ALLOWED_MIME_PREFIXES,
 } from "./validation";
 
 export { derivePreview, sortNotes, searchNotes, formatBulkCopy, extractTags, stripTags, addTag, removeTag } from "./noteUtils";

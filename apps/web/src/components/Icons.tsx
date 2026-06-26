@@ -36,6 +36,11 @@ import {
   Share2 as LucideShare2,
   Shield as LucideShield,
   Zap as LucideZap,
+  Paperclip as LucidePaperclip,
+  File as LucideFile,
+  FileImage as LucideFileImage,
+  FileText as LucideFileText,
+  HardDrive as LucideHardDrive,
   type LucideProps,
 } from "lucide-react";
 
@@ -79,3 +84,8 @@ export const AudioLines = (props: LucideProps) => <LucideAudioLines {...p} {...p
 export const Share2 = (props: LucideProps) => <LucideShare2 {...p} {...props} />;
 export const Shield = (props: LucideProps) => <LucideShield {...p} {...props} />;
 export const Zap = (props: LucideProps) => <LucideZap {...p} {...props} />;
+export const Paperclip = (props: LucideProps) => <LucidePaperclip {...p} {...props} />;
+export const FileIcon = (props: LucideProps) => <LucideFile {...p} {...props} />;
+export const FileImage = (props: LucideProps) => <LucideFileImage {...p} {...props} />;
+export const FileText = (props: LucideProps) => <LucideFileText {...p} {...props} />;
+export const HardDrive = (props: LucideProps) => <LucideHardDrive {...p} {...props} />;

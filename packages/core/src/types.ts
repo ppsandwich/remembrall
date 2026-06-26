@@ -101,3 +101,14 @@ export interface SectionShare {
   status: "pending" | "accepted";
   created_at: string;
 }
+
+export interface Attachment {
+  id: string;
+  note_id: string;
+  user_id: string;
+  filename: string;
+  mime_type: string;
+  size_bytes: number;
+  gcs_object_path: string;
+  created_at: string;
+}

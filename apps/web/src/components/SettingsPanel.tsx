@@ -6,11 +6,13 @@ import { useNotesStore, NOTE_COLORS, DARK_NOTE_COLORS, DEFAULT_COLOR_NAMES, getC
 import { useState, useRef } from "react";
 import { testApiKey } from "@/lib/openrouter";
 import ExportMenu from "./ExportMenu";
+import { HardDrive } from "./Icons";
+import { MAX_USER_STORAGE } from "@brall/core";
 
 export default function SettingsPanel({ onClose }: { onClose: () => void }) {
   const { theme, setTheme, resolvedTheme, showArchived, setShowArchived, showToast } = useUIStore();
   const { user, signOut } = useAuthStore();
-  const { colorNames, colorOrder, setColorName, resetColorName, setColorOrder, openrouterKey, setOpenrouterKey } = useNotesStore();
+  const { colorNames, colorOrder, setColorName, resetColorName, setColorOrder, openrouterKey, setOpenrouterKey, storageUsed } = useNotesStore();
   const [showExport, setShowExport] = useState(false);
   const [showKey, setShowKey] = useState(false);
   const [keyInput, setKeyInput] = useState("");
@@ -317,6 +319,25 @@ export default function SettingsPanel({ onClose }: { onClose: () => void }) {
             </button>
           </div>
 
+          <div>
+            <label className="text-xs font-medium mb-2.5 flex items-center gap-1.5" style={{ color: "var(--text-secondary)" }}>
+              <HardDrive size={14} />
+              Storage
+            </label>
+            <div className="w-full h-2 rounded-full overflow-hidden" style={{ background: "var(--surface-subtle)" }}>
+              <div
+                className="h-full rounded-full transition-all"
+                style={{
+                  width: `${Math.min(100, (storageUsed / MAX_USER_STORAGE) * 100)}%`,
+                  background: storageUsed / MAX_USER_STORAGE > 0.9 ? "#EF4444" : "var(--accent, #3B82F6)",
+                }}
+              />
+            </div>
+            <p className="text-xs mt-1.5" style={{ color: "var(--text-muted)" }}>
+              {formatBytes(storageUsed)} / 2 GB used
+            </p>
+          </div>
+
           <div style={{ borderTop: "1px solid var(--border)" }} className="pt-4">
             <p className="text-xs mb-3" style={{ color: "var(--text-muted)" }}>
               {user?.email}
@@ -337,4 +358,11 @@ export default function SettingsPanel({ onClose }: { onClose: () => void }) {
       </div>
     </div>
   );
+}
+
+function formatBytes(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)} GB`;
 }

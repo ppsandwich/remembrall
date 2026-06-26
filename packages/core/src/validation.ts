@@ -45,3 +45,19 @@ export const bulkDuplicateSchema = z.object({
 export const bulkCopySchema = z.object({
   noteIds: z.array(z.string().uuid()).min(1).max(100),
 });
+
+export const MAX_ATTACHMENT_SIZE = 10 * 1024 * 1024; // 10 MB
+export const MAX_USER_STORAGE = 2 * 1024 * 1024 * 1024; // 2 GB
+export const ALLOWED_MIME_PREFIXES = [
+  "image/",
+  "application/pdf",
+  "text/",
+  "audio/",
+  "video/",
+  "application/zip",
+  "application/json",
+  "application/msword",
+  "application/vnd.openxmlformats-officedocument",
+  "application/vnd.ms-excel",
+  "application/vnd.ms-powerpoint",
+];
