@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Volleyball, Layers, Shield, Zap, Monitor, Download } from "./Icons";
 import LoginPopover from "./LoginPopover";
 
@@ -56,6 +56,18 @@ export default function LandingPage() {
   const [showLogin, setShowLogin] = useState(false);
   const [loginMode, setLoginMode] = useState<LoginMode>("signup");
   const isReturning = useMemo(() => getReturningUser(), []);
+
+  useEffect(() => {
+    const wasDark = document.documentElement.classList.contains("dark");
+    document.documentElement.classList.add("dark");
+    document.querySelector('meta[name="theme-color"]')?.setAttribute("content", "#1A1A1A");
+    return () => {
+      if (!wasDark) {
+        document.documentElement.classList.remove("dark");
+        document.querySelector('meta[name="theme-color"]')?.setAttribute("content", "#FFFFFF");
+      }
+    };
+  }, []);
 
   const handleCta = () => {
     setLoginMode(isReturning ? "login" : "signup");
