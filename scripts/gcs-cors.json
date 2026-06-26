@@ -1,6 +1,6 @@
 [
   {
-    "origin": ["https://brall.app", "http://localhost:3000", "http://192.168.68.90:3000"],
+    "origin": ["https://brall.app", "https://www.brall.app", "http://localhost:3000", "http://192.168.68.90:3000"],
     "method": ["PUT", "POST", "GET", "HEAD"],
     "responseHeader": ["Content-Type", "Content-Length", "Content-Range", "Authorization", "x-goog-hash"],
     "maxAgeSeconds": 3600
