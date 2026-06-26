@@ -6,13 +6,14 @@ import { X, Volleyball } from "./Icons";
 
 interface Props {
   onClose: () => void;
+  defaultMode?: "login" | "signup";
 }
 
-export default function LoginPopover({ onClose }: Props) {
+export default function LoginPopover({ onClose, defaultMode = "login" }: Props) {
   const { signIn, signUp, signInWithMagicLink } = useAuthStore();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [mode, setMode] = useState<"login" | "signup" | "magic">("login");
+  const [mode, setMode] = useState<"login" | "signup" | "magic">(defaultMode);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);

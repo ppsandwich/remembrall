@@ -25,8 +25,11 @@ export const useAuthStore = create<AuthState>((set) => ({
       set({ user: null, loading: false });
     }
 
-    getSupabase().auth.onAuthStateChange((_event, session) => {
+    getSupabase().auth.onAuthStateChange((event, session) => {
       set({ user: session?.user ?? null });
+      if (event === "SIGNED_IN") {
+        try { localStorage.setItem("remembrall-has-signed-in", "1"); } catch {}
+      }
     });
   },
 

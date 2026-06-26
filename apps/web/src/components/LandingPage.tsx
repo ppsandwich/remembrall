@@ -1,8 +1,18 @@
 "use client";
 
-import { useState } from "react";
-import { Volleyball, Layers, Shield, Zap, Monitor } from "./Icons";
+import { useState, useMemo } from "react";
+import { Volleyball, Layers, Shield, Zap, Monitor, Download } from "./Icons";
 import LoginPopover from "./LoginPopover";
+
+type LoginMode = "login" | "signup";
+
+function getReturningUser(): boolean {
+  try {
+    return localStorage.getItem("remembrall-has-signed-in") === "1";
+  } catch {
+    return false;
+  }
+}
 
 const GOLD_STOPS = ["#D4AF37", "#B8860B", "#996515"];
 
@@ -44,23 +54,30 @@ const GRAIN = `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http:
 
 export default function LandingPage() {
   const [showLogin, setShowLogin] = useState(false);
+  const [loginMode, setLoginMode] = useState<LoginMode>("signup");
+  const isReturning = useMemo(() => getReturningUser(), []);
+
+  const handleCta = () => {
+    setLoginMode(isReturning ? "login" : "signup");
+    setShowLogin(true);
+  };
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: "var(--bg)" }}>
-      <LandingHeader onSignIn={() => setShowLogin(true)} />
+      <LandingHeader onSignIn={() => { setLoginMode("login"); setShowLogin(true); }} isReturning={isReturning} />
       <main className="flex-1">
-        <HeroSection onGetStarted={() => setShowLogin(true)} />
+        <HeroSection onGetStarted={handleCta} isReturning={isReturning} />
         <FeaturesSection />
         <ScreenshotsSection />
-        <CTASection onGetStarted={() => setShowLogin(true)} />
+        <CTASection onGetStarted={handleCta} isReturning={isReturning} />
       </main>
       <LandingFooter />
-      {showLogin && <LoginPopover onClose={() => setShowLogin(false)} />}
+      {showLogin && <LoginPopover onClose={() => setShowLogin(false)} defaultMode={loginMode} />}
     </div>
   );
 }
 
-function LandingHeader({ onSignIn }: { onSignIn: () => void }) {
+function LandingHeader({ onSignIn, isReturning }: { onSignIn: () => void; isReturning: boolean }) {
   return (
     <header
       className="sticky top-0 z-40 flex items-center justify-between px-6 md:px-10 py-4"
@@ -88,24 +105,38 @@ function LandingHeader({ onSignIn }: { onSignIn: () => void }) {
           Brall
         </span>
       </div>
-      <button
-        onClick={onSignIn}
-        className="px-5 py-2 rounded-lg text-sm font-medium transition-all"
-        style={{
-          background: "var(--accent)",
-          color: "var(--surface)",
-          border: "1px solid var(--accent)",
-        }}
-        onMouseEnter={(e) => { e.currentTarget.style.opacity = "0.85"; }}
-        onMouseLeave={(e) => { e.currentTarget.style.opacity = "1"; }}
-      >
-        Sign in
-      </button>
+      <div className="flex items-center gap-3">
+        <a
+          href="https://github.com/ppsandwich/remembrall/releases"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm transition-colors"
+          style={{ color: "var(--text-muted)", border: "1px solid var(--border)" }}
+          onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--border-strong)"; e.currentTarget.style.color = "var(--text)"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.color = "var(--text-muted)"; }}
+        >
+          <Download size={14} />
+          <span className="hidden sm:inline">Download</span>
+        </a>
+        <button
+          onClick={onSignIn}
+          className="px-5 py-2 rounded-lg text-sm font-medium transition-all"
+          style={{
+            background: "var(--accent)",
+            color: "var(--surface)",
+            border: "1px solid var(--accent)",
+          }}
+          onMouseEnter={(e) => { e.currentTarget.style.opacity = "0.85"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.opacity = "1"; }}
+        >
+          {isReturning ? "Go to notes" : "Get started"}
+        </button>
+      </div>
     </header>
   );
 }
 
-function HeroSection({ onGetStarted }: { onGetStarted: () => void }) {
+function HeroSection({ onGetStarted, isReturning }: { onGetStarted: () => void; isReturning: boolean }) {
   return (
     <section className="relative overflow-hidden flex items-center justify-center" style={{ minHeight: "min(100vh, 720px)" }}>
       {/* Animated gradient background */}
@@ -222,11 +253,29 @@ function HeroSection({ onGetStarted }: { onGetStarted: () => void }) {
             onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-1px)"; e.currentTarget.style.boxShadow = `0 8px 32px color-mix(in srgb, ${GOLD_STOPS[1]} 40%, transparent)`; }}
             onMouseLeave={(e) => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = `0 4px 24px color-mix(in srgb, ${GOLD_STOPS[1]} 30%, transparent)`; }}
           >
-            Get started — it's free
+            {isReturning ? "Go to notes" : "Get started — it's free"}
           </button>
-          <span className="text-xs" style={{ color: "var(--text-muted)" }}>
-            No account required to try
-          </span>
+          <a
+            href="https://github.com/ppsandwich/remembrall/releases"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-2 px-6 py-3.5 rounded-xl text-sm font-medium transition-all"
+            style={{
+              background: "transparent",
+              color: "var(--text-secondary)",
+              border: "1px solid var(--border)",
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--border-strong)"; e.currentTarget.style.color = "var(--text)"; e.currentTarget.style.transform = "translateY(-1px)"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.color = "var(--text-secondary)"; e.currentTarget.style.transform = "translateY(0)"; }}
+          >
+            <Download size={15} />
+            Download for Desktop
+          </a>
+        </div>
+        <div className="landing-fade-up landing-fade-up-d3 mt-3 flex items-center justify-center gap-4 text-xs" style={{ color: "var(--text-muted)" }}>
+          <span>No account required to try</span>
+          <span style={{ opacity: 0.3 }}>·</span>
+          <span>macOS, Windows & Linux</span>
         </div>
 
         <p
@@ -426,7 +475,7 @@ function ScreenshotMockup({ label }: { label: string }) {
   );
 }
 
-function CTASection({ onGetStarted }: { onGetStarted: () => void }) {
+function CTASection({ onGetStarted, isReturning }: { onGetStarted: () => void; isReturning: boolean }) {
   return (
     <section className="relative py-24 md:py-32 px-6 overflow-hidden">
       {/* Decorative orb */}
@@ -453,7 +502,7 @@ function CTASection({ onGetStarted }: { onGetStarted: () => void }) {
           className="text-xs tracking-widest uppercase mb-3"
           style={{ color: GOLD_STOPS[1] }}
         >
-          Begin
+          {isReturning ? "Welcome back" : "Begin"}
         </p>
         <h2
           style={{
@@ -466,10 +515,12 @@ function CTASection({ onGetStarted }: { onGetStarted: () => void }) {
             marginBottom: "1rem",
           }}
         >
-          Ready to capture your thoughts?
+          {isReturning ? "Your notes are waiting" : "Ready to capture your thoughts?"}
         </h2>
         <p className="text-sm mb-8" style={{ color: "var(--text-muted)" }}>
-          Sign up in seconds. No credit card, no commitment. Just open and write.
+          {isReturning
+            ? "Sign in to pick up where you left off."
+            : "Sign up in seconds. No credit card, no commitment. Just open and write."}
         </p>
         <button
           onClick={onGetStarted}
@@ -482,7 +533,7 @@ function CTASection({ onGetStarted }: { onGetStarted: () => void }) {
           onMouseEnter={(e) => { e.currentTarget.style.opacity = "0.85"; e.currentTarget.style.transform = "translateY(-1px)"; }}
           onMouseLeave={(e) => { e.currentTarget.style.opacity = "1"; e.currentTarget.style.transform = "translateY(0)"; }}
         >
-          Sign up — it's free
+          {isReturning ? "Go to notes" : "Sign up — it's free"}
         </button>
       </div>
     </section>
