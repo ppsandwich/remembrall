@@ -30,6 +30,8 @@ import {
   Plus as LucidePlus,
   Minus as LucideMinus,
   ChevronDown as LucideChevronDown,
+  ChevronLeft as LucideChevronLeft,
+  ChevronRight as LucideChevronRight,
   TableOfContents as LucideTableOfContents,
   Pencil as LucidePencil,
   AudioLines as LucideAudioLines,
@@ -40,7 +42,14 @@ import {
   File as LucideFile,
   FileImage as LucideFileImage,
   FileText as LucideFileText,
+  FileSpreadsheet as LucideFileSpreadsheet,
   HardDrive as LucideHardDrive,
+  Maximize2 as LucideMaximize,
+  ZoomIn as LucideZoomIn,
+  ZoomOut as LucideZoomOut,
+  RotateCw as LucideRotateCw,
+  Loader2 as LucideLoader,
+  Eye as LucideEye,
   type LucideProps,
 } from "lucide-react";
 
@@ -88,4 +97,13 @@ export const Paperclip = (props: LucideProps) => <LucidePaperclip {...p} {...pro
 export const FileIcon = (props: LucideProps) => <LucideFile {...p} {...props} />;
 export const FileImage = (props: LucideProps) => <LucideFileImage {...p} {...props} />;
 export const FileText = (props: LucideProps) => <LucideFileText {...p} {...props} />;
+export const FileSpreadsheet = (props: LucideProps) => <LucideFileSpreadsheet {...p} {...props} />;
 export const HardDrive = (props: LucideProps) => <LucideHardDrive {...p} {...props} />;
+export const ChevronLeft = (props: LucideProps) => <LucideChevronLeft {...p} {...props} />;
+export const ChevronRight = (props: LucideProps) => <LucideChevronRight {...p} {...props} />;
+export const Maximize = (props: LucideProps) => <LucideMaximize {...p} {...props} />;
+export const ZoomIn = (props: LucideProps) => <LucideZoomIn {...p} {...props} />;
+export const ZoomOut = (props: LucideProps) => <LucideZoomOut {...p} {...props} />;
+export const RotateCw = (props: LucideProps) => <LucideRotateCw {...p} {...props} />;
+export const Loader = (props: LucideProps) => <LucideLoader {...p} {...props} />;
+export const Eye = (props: LucideProps) => <LucideEye {...p} {...props} />;

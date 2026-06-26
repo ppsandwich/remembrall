@@ -119,6 +119,22 @@ export async function deleteAttachment(attachmentId: string, gcsObjectPath: stri
   if (error) throw error;
 }
 
+export async function fetchAttachmentBlob(gcsObjectPath: string): Promise<string> {
+  const { downloadUrl, accessToken } = await callEdgeFunction({
+    action: "download",
+    gcsObjectPath,
+  });
+
+  const res = await fetch(downloadUrl, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+
+  if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
+
+  const blob = await res.blob();
+  return URL.createObjectURL(blob);
+}
+
 export async function getUserStorageUsed(): Promise<number> {
   const { data, error } = await getSupabase()
     .from("user_storage_usage")

@@ -128,7 +128,7 @@ export default function AppShell() {
     if (!el) return;
     const update = () => {
       const rect = el.getBoundingClientRect();
-      setFabRight(window.innerWidth - rect.right + 15);
+      setFabRight(window.innerWidth - rect.right + 30);
     };
     update();
     const observer = new ResizeObserver(update);
