@@ -359,7 +359,7 @@ function HeroSection({ onGetStarted, isReturning }: { onGetStarted: () => void; 
                 transform: "scale(2.5)",
               }}
             />
-            <Volleyball size={64} strokeWidth={1} style={{ stroke: "url(#hero-gold)", fill: "none", position: "relative" }} />
+            <Volleyball size={128} strokeWidth={1} style={{ stroke: "url(#hero-gold)", fill: "none", position: "relative" }} />
           </div>
         </div>
 
