@@ -454,7 +454,17 @@ export const useNotesStore = create<NotesState>((set, get) => ({
   dismissWelcomeNote: async (id: string) => {
     set((s) => ({ notes: s.notes.filter((n) => n.id !== id) }));
     try {
+      await attachApi.deleteAttachmentsForNote(id);
       await api.hardDeleteNote(id);
+      // Remove from local attachments state
+      set((s) => {
+        const att = s.attachments.get(id);
+        if (!att) return {};
+        const freedBytes = att.reduce((sum, a) => sum + a.size_bytes, 0);
+        const next = new Map(s.attachments);
+        next.delete(id);
+        return { attachments: next, storageUsed: Math.max(0, s.storageUsed - freedBytes) };
+      });
     } catch {}
   },
 
@@ -535,6 +545,19 @@ export const useNotesStore = create<NotesState>((set, get) => ({
     };
 
     set((s) => ({ notes: [note, ...s.notes] }));
+
+    // Clone attachments from original note
+    try {
+      const cloned = await attachApi.cloneAttachmentsForNote(original.id, created.id);
+      if (cloned.length > 0) {
+        set((s) => {
+          const map = new Map(s.attachments);
+          map.set(created.id, cloned);
+          const addedBytes = cloned.reduce((sum, a) => sum + a.size_bytes, 0);
+          return { attachments: map, storageUsed: s.storageUsed + addedBytes };
+        });
+      }
+    } catch {}
   },
 
   togglePin: async (id: string) => {

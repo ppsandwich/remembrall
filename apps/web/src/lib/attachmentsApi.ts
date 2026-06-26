@@ -100,8 +100,7 @@ export async function downloadAttachment(
 }
 
 export async function deleteAttachment(attachmentId: string, gcsObjectPath: string): Promise<void> {
-  // Delete from GCS via edge function (fire and forget — best effort)
-  callEdgeFunction({ action: "delete", gcsObjectPath }).catch(() => {});
+  await callEdgeFunction({ action: "delete", gcsObjectPath });
 
   const { error } = await getSupabase()
     .from("note_attachments")
@@ -119,6 +118,66 @@ export async function getUserStorageUsed(): Promise<number> {
 
   if (error) throw error;
   return data?.total_bytes ?? 0;
+}
+
+export async function deleteAttachmentsForNote(noteId: string): Promise<void> {
+  const supabase = getSupabase();
+  const { data: attachments } = await supabase
+    .from("note_attachments")
+    .select("id, gcs_object_path")
+    .eq("note_id", noteId);
+
+  if (!attachments || attachments.length === 0) return;
+
+  // Delete GCS objects in parallel (best-effort)
+  await Promise.allSettled(
+    attachments.map((att) =>
+      callEdgeFunction({ action: "delete", gcsObjectPath: att.gcs_object_path })
+    )
+  );
+
+  // Delete DB rows
+  const { error } = await supabase
+    .from("note_attachments")
+    .delete()
+    .eq("note_id", noteId);
+
+  if (error) throw error;
+}
+
+export async function cloneAttachmentsForNote(
+  sourceNoteId: string,
+  targetNoteId: string,
+): Promise<Attachment[]> {
+  const supabase = getSupabase();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("Not authenticated");
+
+  const { data: sourceAttachments } = await supabase
+    .from("note_attachments")
+    .select("filename, mime_type, size_bytes, gcs_object_path")
+    .eq("note_id", sourceNoteId);
+
+  if (!sourceAttachments || sourceAttachments.length === 0) return [];
+
+  const rows = sourceAttachments.map((att) => ({
+    note_id: targetNoteId,
+    user_id: user.id,
+    filename: att.filename,
+    mime_type: att.mime_type,
+    size_bytes: att.size_bytes,
+    gcs_object_path: att.gcs_object_path,
+  }));
+
+  const { data: inserted, error } = await supabase
+    .from("note_attachments")
+    .insert(rows)
+    .select();
+
+  if (error) throw error;
+  return (inserted ?? []) as Attachment[];
 }
 
 function uploadWithProgress(

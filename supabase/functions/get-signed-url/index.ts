@@ -153,6 +153,47 @@ async function generateSignedUrl(opts: {
 }
 
 // ---------------------------------------------------------------------------
+// Service account OAuth2 access token (for GCS JSON API calls)
+// ---------------------------------------------------------------------------
+
+async function getServiceAccountAccessToken(saKeyJson: Record<string, string>): Promise<string> {
+  const now = Math.floor(Date.now() / 1000);
+  const jwtHeader = base64url(new TextEncoder().encode(JSON.stringify({ alg: "RS256", typ: "JWT" })));
+  const jwtClaimSet = base64url(
+    new TextEncoder().encode(
+      JSON.stringify({
+        iss: saKeyJson.client_email,
+        scope: "https://www.googleapis.com/auth/devstorage.full_control",
+        aud: "https://oauth2.googleapis.com/token",
+        iat: now,
+        exp: now + 3600,
+      })
+    )
+  );
+  const signingInput = `${jwtHeader}.${jwtClaimSet}`;
+  const key = await importPrivateKey(saKeyJson.private_key);
+  const sig = await crypto.subtle.sign(
+    "RSASSA-PKCS1-v1_5",
+    key,
+    new TextEncoder().encode(signingInput)
+  );
+  const jwt = `${signingInput}.${base64url(sig)}`;
+
+  const tokenRes = await fetch("https://oauth2.googleapis.com/token", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: `grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer&assertion=${jwt}`,
+  });
+
+  if (!tokenRes.ok) {
+    throw new Error(`Failed to get access token: ${tokenRes.status}`);
+  }
+
+  const { access_token } = await tokenRes.json();
+  return access_token;
+}
+
+// ---------------------------------------------------------------------------
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -272,6 +313,49 @@ serve(async (req) => {
         signedUrl,
         expiresInSeconds: SIGNED_URL_EXPIRY_SECONDS,
       });
+    }
+
+    // --- Delete ---
+    if (action === "delete") {
+      if (!gcsObjectPath) {
+        return jsonResp(req, { error: "Missing gcsObjectPath" }, 400);
+      }
+
+      // Verify ownership
+      const supabaseAdmin = createClient(
+        Deno.env.get("SUPABASE_URL")!,
+        Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+      );
+
+      const { data: attachment } = await supabaseAdmin
+        .from("note_attachments")
+        .select("user_id")
+        .eq("gcs_object_path", gcsObjectPath)
+        .maybeSingle();
+
+      if (!attachment || attachment.user_id !== user.id) {
+        return jsonResp(req, { error: "Not found" }, 404);
+      }
+
+      // Get OAuth2 access token from service account
+      const accessToken = await getServiceAccountAccessToken(saKeyJson);
+
+      // Delete the GCS object
+      const encodedPath = gcsObjectPath.split("/").map(encodeURIComponent).join("/");
+      const deleteRes = await fetch(
+        `https://storage.googleapis.com/storage/v1/b/${bucket}/o/${encodedPath}`,
+        {
+          method: "DELETE",
+          headers: { Authorization: `Bearer ${accessToken}` },
+        }
+      );
+
+      if (!deleteRes.ok && deleteRes.status !== 404) {
+        console.error("GCS delete failed:", deleteRes.status, await deleteRes.text());
+        return jsonResp(req, { error: "Failed to delete from storage" }, 500);
+      }
+
+      return jsonResp(req, { success: true });
     }
 
     return jsonResp(req, { error: `Unknown action: ${action}` }, 400);
