@@ -171,8 +171,9 @@ export default function Header() {
         <div className="max-w-7xl w-full mx-auto flex items-center justify-between">
           {!(window as any).electronAPI && !window.matchMedia("(display-mode: standalone)").matches && (
             <h1
-              className="text-lg font-bold tracking-tight shrink-0 mr-3 hidden sm:block"
+              className="font-bold tracking-tight shrink-0 mr-3 hidden sm:block"
               style={{
+                fontSize: "1.35rem",
                 letterSpacing: "-0.01em",
                 fontFamily: "var(--font-almendra), serif",
                 color: "var(--text)",
