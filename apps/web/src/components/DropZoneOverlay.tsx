@@ -11,6 +11,7 @@ export default function DropZoneOverlay() {
   const uploadAttachment = useNotesStore((s) => s.uploadAttachment);
   const showToast = useUIStore((s) => s.showToast);
   const [visible, setVisible] = useState(false);
+  const [editorOpen, setEditorOpen] = useState(false);
   const dragCountRef = useRef(0);
 
   useEffect(() => {
@@ -18,6 +19,7 @@ export default function DropZoneOverlay() {
       if (!e.dataTransfer?.types.includes("Files")) return;
       e.preventDefault();
       dragCountRef.current++;
+      setEditorOpen(useNotesStore.getState().editingId !== null);
       setVisible(true);
     };
 
@@ -46,6 +48,8 @@ export default function DropZoneOverlay() {
       if (!files || files.length === 0) return;
 
       const store = useNotesStore.getState();
+      const editingId = store.editingId;
+
       for (const file of files) {
         if (file.size > MAX_ATTACHMENT_SIZE) {
           showToast("File type not supported.");
@@ -59,14 +63,19 @@ export default function DropZoneOverlay() {
         }
 
         try {
-          const noteId = await store.createNote(`📎 ${file.name}`, "web", file.name);
-          if (noteId) {
-            await store.uploadAttachment(noteId, file);
-            store.setEditingId(noteId);
-            showToast(`Note created with ${file.name}`);
+          if (editingId) {
+            await store.uploadAttachment(editingId, file);
+            showToast(`Attached ${file.name}`);
+          } else {
+            const noteId = await store.createNote(`📎 ${file.name}`, "web", file.name);
+            if (noteId) {
+              await store.uploadAttachment(noteId, file);
+              store.setEditingId(noteId);
+              showToast(`Note created with ${file.name}`);
+            }
           }
         } catch (err: any) {
-          showToast(err.message || "Failed to create note with attachment", 10000);
+          showToast(err.message || "Failed to attach file", 10000);
         }
       }
     };
@@ -99,7 +108,9 @@ export default function DropZoneOverlay() {
         }}
       >
         <Paperclip size={32} />
-        <p className="text-sm font-medium">Drop files to create a new note</p>
+        <p className="text-sm font-medium">
+          {editorOpen ? "Drop files to attach to current note" : "Drop files to create a new note"}
+        </p>
       </div>
     </div>
   );
