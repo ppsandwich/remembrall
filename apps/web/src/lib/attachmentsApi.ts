@@ -200,8 +200,9 @@ function uploadWithPostPolicy(
     for (const [key, value] of Object.entries(fields)) {
       form.append(key, value);
     }
-    // File must be last
-    form.append("file", file);
+    // File must be last. Create a Blob with the correct content type to match the policy.
+    const fileBlob = new Blob([file], { type: fields["Content-Type"] || file.type });
+    form.append("file", fileBlob, file.name);
 
     const xhr = new XMLHttpRequest();
     xhr.open("POST", uploadUrl);

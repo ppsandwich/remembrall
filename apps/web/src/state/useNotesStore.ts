@@ -781,18 +781,17 @@ export const useNotesStore = create<NotesState>((set, get) => ({
 
   uploadAttachment: async (noteId: string, file: File) => {
     if (file.size > MAX_ATTACHMENT_SIZE) {
-      useUIStore.getState().showToast(`File exceeds 10 MB limit`);
+      useUIStore.getState().showToast("File type not supported.");
       return;
     }
-    const allowed = ALLOWED_MIME_PREFIXES.some((p) =>
-      (file.type || "application/octet-stream").startsWith(p)
-    );
+    const mimeType = file.type || "application/octet-stream";
+    const allowed = ALLOWED_MIME_PREFIXES.some((p) => mimeType.startsWith(p));
     if (!allowed) {
-      useUIStore.getState().showToast(`File type not allowed`);
+      useUIStore.getState().showToast("File type not supported.");
       return;
     }
 
-    const toastId = useUIStore.getState().showToast(`Uploading ${file.name}…`);
+    useUIStore.getState().showToast(`Uploading ${file.name}…`);
     try {
       const attachment = await attachApi.uploadAttachment(noteId, file, (pct) => {
         useUIStore.getState().showToast(`Uploading ${file.name}… ${pct}%`);
@@ -800,8 +799,10 @@ export const useNotesStore = create<NotesState>((set, get) => ({
 
       set((s) => {
         const list = s.attachments.get(noteId) || [];
+        const newMap = new Map(s.attachments).set(noteId, [...list, attachment]);
+        console.log("[Store] attachments map updated, noteId:", noteId, "count:", newMap.get(noteId)?.length);
         return {
-          attachments: new Map(s.attachments).set(noteId, [...list, attachment]),
+          attachments: newMap,
           storageUsed: s.storageUsed + attachment.size_bytes,
         };
       });

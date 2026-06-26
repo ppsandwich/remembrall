@@ -51,6 +51,7 @@ export const MAX_USER_STORAGE = 2 * 1024 * 1024 * 1024; // 2 GB
 export const ALLOWED_MIME_PREFIXES = [
   "image/",
   "application/pdf",
+  "application/octet-stream",
   "text/",
   "audio/",
   "video/",
