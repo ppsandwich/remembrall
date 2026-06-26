@@ -88,7 +88,7 @@ export default function TagInput({ tags, onChange, compact }: Props) {
     }
   };
 
-  const sizeClasses = compact ? "text-xs px-1.5 py-0.5" : "text-xs px-2 py-1";
+  const sizeClasses = compact ? "text-sm px-1.5 py-0.5" : "text-sm px-2 py-1";
 
   return (
     <div className="relative">
@@ -129,7 +129,7 @@ export default function TagInput({ tags, onChange, compact }: Props) {
           onFocus={() => setShowDropdown(true)}
           onKeyDown={handleKeyDown}
           placeholder={tags.length === 0 ? "Tags (you can also put #tags in the note text)" : ""}
-          className="flex-1 min-w-[60px] outline-none text-xs"
+          className="flex-1 min-w-[60px] outline-none text-sm"
           style={{ background: "transparent", color: "var(--text)" }}
           aria-label="Add tag"
         />
@@ -144,7 +144,7 @@ export default function TagInput({ tags, onChange, compact }: Props) {
           {filteredSuggestions.map((tag, i) => (
             <button
               key={tag}
-              className="w-full text-left px-3 py-1.5 text-xs transition-colors"
+              className="w-full text-left px-3 py-1.5 text-sm transition-colors"
               style={{
                 background: i === selectedIndex ? "var(--surface-subtle)" : "transparent",
                 color: "var(--text)",
