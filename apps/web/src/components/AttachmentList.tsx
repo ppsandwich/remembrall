@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef } from "react";
+import { useCallback, useRef, useState } from "react";
 import { useNotesStore } from "@/state/useNotesStore";
 import { downloadAttachment } from "@/lib/attachmentsApi";
 import type { Attachment } from "@brall/core";
@@ -30,6 +30,7 @@ export default function AttachmentList({ noteId }: AttachmentListProps) {
   const uploadAttachment = useNotesStore((s) => s.uploadAttachment);
   const deleteAttachment = useNotesStore((s) => s.deleteAttachment);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const handleDownload = useCallback(
     async (att: Attachment) => {
@@ -40,7 +41,12 @@ export default function AttachmentList({ noteId }: AttachmentListProps) {
 
   const handleDelete = useCallback(
     async (att: Attachment) => {
-      await deleteAttachment(att.id);
+      setDeletingId(att.id);
+      try {
+        await deleteAttachment(att.id);
+      } finally {
+        setDeletingId((prev) => (prev === att.id ? null : prev));
+      }
     },
     [deleteAttachment],
   );
@@ -62,41 +68,50 @@ export default function AttachmentList({ noteId }: AttachmentListProps) {
   return (
     <div className="px-4 py-2" style={{ borderBottom: "1px solid var(--border)" }}>
       <div className="flex flex-wrap gap-1.5">
-        {attachments.map((att) => (
-          <div
-            key={att.id}
-            className="group flex items-center gap-1.5 pl-2 pr-1 py-1 rounded-md text-xs"
-            style={{
-              background: "var(--surface-subtle)",
-              border: "1px solid var(--border)",
-              color: "var(--text-secondary)",
-            }}
-          >
-            {fileIcon(att.mime_type)}
-            <span className="max-w-[140px] truncate">{att.filename}</span>
-            <span style={{ color: "var(--text-muted)" }}>{formatBytes(att.size_bytes)}</span>
-            <button
-              onClick={() => handleDownload(att)}
-              className="p-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity"
-              style={{ color: "var(--text-muted)" }}
-              title="Download"
-              aria-label={`Download ${att.filename}`}
-              onMouseEnter={(e) => { e.currentTarget.style.color = "var(--text-secondary)"; }}
-              onMouseLeave={(e) => { e.currentTarget.style.color = "var(--text-muted)"; }}
+        {attachments.map((att) => {
+          const isDeleting = deletingId === att.id;
+          return (
+            <div
+              key={att.id}
+              className="group flex items-center gap-1.5 pl-2 pr-1 py-1 rounded-md text-xs"
+              style={{
+                background: "var(--surface-subtle)",
+                border: `1px solid ${isDeleting ? "var(--danger, #ef4444)" : "var(--border)"}`,
+                color: "var(--text-secondary)",
+              }}
             >
-              <Download size={12} />
-            </button>
-            <button
-              onClick={() => handleDelete(att)}
-              className="p-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity"
-              style={{ color: "var(--danger, #ef4444)" }}
-              title="Remove"
-              aria-label={`Remove ${att.filename}`}
-            >
-              <Trash size={12} />
-            </button>
-          </div>
-        ))}
+              {isDeleting ? (
+                <span>Deleting...</span>
+              ) : (
+                <>
+                  {fileIcon(att.mime_type)}
+                  <span className="max-w-[140px] truncate">{att.filename}</span>
+                  <span style={{ color: "var(--text-muted)" }}>{formatBytes(att.size_bytes)}</span>
+                  <button
+                    onClick={() => handleDownload(att)}
+                    className="p-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity"
+                    style={{ color: "var(--text-muted)" }}
+                    title="Download"
+                    aria-label={`Download ${att.filename}`}
+                    onMouseEnter={(e) => { e.currentTarget.style.color = "var(--text-secondary)"; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.color = "var(--text-muted)"; }}
+                  >
+                    <Download size={12} />
+                  </button>
+                  <button
+                    onClick={() => handleDelete(att)}
+                    className="p-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity"
+                    style={{ color: "var(--danger, #ef4444)" }}
+                    title="Remove"
+                    aria-label={`Remove ${att.filename}`}
+                  >
+                    <Trash size={12} />
+                  </button>
+                </>
+              )}
+            </div>
+          );
+        })}
       </div>
     </div>
   );
