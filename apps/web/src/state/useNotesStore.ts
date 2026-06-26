@@ -85,10 +85,12 @@ interface NotesState {
   openrouterKey: string | null;
   scrollToPageId: string | null;
   sectionPermissions: Map<string, string>;
+  sectionShares: Map<string, string[]>;
 
   fetchAll: () => Promise<void>;
   fetchPages: () => Promise<void>;
   fetchSharedPages: () => Promise<void>;
+  fetchSectionShares: () => Promise<void>;
   createPage: (name: string) => Promise<void>;
   updatePage: (id: string, name: string) => Promise<void>;
   deletePage: (id: string) => Promise<void>;
@@ -151,6 +153,7 @@ export const useNotesStore = create<NotesState>((set, get) => ({
   openrouterKey: null,
   scrollToPageId: null,
   sectionPermissions: new Map(),
+  sectionShares: new Map(),
 
   fetchAll: async () => {
     const user = useAuthStore.getState().user;
@@ -240,6 +243,27 @@ export const useNotesStore = create<NotesState>((set, get) => ({
         pages: [...ownPages, ...sharedPages],
         sectionPermissions: permissions,
       });
+    } catch {}
+  },
+
+  fetchSectionShares: async () => {
+    const { pages, sectionPermissions } = get();
+    const ownedPageIds = pages
+      .map((p) => p.id)
+      .filter((id) => !sectionPermissions.has(id));
+    if (ownedPageIds.length === 0) return;
+    try {
+      const results = await Promise.all(
+        ownedPageIds.map((id) => shareApi.fetchSectionShares(id))
+      );
+      const shares = new Map<string, string[]>();
+      ownedPageIds.forEach((id, i) => {
+        const emails = results[i]
+          .map((s) => s.shared_with_email)
+          .filter((e): e is string => !!e);
+        if (emails.length > 0) shares.set(id, emails);
+      });
+      set({ sectionShares: shares });
     } catch {}
   },
 

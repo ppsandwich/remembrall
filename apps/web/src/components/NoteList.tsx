@@ -19,7 +19,7 @@ export default function NoteList() {
     lastRecoloredId, clearLastRecoloredId,
     highlightNoteId, setHighlightNoteId,
     setActivePage, scrollToPageId, setScrollToPageId,
-    createPage, sectionPermissions,
+    createPage, sectionPermissions, sectionShares, fetchSectionShares,
   } = useNotesStore();
   const showArchived = useUIStore((s) => s.showArchived);
 
@@ -262,6 +262,16 @@ export default function NoteList() {
                 >
                   {section.page.name}
                 </h2>
+                {(sectionShares.get(section.page.id) || []).map((email) => (
+                  <span
+                    key={email}
+                    className="inline-flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-medium shrink-0"
+                    style={{ background: "var(--surface-subtle)", color: "var(--text-muted)" }}
+                    title={email}
+                  >
+                    {email[0].toUpperCase()}
+                  </span>
+                ))}
                 {!sectionPermissions.has(section.page.id) && (
                   <button
                     onClick={() => setSharingSection({ id: section.page.id, name: section.page.name })}
@@ -360,7 +370,10 @@ export default function NoteList() {
         <ShareDialog
           sectionId={sharingSection.id}
           sectionName={sharingSection.name}
-          onClose={() => setSharingSection(null)}
+          onClose={() => {
+            setSharingSection(null);
+            fetchSectionShares();
+          }}
         />
       )}
     </DragProvider>

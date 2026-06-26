@@ -17,7 +17,7 @@ import SettingsPanel from "./SettingsPanel";
 import DesktopFab from "./DesktopFab";
 
 export default function AppShell() {
-  const { fetchAll, fetchPages, fetchSharedPages, createNote, editingId, selectedIds, deleteNote, duplicateNote, clearSelection, selectAll, pages, activePageId, setHighlightNoteId } =
+  const { fetchAll, fetchPages, fetchSharedPages, fetchSectionShares, createNote, editingId, selectedIds, deleteNote, duplicateNote, clearSelection, selectAll, pages, activePageId, setHighlightNoteId } =
     useNotesStore();
   const { showSettings, setShowSettings, setShowShortcuts, setShowQuickCapture, showToast, setSelectMode, dragHint } = useUIStore();
   const { user } = useAuthStore();
@@ -30,8 +30,8 @@ export default function AppShell() {
 
   useEffect(() => {
     fetchAll().then(() => setReady(true));
-    fetchPages().then(() => fetchSharedPages());
-  }, [fetchAll, fetchPages, fetchSharedPages]);
+    fetchPages().then(() => fetchSharedPages().then(() => fetchSectionShares()));
+  }, [fetchAll, fetchPages, fetchSharedPages, fetchSectionShares]);
 
   // Listen for notes created from desktop app (Electron IPC)
   useEffect(() => {
