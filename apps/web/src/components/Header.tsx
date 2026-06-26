@@ -292,27 +292,28 @@ export default function Header() {
             </div>
 
             {openrouterKey && isSupported && (
-              <div className="relative hidden md:flex">
+              <div
+                className="relative hidden md:flex items-center rounded-full overflow-hidden mr-1"
+                style={{ height: "2.25rem", backdropFilter: "blur(12px)", background: "color-mix(in srgb, var(--surface) 50%, transparent)" }}
+              >
                 <button
                   onClick={handleVoiceToggle}
-                  className={`mr-1 rounded-full flex items-center justify-center transition-all relative ${isRecording ? "voice-throb" : ""}`}
+                  className={`flex items-center justify-center transition-all active:scale-95 relative rounded-l-full ${isRecording ? "voice-throb" : ""}`}
                   style={{
                     width: isRecording ? "auto" : "2.25rem",
                     height: "2.25rem",
                     paddingInline: isRecording ? "0.625rem" : undefined,
                     background: isRecording ? "#EF4444" : "transparent",
                     color: isRecording ? "white" : "#3B82F6",
-                    border: isRecording ? "1px solid #EF4444" : "1px solid #3B82F6",
+                    border: isRecording ? "1px solid #EF4444" : "none",
                     opacity: transcribing ? 0.6 : 1,
                     gap: isRecording ? "0.375rem" : 0,
                   }}
-                  title={isRecording ? "Stop recording" : transcribing ? "Transcribing…" : "New from voice"}
+                  title={isRecording ? "Stop recording" : transcribing ? "Transcribing\u2026" : "New from voice"}
                   aria-label={isRecording ? "Stop recording" : transcribing ? "Transcribing" : "New from voice"}
                   disabled={transcribing}
-                  onMouseEnter={(e) => { if (!isRecording) { e.currentTarget.style.background = "#3B82F6"; e.currentTarget.style.color = "var(--surface)"; } }}
-                  onMouseLeave={(e) => { if (!isRecording) { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "#3B82F6"; } }}
-                  onMouseDown={(e) => { if (!isRecording) e.currentTarget.style.background = "#2563EB"; }}
-                  onMouseUp={(e) => { if (!isRecording) e.currentTarget.style.background = "#3B82F6"; }}
+                  onMouseEnter={(e) => { if (!isRecording) e.currentTarget.style.background = "rgba(59,130,246,0.1)"; }}
+                  onMouseLeave={(e) => { if (!isRecording) e.currentTarget.style.background = "transparent"; }}
                 >
                   {isRecording && <div className="voice-highlight-scroll" />}
                   {transcribing ? (
@@ -329,22 +330,35 @@ export default function Header() {
                     <AudioLines size={20} />
                   )}
                 </button>
+                {!isRecording && !transcribing && (
+                  <button
+                    onClick={() => setShowQuickCapture(true)}
+                    className="flex items-center justify-center transition-all active:scale-95 rounded-r-full"
+                    style={{ width: "2.25rem", height: "2.25rem", color: "#22C55E", background: "transparent" }}
+                    title="New note"
+                    aria-label="New note"
+                    onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(34,197,94,0.1)"; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+                  >
+                    <Plus size={20} />
+                  </button>
+                )}
               </div>
             )}
 
-            <button
-              onClick={() => setShowQuickCapture(true)}
-              className="mr-2 rounded-full flex items-center justify-center transition-colors hidden md:flex"
-              style={{ width: "2.25rem", height: "2.25rem", background: "transparent", color: "#22C55E", border: "1px solid #22C55E" }}
-              title="New note"
-              aria-label="New note"
-              onMouseEnter={(e) => { e.currentTarget.style.background = "#22C55E"; e.currentTarget.style.color = "var(--surface)"; }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "#22C55E"; }}
-              onMouseDown={(e) => { e.currentTarget.style.background = "#16A34A"; }}
-              onMouseUp={(e) => { e.currentTarget.style.background = "#22C55E"; }}
-            >
-              <Plus size={20} />
-            </button>
+            {!openrouterKey && (
+              <button
+                onClick={() => setShowQuickCapture(true)}
+                className="mr-1 rounded-full flex items-center justify-center transition-all active:scale-95 hidden md:flex"
+                style={{ width: "2.25rem", height: "2.25rem", color: "#22C55E", background: "transparent", border: "1px solid #22C55E", backdropFilter: "blur(12px)" }}
+                title="New note"
+                aria-label="New note"
+                onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(34,197,94,0.1)"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+              >
+                <Plus size={20} />
+              </button>
+            )}
 
             <div className="hidden md:block ml-1">
               <input
