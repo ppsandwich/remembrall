@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNotesStore } from "@/state/useNotesStore";
 import { useUIStore } from "@/state/useUIStore";
 import { Paperclip } from "./Icons";
+import { MAX_ATTACHMENT_SIZE, ALLOWED_MIME_PREFIXES } from "@brall/core";
 
 export default function DropZoneOverlay() {
   const createNote = useNotesStore((s) => s.createNote);
@@ -37,23 +38,34 @@ export default function DropZoneOverlay() {
 
     const handleDrop = async (e: DragEvent) => {
       e.preventDefault();
+      e.stopPropagation();
       dragCountRef.current = 0;
       setVisible(false);
 
       const files = e.dataTransfer?.files;
       if (!files || files.length === 0) return;
 
+      const store = useNotesStore.getState();
       for (const file of files) {
+        if (file.size > MAX_ATTACHMENT_SIZE) {
+          showToast("File type not supported.");
+          continue;
+        }
+        const mimeType = file.type || "application/octet-stream";
+        const allowed = ALLOWED_MIME_PREFIXES.some((p) => mimeType.startsWith(p));
+        if (!allowed) {
+          showToast("File type not supported.");
+          continue;
+        }
+
         try {
-          const noteId = await createNote(`📎 ${file.name}`, "web", file.name);
+          const noteId = await store.createNote(`📎 ${file.name}`, "web", file.name);
           if (noteId) {
-            await uploadAttachment(noteId, file);
+            await store.uploadAttachment(noteId, file);
             showToast(`Note created with ${file.name}`);
-          } else {
-            showToast("Failed to create note");
           }
-        } catch (err) {
-          showToast("Failed to create note with attachment");
+        } catch (err: any) {
+          showToast(err.message || "Failed to create note with attachment", 10000);
         }
       }
     };
@@ -68,7 +80,7 @@ export default function DropZoneOverlay() {
       document.removeEventListener("dragleave", handleDragLeave);
       document.removeEventListener("drop", handleDrop);
     };
-  }, [createNote, uploadAttachment, showToast]);
+  }, [showToast]);
 
   if (!visible) return null;
 

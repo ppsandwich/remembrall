@@ -7,6 +7,7 @@ const QUOTA_BYTES = 2 * 1024 * 1024 * 1024; // 2 GB
 const ALLOWED_MIME_PREFIXES = [
   "image/",
   "application/pdf",
+  "application/octet-stream",
   "text/",
   "audio/",
   "video/",
