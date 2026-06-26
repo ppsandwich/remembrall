@@ -3,7 +3,7 @@
 import { useEffect, useRef } from "react";
 import { useAuthStore } from "@/state/useAuthStore";
 import { useEncryptionStore } from "@/state/useEncryptionStore";
-import LoginScreen from "@/components/LoginScreen";
+import LandingPage from "@/components/LandingPage";
 import AppShell from "@/components/AppShell";
 
 export default function Home() {
@@ -42,7 +42,7 @@ export default function Home() {
   }
 
   if (!user) {
-    return <LoginScreen />;
+    return <LandingPage />;
   }
 
   if (!isReady) {

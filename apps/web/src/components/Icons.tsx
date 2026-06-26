@@ -34,6 +34,8 @@ import {
   Pencil as LucidePencil,
   AudioLines as LucideAudioLines,
   Share2 as LucideShare2,
+  Shield as LucideShield,
+  Zap as LucideZap,
   type LucideProps,
 } from "lucide-react";
 
@@ -75,3 +77,5 @@ export const TableOfContents = (props: LucideProps) => <LucideTableOfContents {.
 export const Pencil = (props: LucideProps) => <LucidePencil {...p} {...props} />;
 export const AudioLines = (props: LucideProps) => <LucideAudioLines {...p} {...props} />;
 export const Share2 = (props: LucideProps) => <LucideShare2 {...p} {...props} />;
+export const Shield = (props: LucideProps) => <LucideShield {...p} {...props} />;
+export const Zap = (props: LucideProps) => <LucideZap {...p} {...props} />;
