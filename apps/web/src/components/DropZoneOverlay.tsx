@@ -62,6 +62,7 @@ export default function DropZoneOverlay() {
           const noteId = await store.createNote(`📎 ${file.name}`, "web", file.name);
           if (noteId) {
             await store.uploadAttachment(noteId, file);
+            store.setEditingId(noteId);
             showToast(`Note created with ${file.name}`);
           }
         } catch (err: any) {
