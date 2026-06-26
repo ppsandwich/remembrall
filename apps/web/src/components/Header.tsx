@@ -89,6 +89,7 @@ export default function Header() {
     }
   }, [isRecording, stop, start, openrouterKey, createNote, pages, activePageId, showToast, setHighlightNoteId, transcribing]);
 
+  const [scrolled, setScrolled] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [pagesMenuOpen, setPagesMenuOpen] = useState(false);
   const [showMobileDeleteConfirm, setShowMobileDeleteConfirm] = useState(false);
@@ -122,6 +123,13 @@ export default function Header() {
   }, [pagesMenuOpen]);
 
   useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 0);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  useEffect(() => {
     if (searchOpen && mobileInputRef.current) {
       mobileInputRef.current.focus();
     }
@@ -152,8 +160,13 @@ export default function Header() {
   return (
     <>
       <header
-        className="sticky top-0 z-40 flex items-center justify-between px-8 py-3 border-b"
-        style={{ background: "var(--surface)", borderColor: "var(--border)" }}
+        className="sticky top-0 z-40 flex items-center justify-between px-8 py-3 border-b transition-colors"
+        style={{
+          background: scrolled ? "color-mix(in srgb, var(--surface) 75%, transparent)" : "var(--surface)",
+          borderColor: scrolled ? "color-mix(in srgb, var(--border) 50%, transparent)" : "var(--border)",
+          backdropFilter: scrolled ? "blur(12px) saturate(1.2)" : "none",
+          WebkitBackdropFilter: scrolled ? "blur(12px) saturate(1.2)" : "none",
+        }}
       >
         <div className="max-w-7xl w-full mx-auto flex items-center justify-between">
           {!(window as any).electronAPI && !window.matchMedia("(display-mode: standalone)").matches && (
