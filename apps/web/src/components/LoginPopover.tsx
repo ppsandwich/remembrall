@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useAuthStore } from "@/state/useAuthStore";
 import { X, Volleyball } from "./Icons";
+import { useFocusTrap } from "@/lib/useFocusTrap";
 
 interface Props {
   onClose: () => void;
@@ -50,11 +51,17 @@ export default function LoginPopover({ onClose, defaultMode = "login" }: Props) 
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [handleKeyDown]);
 
+  const focusTrapRef = useFocusTrap<HTMLDivElement>(onClose);
+
   return (
     <div
+      ref={focusTrapRef}
       className="fixed inset-0 z-50 flex items-center justify-center p-6"
       style={{ background: "rgba(0,0,0,0.4)", backdropFilter: "blur(8px)" }}
       onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Sign in or create account"
     >
       <div
         className="w-full max-w-sm rounded-xl shadow-2xl overflow-hidden"
@@ -84,6 +91,7 @@ export default function LoginPopover({ onClose, defaultMode = "login" }: Props) 
             onClick={onClose}
             className="p-1.5 rounded-md transition-colors"
             style={{ color: "var(--text-muted)" }}
+            aria-label="Close"
             onMouseEnter={(e) => { e.currentTarget.style.background = "var(--surface-subtle)"; e.currentTarget.style.color = "var(--text)"; }}
             onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--text-muted)"; }}
           >

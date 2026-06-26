@@ -141,6 +141,8 @@ export default function RichTextEditor({ body, onChange, onKeyDown, placeholder,
   return (
     <div>
       <div
+        role="toolbar"
+        aria-label="Formatting"
         className="flex items-center gap-0.5 px-5 py-2"
         style={{ borderBottom: "1px solid var(--border)" }}
       >

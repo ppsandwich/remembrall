@@ -502,8 +502,26 @@ export default function NoteCard({ note, index, highlighted, onHighlightEnd }: P
       data-note-color={note.color || ""}
       className={`rounded-lg p-5 group/card relative ${getCardClassName(note.id)}`}
       style={style}
+      tabIndex={0}
+      role="button"
+      aria-label={note.title ? `${note.title}: ${cleanPreview}` : cleanPreview || "Note"}
       onMouseDown={handleMouseDown}
       onTouchStart={handleTouchStart}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          if (selectMode) {
+            toggleSelect(note.id);
+          } else {
+            const perm = note.page_id ? sectionPermissions.get(note.page_id) : undefined;
+            if (perm === "viewer") {
+              showToast("Viewers cannot edit notes in shared sections");
+            } else {
+              setEditingId(note.id);
+            }
+          }
+        }
+      }}
       onMouseEnter={(e) => {
         if (!isSelected && !dragState.isDragging) e.currentTarget.style.borderColor = "var(--border-strong)";
       }}

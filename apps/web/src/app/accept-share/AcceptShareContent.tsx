@@ -34,7 +34,7 @@ export default function AcceptShareContent() {
     <div className="flex items-center justify-center min-h-screen" style={{ background: "var(--bg)" }}>
       <div className="w-full max-w-xs text-center">
         {status === "loading" && (
-          <p className="text-sm" style={{ color: "var(--text-muted)" }}>Accepting share…</p>
+          <p className="text-sm" role="status" aria-live="polite" style={{ color: "var(--text-muted)" }}>Accepting share…</p>
         )}
         {status === "success" && (
           <>

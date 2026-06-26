@@ -36,6 +36,8 @@ export default function BulkToolbar() {
 
   return (
     <div
+      role="toolbar"
+      aria-label="Bulk actions"
       className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm"
       style={{ background: "var(--surface-subtle)", border: "1px solid var(--border)" }}
     >

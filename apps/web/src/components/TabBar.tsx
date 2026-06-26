@@ -4,6 +4,7 @@ import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { createPortal } from "react-dom";
 import { useNotesStore } from "@/state/useNotesStore";
 import { Plus, Minus, ChevronDown, Pencil, Settings } from "./Icons";
+import { useFocusTrap } from "@/lib/useFocusTrap";
 
 const MAX_INLINE_TABS = 3;
 
@@ -216,6 +217,8 @@ export default function TabBar() {
             data-tab-id={page.id}
             data-tab-name={page.name}
             data-tab-index={isGlobalIndex}
+            role="tab"
+            aria-selected={activePageId === page.id}
             className="px-3 py-1.5 text-xs transition-colors relative whitespace-nowrap cursor-grab active:cursor-grabbing"
             style={{
               color: activePageId === page.id ? "var(--text)" : "var(--text-muted)",
@@ -252,6 +255,8 @@ export default function TabBar() {
       <div className="flex items-center gap-2" style={{ transform: "scale(0.8)", transformOrigin: "left center" }}>
         <div
           ref={tabContainerRef}
+          role="tablist"
+          aria-label="Sections"
           className="flex items-center rounded-md overflow-hidden relative"
           style={{ border: "1px solid var(--border)", background: "var(--surface-subtle)" }}
         >
@@ -407,47 +412,62 @@ export default function TabBar() {
       </div>
 
       {showDeleteConfirm && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-6"
-          style={{ background: "rgba(0,0,0,0.25)", backdropFilter: "blur(2px)" }}
-          onClick={() => setShowDeleteConfirm(false)}
-        >
-          <div
-            className="w-full max-w-sm rounded-xl shadow-xl overflow-hidden"
-            style={{ background: "var(--surface)", border: "1px solid var(--border)" }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="p-5">
-              <h3 className="text-sm font-medium mb-2" style={{ color: "var(--text)" }}>
-                Delete page
-              </h3>
-              <p className="text-xs mb-4" style={{ color: "var(--text-muted)" }}>
-                Are you sure you want to delete &ldquo;{activePage?.name}&rdquo;? Notes on this page will not be deleted.
-              </p>
-              <div className="flex justify-end gap-2">
-                <button
-                  onClick={() => setShowDeleteConfirm(false)}
-                  className="px-3 py-1.5 text-xs rounded-md transition-colors"
-                  style={{ color: "var(--text-muted)", border: "1px solid var(--border)" }}
-                  onMouseEnter={(e) => { e.currentTarget.style.background = "var(--surface-subtle)"; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleDeleteConfirm}
-                  className="px-3 py-1.5 text-xs rounded-md transition-colors"
-                  style={{ background: "var(--danger, #EF4444)", color: "white" }}
-                  onMouseEnter={(e) => { e.currentTarget.style.opacity = "0.9"; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.opacity = "1"; }}
-                >
-                  Delete
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+        <TabBarDeleteConfirm
+          pageName={activePage?.name || ""}
+          onCancel={() => setShowDeleteConfirm(false)}
+          onConfirm={handleDeleteConfirm}
+        />
       )}
     </>
+  );
+}
+
+function TabBarDeleteConfirm({ pageName, onCancel, onConfirm }: { pageName: string; onCancel: () => void; onConfirm: () => void }) {
+  const focusTrapRef = useFocusTrap<HTMLDivElement>(onCancel);
+  return (
+    <div
+      ref={focusTrapRef}
+      className="fixed inset-0 z-50 flex items-center justify-center p-6"
+      style={{ background: "rgba(0,0,0,0.25)", backdropFilter: "blur(2px)" }}
+      onClick={onCancel}
+    >
+      <div
+        className="w-full max-w-sm rounded-xl shadow-xl overflow-hidden"
+        style={{ background: "var(--surface)", border: "1px solid var(--border)" }}
+        onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Delete page confirmation"
+      >
+        <div className="p-5">
+          <h3 className="text-sm font-medium mb-2" style={{ color: "var(--text)" }}>
+            Delete page
+          </h3>
+          <p className="text-xs mb-4" style={{ color: "var(--text-muted)" }}>
+            Are you sure you want to delete &ldquo;{pageName}&rdquo;? Notes on this page will not be deleted.
+          </p>
+          <div className="flex justify-end gap-2">
+            <button
+              onClick={onCancel}
+              className="px-3 py-1.5 text-xs rounded-md transition-colors"
+              style={{ color: "var(--text-muted)", border: "1px solid var(--border)" }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = "var(--surface-subtle)"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+            >
+              Cancel
+            </button>
+            <button
+              onClick={onConfirm}
+              className="px-3 py-1.5 text-xs rounded-md transition-colors"
+              style={{ background: "var(--danger, #EF4444)", color: "white" }}
+              onMouseEnter={(e) => { e.currentTarget.style.opacity = "0.9"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.opacity = "1"; }}
+            >
+              Delete
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
