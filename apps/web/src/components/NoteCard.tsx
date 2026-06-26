@@ -497,7 +497,7 @@ export default function NoteCard({ note, index, highlighted, onHighlightEnd }: P
       data-note-card={note.id}
       data-note-index={index}
       data-note-color={note.color || ""}
-      className={`rounded-lg p-5 group relative ${getCardClassName(note.id)}`}
+      className={`rounded-lg p-5 group/card relative ${getCardClassName(note.id)}`}
       style={style}
       onMouseDown={handleMouseDown}
       onTouchStart={handleTouchStart}
@@ -587,12 +587,12 @@ export default function NoteCard({ note, index, highlighted, onHighlightEnd }: P
       )}
 
       <div
-        className="absolute top-0 inset-x-0 h-12 rounded-t-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"
+        className="absolute top-0 inset-x-0 h-12 rounded-t-lg opacity-0 group-hover/card:opacity-100 transition-opacity pointer-events-none"
         style={{ backdropFilter: "blur(8px)" }}
       />
 
       <div
-        className="absolute top-1.5 right-1.5 flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+        className="absolute top-1.5 right-1.5 flex items-center gap-0.5 opacity-0 group-hover/card:opacity-100 transition-opacity"
         onClick={(e) => e.stopPropagation()}
       >
         <CardButton onClick={handleCopy} title="Copy">

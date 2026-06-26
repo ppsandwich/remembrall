@@ -181,7 +181,7 @@ export default function RichTextEditor({ body, onChange, onKeyDown, placeholder,
           color: "var(--text)",
           wordBreak: "break-word",
           direction: "ltr",
-          unicodeBidi: "isolate-override",
+          unicodeBidi: "embed",
           textAlign: "left",
         }}
         data-placeholder={placeholder || "Start typing…"}
