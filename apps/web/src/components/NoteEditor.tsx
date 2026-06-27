@@ -221,10 +221,11 @@ export default function NoteEditor() {
     }
   }, [isNewNote, enterToSave, handleSaveNow, setEditingId, handleClose]);
 
+  const focusTrapRef = useFocusTrap<HTMLDivElement>(handleClose);
+
   if (!isOpen) return null;
 
   const modKey = typeof navigator !== "undefined" && /Mac|iPhone|iPad|iPod/.test(navigator.userAgent) ? "⌘" : "Ctrl+";
-  const focusTrapRef = useFocusTrap<HTMLDivElement>(handleClose);
 
   return (
     <div
