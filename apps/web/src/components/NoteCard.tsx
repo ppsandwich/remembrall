@@ -153,8 +153,10 @@ export default function NoteCard({ note, index, highlighted, onHighlightEnd }: P
           const tabBelow = elemBelow.closest("[data-tab-id]") as HTMLElement | null;
           if (tabBelow) {
             hoveredTab = tabBelow;
-            hoveredTab.style.outline = "2px solid var(--accent)";
-            hoveredTab.style.outlineOffset = "-2px";
+            if (!tabBelow.hasAttribute("data-move-to-item")) {
+              hoveredTab.style.outline = "2px solid var(--accent)";
+              hoveredTab.style.outlineOffset = "-2px";
+            }
             if (tabBelow.hasAttribute("data-move-to-item")) {
               setHoveredTabName(null);
             } else {
@@ -309,8 +311,10 @@ export default function NoteCard({ note, index, highlighted, onHighlightEnd }: P
         const tabBelow = elemBelow.closest("[data-tab-id]") as HTMLElement | null;
         if (tabBelow) {
           hoveredTab = tabBelow;
-          hoveredTab.style.outline = "2px solid var(--accent)";
-          hoveredTab.style.outlineOffset = "-2px";
+          if (!tabBelow.hasAttribute("data-move-to-item")) {
+            hoveredTab.style.outline = "2px solid var(--accent)";
+            hoveredTab.style.outlineOffset = "-2px";
+          }
           if (tabBelow.hasAttribute("data-move-to-item")) {
             setHoveredTabName(null);
           } else {
