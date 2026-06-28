@@ -183,7 +183,13 @@ export default function NoteCard({ note, index, highlighted, onHighlightEnd }: P
       setDragHint(null);
 
       if (isDraggingRef.current) {
-        const droppedOnTab = hoveredTab;
+        const droppedOnTab = hoveredTab || (() => {
+          const el = cardRef.current;
+          if (el) el.style.pointerEvents = "none";
+          const below = document.elementFromPoint(upEvent.clientX, upEvent.clientY);
+          if (el) el.style.pointerEvents = "";
+          return below?.closest("[data-tab-id]") as HTMLElement | null;
+        })();
         const targetPageId = droppedOnTab?.getAttribute("data-tab-id");
         clearTabHighlight();
 
@@ -339,11 +345,17 @@ export default function NoteCard({ note, index, highlighted, onHighlightEnd }: P
       setDragHint(null);
 
       if (isDragging) {
-        const droppedOnTab = hoveredTab;
+        const t = upEvent.changedTouches[0];
+        const droppedOnTab = hoveredTab || (() => {
+          const el = cardRef.current;
+          if (el) el.style.pointerEvents = "none";
+          const below = document.elementFromPoint(t.clientX, t.clientY);
+          if (el) el.style.pointerEvents = "";
+          return below?.closest("[data-tab-id]") as HTMLElement | null;
+        })();
         const targetPageId = droppedOnTab?.getAttribute("data-tab-id");
         clearTabHighlight();
 
-        const t = upEvent.changedTouches[0];
         const dropX = t.clientX;
         const dropY = t.clientY;
         const originX = radialOriginRef.current?.x ?? 0;
@@ -540,7 +552,7 @@ export default function NoteCard({ note, index, highlighted, onHighlightEnd }: P
         <div className="flex-1 min-w-0">
           {note.title && (
             <p
-              className="text-xs font-bold mb-1 uppercase tracking-wider"
+              className="text-xs font-bold mb-1 uppercase tracking-wider overflow-hidden text-ellipsis whitespace-nowrap"
               style={{ color: eyebrowColor }}
             >
               {note.title}

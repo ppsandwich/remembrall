@@ -10,13 +10,19 @@
     "build:desktop:win": "pnpm --filter @brall/desktop build:win",
     "build:extension": "npx tsx scripts/build-extension.ts",
     "lint": "pnpm --filter @brall/web lint",
-    "typecheck": "pnpm run -r typecheck"
+    "typecheck": "pnpm run -r typecheck",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "test:e2e": "playwright test"
   },
   "engines": {
     "node": ">=20"
   },
   "devDependencies": {
     "@playwright/test": "^1.61.1",
-    "playwright": "^1.61.1"
+    "@vitest/coverage-v8": "^4.1.9",
+    "playwright": "^1.61.1",
+    "vitest": "^4.1.9"
   }
 }
