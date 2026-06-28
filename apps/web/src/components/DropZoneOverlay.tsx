@@ -12,6 +12,7 @@ export default function DropZoneOverlay() {
   const showToast = useUIStore((s) => s.showToast);
   const [visible, setVisible] = useState(false);
   const [editorOpen, setEditorOpen] = useState(false);
+  const [fileName, setFileName] = useState<string | null>(null);
   const dragCountRef = useRef(0);
 
   useEffect(() => {
@@ -20,6 +21,7 @@ export default function DropZoneOverlay() {
       e.preventDefault();
       dragCountRef.current++;
       setEditorOpen(useNotesStore.getState().editingId !== null);
+      setFileName(e.dataTransfer?.files?.[0]?.name ?? null);
       setVisible(true);
     };
 
@@ -109,7 +111,11 @@ export default function DropZoneOverlay() {
       >
         <Paperclip size={32} />
         <p className="text-sm font-medium">
-          {editorOpen ? "Drop files to attach to current note" : "Drop files to create a new note"}
+          {editorOpen ? (
+            fileName ? <>Attach <strong>{fileName}</strong> to note</> : "Drop files to attach to current note"
+          ) : (
+            fileName ? <>Create new note and attach <strong>{fileName}</strong></> : "Drop files to create a new note"
+          )}
         </p>
       </div>
     </div>

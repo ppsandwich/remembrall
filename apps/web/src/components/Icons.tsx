@@ -50,6 +50,7 @@ import {
   RotateCw as LucideRotateCw,
   Loader2 as LucideLoader,
   Eye as LucideEye,
+  Code2 as LucideCode2,
   type LucideProps,
 } from "lucide-react";
 
@@ -107,3 +108,4 @@ export const ZoomOut = (props: LucideProps) => <LucideZoomOut {...p} {...props} 
 export const RotateCw = (props: LucideProps) => <LucideRotateCw {...p} {...props} />;
 export const Loader = (props: LucideProps) => <LucideLoader {...p} {...props} />;
 export const Eye = (props: LucideProps) => <LucideEye {...p} {...props} />;
+export const Code2 = (props: LucideProps) => <LucideCode2 {...p} {...props} />;

@@ -8,6 +8,7 @@ import { DragProvider } from "./DragContext";
 import NoteCard from "./NoteCard";
 import EmptyState from "./EmptyState";
 import ShareDialog from "./ShareDialog";
+import EmbedExportButton from "./EmbedExportButton";
 import { Plus, Share2 } from "./Icons";
 
 const GRID_CLASS = "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 3xl:grid-cols-7 gap-3";
@@ -285,6 +286,11 @@ export default function NoteList() {
                     <Share2 size={13} />
                   </button>
                 )}
+                <EmbedExportButton
+                  sectionId={section.page.id}
+                  sectionName={section.page.name}
+                  notes={section.notes}
+                />
               </div>
               {pinned.length > 0 && (
                 <>
