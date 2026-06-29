@@ -100,6 +100,42 @@ input[type="checkbox"] {
   height: 15px;
 }
 
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  opacity: 1;
+  height: 100%;
+  width: 20px;
+  cursor: pointer;
+}
+
+input[type="number"]::-webkit-inner-spin-button {
+  border-left: 1px solid var(--border);
+  border-radius: 0 6px 6px 0;
+  background: var(--surface-subtle);
+  background-image: linear-gradient(var(--border), var(--border));
+  background-size: 1px 50%;
+  background-position: center;
+  background-repeat: no-repeat;
+  transition: background-color 0.15s ease;
+}
+
+input[type="number"]::-webkit-inner-spin-button:hover {
+  background-color: var(--border);
+}
+
+input[type="number"]::-webkit-inner-spin-button:active {
+  background-color: var(--border-strong);
+}
+
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: inner-spin-button;
+}
+
 @media (prefers-reduced-motion: reduce) {
   * {
     transition: none !important;
