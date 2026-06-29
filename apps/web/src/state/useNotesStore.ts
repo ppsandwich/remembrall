@@ -133,7 +133,7 @@ interface NotesState {
   deletePage: (id: string) => Promise<void>;
   reorderPages: (pageId: string, targetIndex: number) => Promise<void>;
   setActivePage: (id: string) => void;
-  createNote: (body: string, source?: NoteSource, title?: string) => Promise<string | null>;
+  createNote: (body: string, source?: NoteSource, title?: string, pageId?: string) => Promise<string | null>;
   updateNote: (id: string, body: string) => Promise<void>;
   updateNoteTitle: (id: string, title: string) => Promise<void>;
   updateNoteColor: (id: string, color: string) => Promise<void>;
@@ -370,7 +370,7 @@ export const useNotesStore = create<NotesState>((set, get) => ({
     set({ activePageId: id, selectedIds: new Set(), scrollToPageId: id });
   },
 
-  createNote: async (body: string, source: NoteSource = "web", title: string = "") => {
+  createNote: async (body: string, source: NoteSource = "web", title: string = "", pageId?: string) => {
     const user = useAuthStore.getState().user;
     const { encryptText } = useEncryptionStore.getState();
     if (!user || !body.trim()) return null;
@@ -379,7 +379,7 @@ export const useNotesStore = create<NotesState>((set, get) => ({
     const encryptedBody = await encryptText(cleanedBody);
     const preview = derivePreview(cleanedBody);
     const previewEncrypted = await encryptText(preview);
-    const activePageId = get().activePageId;
+    const targetPageId = pageId ?? get().activePageId;
 
     const created = await api.createNote({
       userId: user.id,
@@ -388,7 +388,7 @@ export const useNotesStore = create<NotesState>((set, get) => ({
       source,
       pinned: false,
       color,
-      pageId: activePageId || undefined,
+      pageId: targetPageId || undefined,
       title,
     });
 
@@ -406,7 +406,7 @@ export const useNotesStore = create<NotesState>((set, get) => ({
       source,
       position: maxPosition + 1,
       color,
-      page_id: activePageId,
+      page_id: targetPageId,
       title,
       created_at: created.created_at,
       updated_at: created.updated_at,

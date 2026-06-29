@@ -22,7 +22,7 @@ function buildBody(htmlBody: string, tags: string[]): string {
 }
 
 export default function NoteEditor() {
-  const { editingId, notes, setEditingId, createNote, updateNote, updateNoteTitle, deleteNote, restoreNote, duplicateNote, togglePin } =
+  const { editingId, notes, setEditingId, createNote, updateNote, updateNoteTitle, deleteNote, restoreNote, duplicateNote, togglePin, pages, activePageId, moveNoteToPage, sectionPermissions } =
     useNotesStore();
   const showToast = useUIStore((s) => s.showToast);
   const enterToSave = useUIStore((s) => s.enterToSave);
@@ -40,6 +40,7 @@ export default function NoteEditor() {
   const [tags, setTags] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout>>(null);
+  const [selectedPageId, setSelectedPageId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -54,6 +55,7 @@ export default function NoteEditor() {
       setTitle("");
       setBodyHtml("");
       setTags([]);
+      setSelectedPageId(useNotesStore.getState().activePageId);
       return;
     }
     const current = useNotesStore.getState().notes.find((n) => n.id === editingId);
@@ -64,10 +66,12 @@ export default function NoteEditor() {
       const cleanBody = stripTagsFromHtml(fullBody);
       setBodyHtml(cleanBody);
       setTags(extractedTags);
+      setSelectedPageId(current.page_id);
     } else {
       setTitle("");
       setBodyHtml("");
       setTags([]);
+      setSelectedPageId(null);
     }
   }, [editingId, isOpen]);
 
@@ -121,7 +125,7 @@ export default function NoteEditor() {
       for (const tag of tags) {
         fullBody = addTag(fullBody, tag);
       }
-      await createNote(fullBody, undefined, title || undefined);
+      await createNote(fullBody, undefined, title || undefined, selectedPageId || undefined);
       showToast("Saved.");
       setTitle("");
       setBodyHtml("");
@@ -178,7 +182,7 @@ export default function NoteEditor() {
     }
     if (isNewNote) {
       setSaving(true);
-      await createNote(text);
+      await createNote(text, undefined, undefined, selectedPageId || undefined);
       setSaving(false);
       showToast("Saved.");
       setShowQuickCapture(false);
@@ -362,23 +366,55 @@ export default function NoteEditor() {
                   <Clipboard />
                 </button>
               </div>
-              <button
-                type="button"
-                onClick={() => setEnterToSave(!enterToSave)}
-                className="hidden md:flex items-center gap-1.5 px-2 py-1 rounded transition-colors"
-                style={{ color: "var(--text-muted)", background: "var(--surface-subtle)" }}
-                title={enterToSave ? "Enter to save" : `${modKey}Enter to save`}
-              >
-                <span style={{ fontWeight: enterToSave ? 600 : 400, color: enterToSave ? "#3B82F6" : undefined }}>Enter</span>
-                <span style={{ color: "var(--text-muted)" }}>/</span>
-                <span style={{ fontWeight: !enterToSave ? 600 : 400, color: !enterToSave ? "#3B82F6" : undefined }}>{modKey}↵</span>
-                <span>to save</span>
-              </button>
+              <div className="flex items-center gap-2">
+                {pages.length > 1 && (
+                  <select
+                    value={selectedPageId || ""}
+                    onChange={(e) => setSelectedPageId(e.target.value || null)}
+                    className="px-2 py-1 rounded outline-none text-xs"
+                    style={{ background: "var(--surface-subtle)", color: "var(--text-muted)", border: "1px solid var(--border)" }}
+                  >
+                    {pages.map((p) => (
+                      <option key={p.id} value={p.id}>{p.name}</option>
+                    ))}
+                  </select>
+                )}
+                <button
+                  type="button"
+                  onClick={() => setEnterToSave(!enterToSave)}
+                  className="hidden md:flex items-center gap-1.5 px-2 py-1 rounded transition-colors"
+                  style={{ color: "var(--text-muted)", background: "var(--surface-subtle)" }}
+                  title={enterToSave ? "Enter to save" : `${modKey}Enter to save`}
+                >
+                  <span style={{ fontWeight: enterToSave ? 600 : 400, color: enterToSave ? "#3B82F6" : undefined }}>Enter</span>
+                  <span style={{ color: "var(--text-muted)" }}>/</span>
+                  <span style={{ fontWeight: !enterToSave ? 600 : 400, color: !enterToSave ? "#3B82F6" : undefined }}>{modKey}↵</span>
+                  <span>to save</span>
+                </button>
+              </div>
             </>
           ) : (
             <>
               <span>{note ? new Date(note.updated_at).toLocaleString() : ""}</span>
               <div className="flex items-center gap-3">
+                {pages.length > 1 && (
+                  <select
+                    value={selectedPageId || ""}
+                    onChange={(e) => {
+                      const newPageId = e.target.value || null;
+                      setSelectedPageId(newPageId);
+                      if (note && newPageId && newPageId !== note.page_id) {
+                        moveNoteToPage(note.id, newPageId);
+                      }
+                    }}
+                    className="px-2 py-1 rounded outline-none text-xs"
+                    style={{ background: "var(--surface-subtle)", color: "var(--text-muted)", border: "1px solid var(--border)" }}
+                  >
+                    {pages.map((p) => (
+                      <option key={p.id} value={p.id}>{p.name}</option>
+                    ))}
+                  </select>
+                )}
                 <button
                   type="button"
                   onClick={() => setEnterToSave(!enterToSave)}

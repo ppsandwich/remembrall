@@ -40,6 +40,7 @@ export default function RadialColorPicker({ centerX, centerY, currentColor, mous
   ], [storeColorOrder, PICKER_COLORS]);
 
   const [hoveredColor, setHoveredColor] = useState<string | null>(null);
+  const [hoveringMoveTo, setHoveringMoveTo] = useState(false);
   const hoveredRef = useRef<string | null>(null);
   const onReleaseRef = useRef(onSelect);
   onReleaseRef.current = onSelect;
@@ -49,7 +50,7 @@ export default function RadialColorPicker({ centerX, centerY, currentColor, mous
   const dx = mouseX - centerX;
   const dy = mouseY - centerY;
   const distFromCenter = Math.sqrt(dx * dx + dy * dy);
-  const isOutOfRange = distFromCenter > FADE_RADIUS;
+  const isOutOfRange = !hoveringMoveTo && distFromCenter > FADE_RADIUS;
 
   const getHoveredColor = useCallback(
     (clientX: number, clientY: number): string | null => {
@@ -228,7 +229,7 @@ export default function RadialColorPicker({ centerX, centerY, currentColor, mous
           {hoveredColor === "none" ? "None" : getColorDisplayName(hoveredColor, colorNames)}
         </div>
       )}
-      {!isOutOfRange && pages.filter((p) => p.id !== activePageId).map((page, i) => {
+      {pages.filter((p) => p.id !== activePageId).map((page, i) => {
         const itemY = centerY + RADIUS + SWATCH_SIZE + 16 + i * 32;
         return (
           <div
@@ -236,6 +237,8 @@ export default function RadialColorPicker({ centerX, centerY, currentColor, mous
             data-tab-id={page.id}
             data-tab-name={page.name}
             data-move-to-item
+            onMouseEnter={() => setHoveringMoveTo(true)}
+            onMouseLeave={() => setHoveringMoveTo(false)}
             style={{
               position: "absolute",
               left: centerX,
