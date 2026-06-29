@@ -67,6 +67,9 @@ export const DARK_NOTE_COLORS = [
 
 const EMPTY_PROPERTY_DEFINITIONS: PropertyDefinition[] = [];
 
+let lastSyncedColorNames: Record<string, string> | null = null;
+let lastSyncedColorOrder: string[] | null = null;
+
 export const DEFAULT_COLOR_NAMES: Record<string, string> = {
   none: "None",
   red: "Red",
@@ -716,6 +719,7 @@ export const useNotesStore = create<NotesState>((set, get) => ({
     set({ colorNames: names });
     const user = useAuthStore.getState().user;
     if (user) {
+      lastSyncedColorNames = names;
       prefApi.upsertPreferences(user.id, { color_names: names }).catch(() => {});
     }
   },
@@ -726,6 +730,7 @@ export const useNotesStore = create<NotesState>((set, get) => ({
     set({ colorNames: names });
     const user = useAuthStore.getState().user;
     if (user) {
+      lastSyncedColorNames = names;
       prefApi.upsertPreferences(user.id, { color_names: names }).catch(() => {});
     }
   },
@@ -735,6 +740,7 @@ export const useNotesStore = create<NotesState>((set, get) => ({
     set({ colorOrder: order });
     const user = useAuthStore.getState().user;
     if (user) {
+      lastSyncedColorOrder = order;
       prefApi.upsertPreferences(user.id, { color_order: order }).catch(() => {});
     }
   },
@@ -1141,30 +1147,84 @@ export async function initColorSettings(userId?: string) {
     if (prefs) {
       const serverNamesRaw = prefs.color_names && Object.keys(prefs.color_names).length > 0
         ? prefs.color_names
-        : localNames;
+        : null;
       const filteredServerNames: Record<string, string> = {};
-      for (const key of Object.keys(serverNamesRaw)) {
-        if (validColorNames.has(key)) {
-          filteredServerNames[key] = serverNamesRaw[key];
+      if (serverNamesRaw) {
+        for (const key of Object.keys(serverNamesRaw)) {
+          if (validColorNames.has(key)) {
+            filteredServerNames[key] = serverNamesRaw[key];
+          }
         }
       }
-      const serverNames = { ...DEFAULT_COLOR_NAMES, ...filteredServerNames };
+      const serverNames = { ...DEFAULT_COLOR_NAMES, ...(serverNamesRaw ? filteredServerNames : {}) };
 
       const serverOrderRaw = prefs.color_order && prefs.color_order.length > 0
         ? prefs.color_order
-        : localOrder.length > 0 ? localOrder : DEFAULT_COLOR_ORDER;
-      const serverOrder = serverOrderRaw.filter((c: string) => validColorNames.has(c));
+        : null;
+      const serverOrder = serverOrderRaw
+        ? serverOrderRaw.filter((c: string) => validColorNames.has(c))
+        : null;
 
-      useNotesStore.setState({
-        colorNames: serverNames,
-        colorOrder: serverOrder.length > 0 ? serverOrder : DEFAULT_COLOR_ORDER,
-      });
-      localStorage.setItem("remembrall-color-names", JSON.stringify(serverNames));
-      localStorage.setItem("remembrall-color-order", JSON.stringify(serverOrder));
+      const namesUnchanged = lastSyncedColorNames
+        ? JSON.stringify(serverNames) === JSON.stringify(lastSyncedColorNames)
+        : false;
+      const orderUnchanged = lastSyncedColorOrder
+        ? JSON.stringify(serverOrder ?? []) === JSON.stringify(lastSyncedColorOrder)
+        : false;
+
+      if (!namesUnchanged) {
+        if (lastSyncedColorNames && serverNamesRaw) {
+          const namesToWrite = { ...DEFAULT_COLOR_NAMES };
+          for (const key of Object.keys(serverNames)) {
+            const serverVal = serverNames[key];
+            const localVal = localNames[key];
+            const lastVal = lastSyncedColorNames[key];
+            const defaultVal = DEFAULT_COLOR_NAMES[key];
+            if (localVal !== defaultVal) {
+              namesToWrite[key] = localVal;
+            } else if (serverVal !== lastVal) {
+              namesToWrite[key] = serverVal;
+            } else {
+              namesToWrite[key] = localVal;
+            }
+          }
+          useNotesStore.setState({ colorNames: namesToWrite });
+          lastSyncedColorNames = namesToWrite;
+          localStorage.setItem("remembrall-color-names", JSON.stringify(namesToWrite));
+          prefApi.upsertPreferences(userId, { color_names: namesToWrite }).catch(() => {});
+        } else if (serverNamesRaw) {
+          useNotesStore.setState({ colorNames: serverNames });
+          lastSyncedColorNames = serverNames;
+          localStorage.setItem("remembrall-color-names", JSON.stringify(serverNames));
+        }
+      }
+
+      if (!orderUnchanged) {
+        if (lastSyncedColorOrder && serverOrder) {
+          const orderToWrite = [...localOrder];
+          for (const c of serverOrder) {
+            if (!orderToWrite.includes(c)) orderToWrite.push(c);
+          }
+          useNotesStore.setState({ colorOrder: orderToWrite });
+          lastSyncedColorOrder = orderToWrite;
+          localStorage.setItem("remembrall-color-order", JSON.stringify(orderToWrite));
+          prefApi.upsertPreferences(userId, { color_order: orderToWrite }).catch(() => {});
+        } else if (serverOrder) {
+          useNotesStore.setState({
+            colorOrder: serverOrder.length > 0 ? serverOrder : DEFAULT_COLOR_ORDER,
+          });
+          lastSyncedColorOrder = serverOrder.length > 0 ? serverOrder : DEFAULT_COLOR_ORDER;
+          localStorage.setItem("remembrall-color-order", JSON.stringify(serverOrder.length > 0 ? serverOrder : DEFAULT_COLOR_ORDER));
+        }
+      }
     } else if (Object.keys(localNames).length > 0 || localOrder.length > 0) {
+      const namesToPush = Object.keys(localNames).length > 0 ? localNames : DEFAULT_COLOR_NAMES;
+      const orderToPush = localOrder.length > 0 ? localOrder : DEFAULT_COLOR_ORDER;
+      lastSyncedColorNames = namesToPush;
+      lastSyncedColorOrder = orderToPush;
       await prefApi.upsertPreferences(userId, {
-        color_names: Object.keys(localNames).length > 0 ? localNames : DEFAULT_COLOR_NAMES,
-        color_order: localOrder.length > 0 ? localOrder : DEFAULT_COLOR_ORDER,
+        color_names: namesToPush,
+        color_order: orderToPush,
       });
     }
   } catch {}
