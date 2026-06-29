@@ -5,6 +5,7 @@ import { Bold, Italic, UnderlineIcon, ListUnordered, ListOrdered, CheckList, Spa
 import { plainTextToHtml, isHtml } from "@/lib/html";
 import { AIActionsDropdown, AIProgressIndicator, useAIActions, SlashCommandMenu } from "./AIActionsMenu";
 import { AIActionId, AI_ACTIONS } from "@/lib/aiActions";
+import { useUIStore } from "@/state/useUIStore";
 
 interface Props {
   body: string;
@@ -20,27 +21,30 @@ function ToolbarButton({
   title,
   children,
   active,
+  accent,
 }: {
   onMouseDown: (e: React.MouseEvent) => void;
   title: string;
   children: React.ReactNode;
   active?: boolean;
+  accent?: boolean;
 }) {
+  const baseColor = accent ? "#3B82F6" : active ? "var(--text)" : "var(--text-muted)";
   return (
     <button
       type="button"
       className="p-1.5 rounded transition-colors relative"
-      style={{ color: active ? "var(--text)" : "var(--text-muted)" }}
+      style={{ color: baseColor }}
       title={title}
       aria-label={title}
       onMouseDown={onMouseDown}
       onMouseEnter={(e) => {
         e.currentTarget.style.background = "var(--surface-subtle)";
-        e.currentTarget.style.color = "var(--text-secondary)";
+        e.currentTarget.style.color = accent ? "#2563EB" : "var(--text-secondary)";
       }}
       onMouseLeave={(e) => {
         e.currentTarget.style.background = active ? "var(--surface-subtle)" : "transparent";
-        e.currentTarget.style.color = active ? "var(--text)" : "var(--text-muted)";
+        e.currentTarget.style.color = baseColor;
       }}
     >
       {children}
@@ -142,15 +146,28 @@ export default function RichTextEditor({ body, onChange, onKeyDown, placeholder,
     setShowAIMenu(false);
     setSlashState(null);
 
+    const actionLabel = AI_ACTIONS.find((a) => a.id === actionId)?.label ?? "AI action";
     const selectedText = getSelectedText();
 
     if (selectedText.trim()) {
+      const sel = window.getSelection();
+      const range = sel && sel.rangeCount ? sel.getRangeAt(0) : null;
+      const previousHtml = editorRef.current?.innerHTML ?? "";
+
       const result = await execute(actionId, selectedText);
       if (result !== null) {
-        const sel = window.getSelection();
-        if (sel && !sel.isCollapsed) {
+        if (range && sel && !sel.isCollapsed) {
           replaceSelectedText(result);
         }
+        useUIStore.getState().showToastWithAction(`${actionLabel} applied.`, {
+          label: "Undo",
+          onAction: () => {
+            if (editorRef.current) {
+              editorRef.current.innerHTML = previousHtml;
+              emitChange();
+            }
+          },
+        });
       }
       return;
     }
@@ -159,10 +176,20 @@ export default function RichTextEditor({ body, onChange, onKeyDown, placeholder,
     const fullText = editorRef.current.innerText || "";
     if (!fullText.trim()) return;
 
+    const previousHtml = editorRef.current.innerHTML;
     const result = await execute(actionId, fullText);
     if (result !== null) {
       editorRef.current.innerHTML = plainTextToHtml(result);
       emitChange();
+      useUIStore.getState().showToastWithAction(`${actionLabel} applied.`, {
+        label: "Undo",
+        onAction: () => {
+          if (editorRef.current) {
+            editorRef.current.innerHTML = previousHtml;
+            emitChange();
+          }
+        },
+      });
     }
   }, [getSelectedText, execute, replaceSelectedText, emitChange]);
 
@@ -399,7 +426,7 @@ export default function RichTextEditor({ body, onChange, onKeyDown, placeholder,
           <ListOrdered />
         </ToolbarButton>
         <div className="w-px h-4 mx-1" style={{ background: "var(--border)" }} />
-        <ToolbarButton onMouseDown={(e) => { e.preventDefault(); insertChecklist(); }} title="Checklist">
+        <ToolbarButton onMouseDown={(e) => { e.preventDefault(); insertChecklist(); }} title="Checklist" accent>
           <CheckList />
         </ToolbarButton>
 
@@ -412,6 +439,7 @@ export default function RichTextEditor({ body, onChange, onKeyDown, placeholder,
             }}
             title="AI actions"
             active={showAIMenu}
+            accent
           >
             <Sparkles />
           </ToolbarButton>

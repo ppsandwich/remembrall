@@ -7,6 +7,7 @@ export default function UndoToast() {
   const undoStack = useNotesStore((s) => s.undoStack);
   const undoDelete = useNotesStore((s) => s.undoDelete);
   const toastMessage = useUIStore((s) => s.toastMessage);
+  const toastAction = useUIStore((s) => s.toastAction);
 
   if (undoStack.length === 0 && !toastMessage) return null;
 
@@ -29,10 +30,22 @@ export default function UndoToast() {
       )}
       {toastMessage && (
         <div
-          className="px-5 py-3 rounded-lg shadow-lg text-sm"
+          className="flex items-center gap-4 px-5 py-3 rounded-lg shadow-lg text-sm"
           style={{ background: "var(--accent)", color: "var(--surface)" }}
         >
-          {toastMessage}
+          <span>{toastMessage}</span>
+          {toastAction && (
+            <button
+              onClick={() => {
+                toastAction.onAction();
+                useUIStore.getState().clearToast();
+              }}
+              className="font-medium underline underline-offset-2 hover:opacity-80"
+              style={{ color: "#22C55E" }}
+            >
+              {toastAction.label}
+            </button>
+          )}
         </div>
       )}
     </div>
