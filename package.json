@@ -23,6 +23,7 @@
     "@playwright/test": "^1.61.1",
     "@vitest/coverage-v8": "^4.1.9",
     "playwright": "^1.61.1",
+    "tsx": "^4.19.0",
     "vitest": "^4.1.9"
   }
 }
