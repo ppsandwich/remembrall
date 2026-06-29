@@ -17,6 +17,7 @@ import SettingsPanel from "./SettingsPanel";
 import DesktopFab from "./DesktopFab";
 import DropZoneOverlay from "./DropZoneOverlay";
 import TableView from "./TableView";
+import KanbanView from "./KanbanView";
 import PropertyFilterBar from "./PropertyFilter";
 
 export default function AppShell() {
@@ -168,6 +169,8 @@ export default function AppShell() {
         <BulkToolbar />
         {viewMode === "table" ? (
           <TableView notes={getFilteredNotes()} definitions={getActivePropertyDefinitions()} />
+        ) : viewMode === "columns" ? (
+          <KanbanView notes={getFilteredNotes()} definitions={getActivePropertyDefinitions()} />
         ) : (
           <NoteList />
         )}
