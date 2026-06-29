@@ -1,8 +1,10 @@
 "use client";
 
-import { useRef, useCallback, useEffect } from "react";
-import { Bold, Italic, UnderlineIcon, ListUnordered, ListOrdered, CheckList } from "./Icons";
+import { useRef, useCallback, useEffect, useState } from "react";
+import { Bold, Italic, UnderlineIcon, ListUnordered, ListOrdered, CheckList, Sparkles } from "./Icons";
 import { plainTextToHtml, isHtml } from "@/lib/html";
+import { AIActionsDropdown, AIProgressIndicator, useAIActions, SlashCommandMenu } from "./AIActionsMenu";
+import { AIActionId, AI_ACTIONS } from "@/lib/aiActions";
 
 interface Props {
   body: string;
@@ -17,16 +19,18 @@ function ToolbarButton({
   onMouseDown,
   title,
   children,
+  active,
 }: {
   onMouseDown: (e: React.MouseEvent) => void;
   title: string;
   children: React.ReactNode;
+  active?: boolean;
 }) {
   return (
     <button
       type="button"
-      className="p-1.5 rounded transition-colors"
-      style={{ color: "var(--text-muted)" }}
+      className="p-1.5 rounded transition-colors relative"
+      style={{ color: active ? "var(--text)" : "var(--text-muted)" }}
       title={title}
       aria-label={title}
       onMouseDown={onMouseDown}
@@ -35,8 +39,8 @@ function ToolbarButton({
         e.currentTarget.style.color = "var(--text-secondary)";
       }}
       onMouseLeave={(e) => {
-        e.currentTarget.style.background = "transparent";
-        e.currentTarget.style.color = "var(--text-muted)";
+        e.currentTarget.style.background = active ? "var(--surface-subtle)" : "transparent";
+        e.currentTarget.style.color = active ? "var(--text)" : "var(--text-muted)";
       }}
     >
       {children}
@@ -76,6 +80,10 @@ export default function RichTextEditor({ body, onChange, onKeyDown, placeholder,
   const bodyRef = useRef(body);
   bodyRef.current = body;
 
+  const [showAIMenu, setShowAIMenu] = useState(false);
+  const [slashState, setSlashState] = useState<{ start: number; filter: string; caretRect: { top: number; left: number } | null } | null>(null);
+  const { execute, running, cancel } = useAIActions();
+
   useEffect(() => {
     if (!editorRef.current) return;
     const html = body ? (isHtml(body) ? body : plainTextToHtml(body)) : "";
@@ -94,6 +102,77 @@ export default function RichTextEditor({ body, onChange, onKeyDown, placeholder,
     document.execCommand(command, false, value);
     emitChange();
   }, [emitChange]);
+
+  const getSelectedText = useCallback((): string => {
+    const sel = window.getSelection();
+    if (!sel || sel.isCollapsed) return "";
+    return sel.toString();
+  }, []);
+
+  const replaceSelectedText = useCallback((newText: string) => {
+    document.execCommand("insertText", false, newText);
+    emitChange();
+  }, [emitChange]);
+
+  const replaceSlashCommand = useCallback((replacement: string) => {
+    const sel = window.getSelection();
+    if (!sel || !sel.rangeCount || !editorRef.current) return;
+
+    const range = sel.getRangeAt(0);
+    const textNode = range.startContainer;
+    if (textNode.nodeType !== Node.TEXT_NODE) return;
+
+    const text = textNode.textContent || "";
+    const slashIdx = text.lastIndexOf("/");
+    if (slashIdx === -1) return;
+
+    const before = text.slice(0, slashIdx);
+    const after = text.slice(range.startOffset);
+    textNode.textContent = before + replacement + after;
+
+    const newRange = document.createRange();
+    newRange.setStart(textNode, slashIdx + replacement.length);
+    newRange.collapse(true);
+    sel.removeAllRanges();
+    sel.addRange(newRange);
+    emitChange();
+  }, [emitChange]);
+
+  const handleAIAction = useCallback(async (actionId: AIActionId) => {
+    setShowAIMenu(false);
+    setSlashState(null);
+
+    const selectedText = getSelectedText();
+
+    if (selectedText.trim()) {
+      const result = await execute(actionId, selectedText);
+      if (result !== null) {
+        const sel = window.getSelection();
+        if (sel && !sel.isCollapsed) {
+          replaceSelectedText(result);
+        }
+      }
+      return;
+    }
+
+    if (!editorRef.current) return;
+    const fullText = editorRef.current.innerText || "";
+    if (!fullText.trim()) return;
+
+    const result = await execute(actionId, fullText);
+    if (result !== null) {
+      editorRef.current.innerHTML = plainTextToHtml(result);
+      emitChange();
+    }
+  }, [getSelectedText, execute, replaceSelectedText, emitChange]);
+
+  const getCaretRect = useCallback((): { top: number; left: number } | null => {
+    const sel = window.getSelection();
+    if (!sel || !sel.rangeCount) return null;
+    const range = sel.getRangeAt(0);
+    const rect = range.getBoundingClientRect();
+    return { top: rect.top, left: rect.left };
+  }, []);
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
     if (e.key === "Enter" && e.shiftKey) {
@@ -137,6 +216,10 @@ export default function RichTextEditor({ body, onChange, onKeyDown, placeholder,
         return;
       }
 
+      if (slashState) {
+        setSlashState(null);
+      }
+
       onKeyDown?.(e);
       if (!e.defaultPrevented) {
         e.preventDefault();
@@ -144,6 +227,62 @@ export default function RichTextEditor({ body, onChange, onKeyDown, placeholder,
         emitChange();
       }
       return;
+    }
+
+    if (e.key === "/") {
+      const sel = window.getSelection();
+      if (!sel || !sel.rangeCount) return;
+      const range = sel.getRangeAt(0);
+      const textNode = range.startContainer;
+      if (textNode.nodeType !== Node.TEXT_NODE) {
+        const text = textNode.textContent || "";
+        if (text === "" || text === "\u200B") {
+          setTimeout(() => {
+            const caretRect = getCaretRect();
+            setSlashState({ start: 0, filter: "", caretRect });
+          }, 0);
+        }
+        return;
+      }
+      const textBefore = (textNode.textContent || "").slice(0, range.startOffset);
+      const lineStart = textBefore.lastIndexOf("\n") + 1;
+      const linePrefix = textBefore.slice(lineStart);
+      if (linePrefix.trim() === "" || linePrefix === "\u200B") {
+        setTimeout(() => {
+          const caretRect = getCaretRect();
+          setSlashState({ start: range.startOffset, filter: "", caretRect });
+        }, 0);
+      }
+      return;
+    }
+
+    if (slashState) {
+      if (e.key === "Backspace") {
+        const sel = window.getSelection();
+        if (sel && sel.rangeCount) {
+          const textNode = sel.getRangeAt(0).startContainer;
+          const currentText = textNode.textContent || "";
+          const cursorPos = sel.getRangeAt(0).startOffset;
+          const filterLen = cursorPos - slashState.start - 1;
+          if (filterLen <= 0) {
+            setSlashState(null);
+          } else {
+            setSlashState({ ...slashState, filter: currentText.slice(slashState.start + 1, cursorPos - 1) });
+          }
+        }
+        return;
+      }
+      if (e.key.length === 1 && !e.ctrlKey && !e.metaKey) {
+        const sel = window.getSelection();
+        if (sel && sel.rangeCount) {
+          const textNode = sel.getRangeAt(0).startContainer;
+          const currentText = textNode.textContent || "";
+          const cursorPos = sel.getRangeAt(0).startOffset;
+          const newFilter = currentText.slice(slashState.start + 1, cursorPos) + e.key;
+          setSlashState({ ...slashState, filter: newFilter });
+        }
+        return;
+      }
     }
 
     if (e.ctrlKey || e.metaKey) {
@@ -165,7 +304,34 @@ export default function RichTextEditor({ body, onChange, onKeyDown, placeholder,
     }
 
     onKeyDown?.(e);
-  }, [exec, emitChange, onKeyDown]);
+  }, [exec, emitChange, onKeyDown, slashState, getCaretRect]);
+
+  const handleSlashSelect = useCallback((actionId: AIActionId) => {
+    if (slashState && editorRef.current) {
+      const sel = window.getSelection();
+      if (sel && sel.rangeCount) {
+        const range = sel.getRangeAt(0);
+        const textNode = range.startContainer;
+        if (textNode.nodeType === Node.TEXT_NODE) {
+          const text = textNode.textContent || "";
+          const slashIdx = text.lastIndexOf("/");
+          if (slashIdx !== -1) {
+            const before = text.slice(0, slashIdx);
+            const after = text.slice(range.startOffset);
+            textNode.textContent = before + after;
+            const newRange = document.createRange();
+            newRange.setStart(textNode, slashIdx);
+            newRange.collapse(true);
+            sel.removeAllRanges();
+            sel.addRange(newRange);
+            emitChange();
+          }
+        }
+      }
+    }
+    setSlashState(null);
+    handleAIAction(actionId);
+  }, [slashState, emitChange, handleAIAction]);
 
   const handlePaste = useCallback((e: React.ClipboardEvent) => {
     e.preventDefault();
@@ -236,6 +402,32 @@ export default function RichTextEditor({ body, onChange, onKeyDown, placeholder,
         <ToolbarButton onMouseDown={(e) => { e.preventDefault(); insertChecklist(); }} title="Checklist">
           <CheckList />
         </ToolbarButton>
+
+        <div className="w-px h-4 mx-1" style={{ background: "var(--border)" }} />
+        <div className="relative">
+          <ToolbarButton
+            onMouseDown={(e) => {
+              e.preventDefault();
+              setShowAIMenu((v) => !v);
+            }}
+            title="AI actions"
+            active={showAIMenu}
+          >
+            <Sparkles />
+          </ToolbarButton>
+          {showAIMenu && (
+            <AIActionsDropdown
+              onSelect={handleAIAction}
+              onClose={() => setShowAIMenu(false)}
+            />
+          )}
+        </div>
+        {running && (
+          <AIProgressIndicator
+            actionLabel={AI_ACTIONS.find((a) => a.id === running)?.label ?? "Processing"}
+            onCancel={cancel}
+          />
+        )}
       </div>
 
       <div
@@ -250,6 +442,13 @@ export default function RichTextEditor({ body, onChange, onKeyDown, placeholder,
         onKeyDown={handleKeyDown}
         onPaste={handlePaste}
         onClick={handleClick}
+        onBlur={() => {
+          setTimeout(() => {
+            if (!document.activeElement?.closest("[contenteditable]")) {
+              setSlashState(null);
+            }
+          }, 150);
+        }}
         className={`w-full px-5 py-4 text-sm outline-none leading-relaxed ${compact ? "min-h-[7.5rem] md:min-h-[50vh]" : "min-h-[50vh]"}`}
         style={{
           maxHeight: "70vh",
@@ -263,6 +462,15 @@ export default function RichTextEditor({ body, onChange, onKeyDown, placeholder,
         }}
         data-placeholder={placeholder || "Start typing…"}
       />
+
+      {slashState && (
+        <SlashCommandMenu
+          filter={slashState.filter}
+          onSelect={handleSlashSelect}
+          onClose={() => setSlashState(null)}
+          caretRect={slashState.caretRect}
+        />
+      )}
 
       <style>{`
         [contenteditable]:empty::before {

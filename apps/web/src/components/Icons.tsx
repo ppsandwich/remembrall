@@ -52,6 +52,7 @@ import {
   Loader2 as LucideLoader,
   Eye as LucideEye,
   Code2 as LucideCode2,
+  Sparkles as LucideSparkles,
   type LucideProps,
 } from "lucide-react";
 
@@ -111,3 +112,4 @@ export const Loader = (props: LucideProps) => <LucideLoader {...p} {...props} />
 export const Eye = (props: LucideProps) => <LucideEye {...p} {...props} />;
 export const Code2 = (props: LucideProps) => <LucideCode2 {...p} {...props} />;
 export const CheckList = (props: LucideProps) => <LucideListChecks {...p} {...props} />;
+export const Sparkles = (props: LucideProps) => <LucideSparkles {...p} {...props} />;
