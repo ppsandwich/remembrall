@@ -9,6 +9,7 @@ import { exportSingleNote, downloadMarkdown, singleNoteFilename } from "@brall/e
 import { Copy, Pin, PinOff, Download, Trash, Palette, Undo, X, Paperclip } from "./Icons";
 import { useDragContext } from "./DragContext";
 import RadialColorPicker from "./RadialColorPicker";
+import PropertyBadge from "./PropertyBadge";
 import { useRef, useCallback, useState, useEffect, useMemo } from "react";
 
 const EMPTY_ATTACHMENTS: never[] = [];
@@ -21,7 +22,7 @@ interface Props {
 }
 
 export default function NoteCard({ note, index, highlighted, onHighlightEnd }: Props) {
-  const { toggleSelect, selectedIds, setEditingId, deleteNote, dismissWelcomeNote, restoreNote, togglePin, updateNoteColor, moveNoteToPage, clusterMode, setDragging, colorNames, pages, activePageId, sectionPermissions } =
+  const { toggleSelect, selectedIds, setEditingId, deleteNote, dismissWelcomeNote, restoreNote, togglePin, updateNoteColor, moveNoteToPage, clusterMode, setDragging, colorNames, pages, activePageId, sectionPermissions, getActivePropertyDefinitions } =
     useNotesStore();
   const noteAttachments = useNotesStore((s) => s.attachments.get(note.id) ?? EMPTY_ATTACHMENTS);
   const { showToast, selectMode, resolvedTheme, setDragHint, showArchived } = useUIStore();
@@ -615,6 +616,19 @@ export default function NoteCard({ note, index, highlighted, onHighlightEnd }: P
               ))}
             </div>
           )}
+          {note.properties && Object.keys(note.properties).length > 0 && (() => {
+            const defs = getActivePropertyDefinitions();
+            if (defs.length === 0) return null;
+            const propEntries = defs.filter((d) => note.properties[d.id] !== undefined && note.properties[d.id] !== null);
+            if (propEntries.length === 0) return null;
+            return (
+              <div className="flex flex-wrap gap-1 mt-2">
+                {propEntries.map((def) => (
+                  <PropertyBadge key={def.id} definition={def} value={note.properties[def.id]} />
+                ))}
+              </div>
+            );
+          })()}
         </div>
       </div>
 

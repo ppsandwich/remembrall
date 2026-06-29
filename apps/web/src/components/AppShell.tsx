@@ -16,10 +16,15 @@ import ShortcutsPanel from "./ShortcutsPanel";
 import SettingsPanel from "./SettingsPanel";
 import DesktopFab from "./DesktopFab";
 import DropZoneOverlay from "./DropZoneOverlay";
+import TableView from "./TableView";
+import PropertyFilterBar from "./PropertyFilter";
 
 export default function AppShell() {
   const { fetchAll, fetchPages, fetchSharedPages, fetchSectionShares, createNote, editingId, selectedIds, deleteNote, duplicateNote, clearSelection, selectAll, pages, activePageId, setHighlightNoteId } =
     useNotesStore();
+  const viewMode = useNotesStore((s) => s.viewMode);
+  const getFilteredNotes = useNotesStore((s) => s.getFilteredNotes);
+  const getActivePropertyDefinitions = useNotesStore((s) => s.getActivePropertyDefinitions);
   const { showSettings, setShowSettings, setShowShortcuts, setShowQuickCapture, showToast, setSelectMode, dragHint } = useUIStore();
   const { user } = useAuthStore();
   const [ready, setReady] = useState(false);
@@ -158,8 +163,13 @@ export default function AppShell() {
       <Header />
       <main ref={mainRef} className="flex-1 max-w-7xl w-full mx-auto px-8 py-6 flex flex-col gap-4 relative">
         <TagFilter />
+        <PropertyFilterBar />
         <BulkToolbar />
-        <NoteList />
+        {viewMode === "table" ? (
+          <TableView notes={getFilteredNotes()} definitions={getActivePropertyDefinitions()} />
+        ) : (
+          <NoteList />
+        )}
         <div className="hidden md:block">
           <DesktopFab right={fabRight} />
         </div>

@@ -12,6 +12,7 @@ import { Copy, Pin, PinOff, Duplicate, Download, Trash, X, Save, Clipboard, Undo
 import TagInput from "./TagInput";
 import RichTextEditor from "./RichTextEditor";
 import AttachmentList, { AttachmentUploadButton } from "./AttachmentList";
+import PropertyEditor from "./PropertyEditor";
 
 function buildBody(htmlBody: string, tags: string[]): string {
   let result = htmlBody.trim();
@@ -22,7 +23,7 @@ function buildBody(htmlBody: string, tags: string[]): string {
 }
 
 export default function NoteEditor() {
-  const { editingId, notes, setEditingId, createNote, updateNote, updateNoteTitle, deleteNote, restoreNote, duplicateNote, togglePin, pages, activePageId, moveNoteToPage, sectionPermissions } =
+  const { editingId, notes, setEditingId, createNote, updateNote, updateNoteTitle, deleteNote, restoreNote, duplicateNote, togglePin, pages, activePageId, moveNoteToPage, sectionPermissions, updateNoteProperty, getActivePropertyDefinitions } =
     useNotesStore();
   const showToast = useUIStore((s) => s.showToast);
   const enterToSave = useUIStore((s) => s.enterToSave);
@@ -41,6 +42,9 @@ export default function NoteEditor() {
   const [saving, setSaving] = useState(false);
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout>>(null);
   const [selectedPageId, setSelectedPageId] = useState<string | null>(null);
+  const [propertyValues, setPropertyValues] = useState<Record<string, unknown>>({});
+
+  const propertyDefinitions = getActivePropertyDefinitions();
 
   useEffect(() => {
     if (!isOpen) return;
@@ -67,11 +71,13 @@ export default function NoteEditor() {
       setBodyHtml(cleanBody);
       setTags(extractedTags);
       setSelectedPageId(current.page_id);
+      setPropertyValues({ ...(current.properties || {}) });
     } else {
       setTitle("");
       setBodyHtml("");
       setTags([]);
       setSelectedPageId(null);
+      setPropertyValues({});
     }
   }, [editingId, isOpen]);
 
@@ -116,6 +122,15 @@ export default function NoteEditor() {
       }
     }, 600);
   }, [note, bodyHtml, updateNote]);
+
+  const handlePropertyChange = useCallback(async (propId: string, value: unknown) => {
+    setPropertyValues((prev) => ({ ...prev, [propId]: value }));
+    if (note) {
+      setSaving(true);
+      await updateNoteProperty(note.id, propId, value);
+      setSaving(false);
+    }
+  }, [note, updateNoteProperty]);
 
   const handleSaveNow = useCallback(async () => {
     if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
@@ -313,6 +328,14 @@ export default function NoteEditor() {
         <div className={`px-4 py-1.5 ${isNewNote ? "hidden md:block" : ""}`} style={{ borderBottom: "1px solid var(--border)" }}>
           <TagInput tags={tags} onChange={handleTagsChange} compact={isNewNote} />
         </div>
+
+        {!isNewNote && propertyDefinitions.length > 0 && (
+          <PropertyEditor
+            definitions={propertyDefinitions}
+            values={propertyValues}
+            onChange={handlePropertyChange}
+          />
+        )}
 
         {!isNewNote && note && <AttachmentList noteId={note.id} />}
 

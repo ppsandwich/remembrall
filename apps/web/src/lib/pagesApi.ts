@@ -1,5 +1,5 @@
 import { getSupabase } from "./supabaseClient";
-import type { NotePage } from "@brall/core";
+import type { NotePage, PropertyDefinition } from "@brall/core";
 
 export async function fetchPages(userId: string): Promise<NotePage[]> {
   const { data, error } = await getSupabase()
@@ -23,6 +23,7 @@ export async function createPage(params: {
       user_id: params.userId,
       name: params.name,
       position: params.position,
+      property_definitions: [],
     })
     .select()
     .single();
@@ -33,7 +34,7 @@ export async function createPage(params: {
 
 export async function updatePage(
   pageId: string,
-  updates: { name?: string; position?: number }
+  updates: { name?: string; position?: number; property_definitions?: PropertyDefinition[] }
 ): Promise<NotePage> {
   const { data, error } = await getSupabase()
     .from("note_pages")

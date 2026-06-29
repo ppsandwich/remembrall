@@ -21,6 +21,7 @@ export async function createNote(params: {
   color?: string;
   pageId?: string;
   title?: string;
+  properties?: Record<string, unknown>;
 }): Promise<Note> {
   const { data, error } = await getSupabase()
     .from("notes")
@@ -33,6 +34,7 @@ export async function createNote(params: {
       color: params.color || "",
       page_id: params.pageId || null,
       title: params.title || "",
+      properties: params.properties || {},
     })
     .select()
     .single();
@@ -51,6 +53,7 @@ export async function updateNote(
     color?: string;
     page_id?: string | null;
     title?: string;
+    properties?: Record<string, unknown>;
   }
 ): Promise<Note> {
   const { data, error } = await getSupabase()
@@ -107,6 +110,7 @@ export async function duplicateNote(params: {
       duplicated_from: params.original.id,
       position: params.original.position,
       page_id: params.original.page_id,
+      properties: params.original.properties || {},
     })
     .select()
     .single();

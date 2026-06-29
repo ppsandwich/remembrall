@@ -8,6 +8,9 @@ export type {
   UserEncryptionKey,
   SectionShare,
   Attachment,
+  PropertyType,
+  PropertyDefinition,
+  PropertyValue,
 } from "./types";
 
 export {
@@ -22,6 +25,21 @@ export {
   MAX_ATTACHMENT_SIZE,
   MAX_USER_STORAGE,
   ALLOWED_MIME_PREFIXES,
+  PROPERTY_TYPES,
+  propertyTypeSchema,
+  propertyDefinitionSchema,
+  propertyValueSchema,
 } from "./validation";
 
 export { derivePreview, sortNotes, searchNotes, formatBulkCopy, extractTags, stripTags, addTag, removeTag } from "./noteUtils";
+
+export {
+  validatePropertyValue,
+  formatPropertyValue,
+  defaultPropertyValue,
+  filterNotesByProperties,
+  searchNotesWithProperties,
+  getDefaultFilterOperators,
+} from "./propertyUtils";
+
+export type { PropertyFilter, PropertyFilterOperator } from "./propertyUtils";
