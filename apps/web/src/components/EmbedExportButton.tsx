@@ -36,7 +36,7 @@ export default function EmbedExportButton({ sectionId, sectionName, notes }: Pro
       }
 
       const origin = typeof window !== "undefined" ? window.location.origin : "";
-      const embedUrl = `${origin}/embed/${token}`;
+      const embedUrl = `${origin}/embed?token=${token}`;
       const iframe = `<iframe src="${embedUrl}" style="width:100%;height:600px;border:none;border-radius:8px;" title="${sectionName} notes"></iframe>`;
 
       await writeClipboard(iframe);
