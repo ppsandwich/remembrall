@@ -348,8 +348,7 @@ export default function KanbanView({ notes, definitions }: { notes: DecryptedNot
               </h3>
             )}
             <div
-              className="flex gap-3 overflow-x-auto pb-3"
-              style={{ scrollbarWidth: "thin" }}
+              className="flex gap-3 pb-3"
             >
               {columns.map((col) => (
                 <KanbanColumn
@@ -596,7 +595,7 @@ function KanbanColumn({
           {column.notes.length}
         </span>
       </div>
-      <div className="flex flex-col gap-2 p-2 overflow-y-auto" style={{ maxHeight: "calc(100vh - 280px)" }}>
+      <div className="flex flex-col gap-2 p-2">
         {column.notes.map((note, i) => (
           <KanbanCard
             key={note.id}
