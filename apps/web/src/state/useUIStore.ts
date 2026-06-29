@@ -1,5 +1,10 @@
 import { create } from "zustand";
 
+export interface ToastAction {
+  label: string;
+  onAction: () => void;
+}
+
 interface UIState {
   theme: "light" | "dark";
   resolvedTheme: "light" | "dark";
@@ -8,6 +13,7 @@ interface UIState {
   showQuickCapture: boolean;
   selectMode: boolean;
   toastMessage: string | null;
+  toastAction: ToastAction | null;
   dragHint: string | null;
   enterToSave: boolean;
   showArchived: boolean;
@@ -20,6 +26,7 @@ interface UIState {
   setEnterToSave: (on: boolean) => void;
   setDragHint: (message: string | null) => void;
   showToast: (message: string, durationMs?: number) => void;
+  showToastWithAction: (message: string, action: ToastAction, durationMs?: number) => void;
   clearToast: () => void;
   setShowArchived: (show: boolean) => void;
 }
@@ -43,6 +50,7 @@ export const useUIStore = create<UIState>((set) => ({
   showQuickCapture: false,
   selectMode: false,
   toastMessage: null,
+  toastAction: null,
   dragHint: null,
   enterToSave: true,
   showArchived: false,
@@ -65,11 +73,16 @@ export const useUIStore = create<UIState>((set) => ({
   },
 
   showToast: (message, durationMs?: number) => {
-    set({ toastMessage: message });
-    setTimeout(() => set({ toastMessage: null }), durationMs ?? 3000);
+    set({ toastMessage: message, toastAction: null });
+    setTimeout(() => set({ toastMessage: null, toastAction: null }), durationMs ?? 3000);
   },
 
-  clearToast: () => set({ toastMessage: null }),
+  showToastWithAction: (message, action, durationMs?: number) => {
+    set({ toastMessage: message, toastAction: action });
+    setTimeout(() => set({ toastMessage: null, toastAction: null }), durationMs ?? 8000);
+  },
+
+  clearToast: () => set({ toastMessage: null, toastAction: null }),
   setShowArchived: (show) => set({ showArchived: show }),
 }));
 
