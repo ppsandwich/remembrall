@@ -330,26 +330,30 @@ export default function KanbanView({ notes, definitions }: { notes: DecryptedNot
         onSwimlaneByChange={setKanbanSwimlaneBy}
       />
 
-      {swimlanes.map((swimlane) => {
-        const columns = groupNotesIntoColumns(swimlane.notes, kanbanGroupBy, kanbanGroupPropId, definitions, colorNames);
-        if (columns.length === 0) return null;
+      <div
+        className="flex flex-col gap-4 -mx-8 px-8"
+        style={{ overflowX: "auto", scrollbarWidth: "thin" }}
+      >
+        {swimlanes.map((swimlane) => {
+          const columns = groupNotesIntoColumns(swimlane.notes, kanbanGroupBy, kanbanGroupPropId, definitions, colorNames);
+          if (columns.length === 0) return null;
 
-        return (
-          <div key={swimlane.id} className="flex flex-col gap-2">
-            {kanbanSwimlaneBy !== "none" && swimlane.label && (
-              <h3
-                className="text-sm font-semibold px-1"
-                style={{ color: "var(--text)" }}
+          return (
+            <div key={swimlane.id} className="flex flex-col gap-2">
+              {kanbanSwimlaneBy !== "none" && swimlane.label && (
+                <h3
+                  className="text-sm font-semibold px-1"
+                  style={{ color: "var(--text)" }}
+                >
+                  {swimlane.label}
+                  <span className="ml-2 text-xs font-normal" style={{ color: "var(--text-muted)" }}>
+                    {swimlane.notes.length} note{swimlane.notes.length !== 1 ? "s" : ""}
+                  </span>
+                </h3>
+              )}
+              <div
+                className="flex gap-3 pb-3"
               >
-                {swimlane.label}
-                <span className="ml-2 text-xs font-normal" style={{ color: "var(--text-muted)" }}>
-                  {swimlane.notes.length} note{swimlane.notes.length !== 1 ? "s" : ""}
-                </span>
-              </h3>
-            )}
-            <div
-              className="flex gap-3 pb-3"
-            >
               {columns.map((col) => (
                 <KanbanColumn
                   key={col.id}
@@ -366,6 +370,7 @@ export default function KanbanView({ notes, definitions }: { notes: DecryptedNot
           </div>
         );
       })}
+      </div>
     </div>
   );
 }
