@@ -92,6 +92,8 @@ export interface UserPreferences {
   openrouter_api_key: string | null;
   color_names: Record<string, string>;
   color_order: string[];
+  table_column_widths: Record<string, Record<string, number>>;
+  table_sort_state: Record<string, { column: string; direction: "asc" | "desc" }>;
   created_at: string;
   updated_at: string;
 }
