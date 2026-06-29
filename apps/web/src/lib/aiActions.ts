@@ -76,7 +76,7 @@ export async function runAIAction(
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      model: "google/gemini-2.0-flash-001",
+      model: "minimax/minimax-m3",
       messages: [{ role: "user", content: action.prompt(text) }],
       temperature: 0.3,
       max_tokens: 2048,
