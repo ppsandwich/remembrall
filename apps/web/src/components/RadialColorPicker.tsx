@@ -40,7 +40,7 @@ export default function RadialColorPicker({ centerX, centerY, currentColor, mous
   ], [storeColorOrder, PICKER_COLORS]);
 
   const [hoveredColor, setHoveredColor] = useState<string | null>(null);
-  const [hoveringMoveTo, setHoveringMoveTo] = useState(false);
+  const [hoveredMoveToPageId, setHoveredMoveToPageId] = useState<string | null>(null);
   const hoveredRef = useRef<string | null>(null);
   const onReleaseRef = useRef(onSelect);
   onReleaseRef.current = onSelect;
@@ -50,7 +50,7 @@ export default function RadialColorPicker({ centerX, centerY, currentColor, mous
   const dx = mouseX - centerX;
   const dy = mouseY - centerY;
   const distFromCenter = Math.sqrt(dx * dx + dy * dy);
-  const isOutOfRange = !hoveringMoveTo && distFromCenter > FADE_RADIUS;
+  const isOutOfRange = !hoveredMoveToPageId && distFromCenter > FADE_RADIUS;
 
   const getHoveredColor = useCallback(
     (clientX: number, clientY: number): string | null => {
@@ -231,14 +231,15 @@ export default function RadialColorPicker({ centerX, centerY, currentColor, mous
       )}
       {pages.filter((p) => p.id !== activePageId).map((page, i) => {
         const itemY = centerY + RADIUS + SWATCH_SIZE + 16 + i * 32;
+        const isHovered = hoveredMoveToPageId === page.id;
         return (
           <div
             key={page.id}
             data-tab-id={page.id}
             data-tab-name={page.name}
             data-move-to-item
-            onMouseEnter={() => setHoveringMoveTo(true)}
-            onMouseLeave={() => setHoveringMoveTo(false)}
+            onMouseEnter={() => setHoveredMoveToPageId(page.id)}
+            onMouseLeave={() => setHoveredMoveToPageId(null)}
             style={{
               position: "absolute",
               left: centerX,
@@ -247,14 +248,15 @@ export default function RadialColorPicker({ centerX, centerY, currentColor, mous
               padding: "4px 12px",
               fontSize: 11,
               fontWeight: 500,
-              color: "var(--text-secondary)",
-              background: "var(--surface)",
-              border: "1px solid var(--border)",
+              color: isHovered ? "var(--text)" : "var(--text-secondary)",
+              background: isHovered ? "var(--surface-subtle)" : "var(--surface)",
+              border: isHovered ? "1px solid var(--accent)" : "1px solid var(--border)",
               borderRadius: 6,
               whiteSpace: "nowrap",
               pointerEvents: "auto",
               opacity: swatchOpacity,
-              transition: "opacity 150ms ease-out",
+              transition: "opacity 150ms ease-out, background 100ms, color 100ms, border-color 100ms",
+              cursor: "pointer",
             }}
           >
             Move to {page.name}
