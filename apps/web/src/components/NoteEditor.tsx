@@ -26,6 +26,7 @@ export default function NoteEditor() {
   const { editingId, notes, setEditingId, createNote, updateNote, updateNoteTitle, deleteNote, restoreNote, duplicateNote, togglePin, pages, activePageId, moveNoteToPage, sectionPermissions, updateNoteProperty, getActivePropertyDefinitions } =
     useNotesStore();
   const showToast = useUIStore((s) => s.showToast);
+  const showToastWithAction = useUIStore((s) => s.showToastWithAction);
   const enterToSave = useUIStore((s) => s.enterToSave);
   const setEnterToSave = useUIStore((s) => s.setEnterToSave);
   const showQuickCapture = useUIStore((s) => s.showQuickCapture);
@@ -43,6 +44,8 @@ export default function NoteEditor() {
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout>>(null);
   const [selectedPageId, setSelectedPageId] = useState<string | null>(null);
   const [propertyValues, setPropertyValues] = useState<Record<string, unknown>>({});
+  const [ignoredTags, setIgnoredTags] = useState<Set<string>>(new Set());
+  const [shownTags, setShownTags] = useState<Set<string>>(new Set());
 
   const notePageId = note?.page_id;
   const propertyDefinitions = notePageId
@@ -62,6 +65,8 @@ export default function NoteEditor() {
       setTitle("");
       setBodyHtml("");
       setTags([]);
+      setIgnoredTags(new Set());
+      setShownTags(new Set());
       setSelectedPageId(useNotesStore.getState().activePageId);
       return;
     }
@@ -73,12 +78,16 @@ export default function NoteEditor() {
       const cleanBody = stripTagsFromHtml(fullBody);
       setBodyHtml(cleanBody);
       setTags(extractedTags);
+      setIgnoredTags(new Set());
+      setShownTags(new Set());
       setSelectedPageId(current.page_id);
       setPropertyValues({ ...(current.properties || {}) });
     } else {
       setTitle("");
       setBodyHtml("");
       setTags([]);
+      setIgnoredTags(new Set());
+      setShownTags(new Set());
       setSelectedPageId(null);
       setPropertyValues({});
     }
@@ -86,6 +95,34 @@ export default function NoteEditor() {
 
   const scheduleSave = useCallback((newHtml: string) => {
     setBodyHtml(newHtml);
+    
+    // Detect tags in the body
+    const plainText = htmlToPlainText(newHtml);
+    const bodyTags = extractTags(plainText);
+    const newTags = bodyTags.filter(tag => !tags.includes(tag) && !ignoredTags.has(tag) && !shownTags.has(tag));
+    
+    if (newTags.length > 0) {
+      const tagNames = newTags.map(t => `#${t}`).join(", ");
+      showToastWithAction(
+        `Tag${newTags.length > 1 ? "s" : ""} detected in body: ${tagNames}`,
+        {
+          label: "Ignore",
+          onAction: () => {
+            setIgnoredTags(prev => {
+              const next = new Set(prev);
+              newTags.forEach(tag => next.add(tag));
+              return next;
+            });
+          },
+        }
+      );
+      setShownTags(prev => {
+        const next = new Set(prev);
+        newTags.forEach(tag => next.add(tag));
+        return next;
+      });
+    }
+    
     if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
     saveTimeoutRef.current = setTimeout(async () => {
       if (note) {
@@ -97,7 +134,7 @@ export default function NoteEditor() {
         }
       }
     }, 600);
-  }, [note, tags, updateNote]);
+  }, [note, tags, ignoredTags, shownTags, updateNote, showToastWithAction]);
 
   const handleTitleChange = useCallback((newTitle: string) => {
     setTitle(newTitle);
