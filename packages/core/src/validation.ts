@@ -12,7 +12,7 @@ export const NOTE_SOURCES = [
 
 export const noteSourceSchema = z.enum(NOTE_SOURCES);
 
-export const PROPERTY_TYPES = ["text", "number", "date", "select", "multi-select", "checkbox", "url"] as const;
+export const PROPERTY_TYPES = ["text", "number", "date", "select", "multi-select", "checkbox", "url", "calculated"] as const;
 
 export const propertyTypeSchema = z.enum(PROPERTY_TYPES);
 
@@ -21,6 +21,7 @@ export const propertyDefinitionSchema = z.object({
   name: z.string().min(1).max(100),
   type: propertyTypeSchema,
   options: z.array(z.string().max(100)).max(100).optional(),
+  formula: z.string().max(1000).optional(),
 });
 
 export const propertyValueSchema = z.union([

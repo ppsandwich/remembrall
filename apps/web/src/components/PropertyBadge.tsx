@@ -70,6 +70,18 @@ export default function PropertyBadge({ definition, value }: Props) {
     );
   }
 
+  if (definition.type === "calculated") {
+    return (
+      <span
+        className="inline-flex items-center text-xs px-1.5 py-0.5 rounded font-mono"
+        style={{ background: "var(--surface-subtle)", color: "var(--text-secondary)" }}
+        title={`${definition.name}: ${formatted}`}
+      >
+        {formatted}
+      </span>
+    );
+  }
+
   return (
     <span
       className="inline-flex items-center text-xs px-1.5 py-0.5 rounded truncate max-w-[120px]"

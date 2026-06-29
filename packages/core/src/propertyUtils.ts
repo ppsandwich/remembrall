@@ -53,6 +53,8 @@ export function formatPropertyValue(def: PropertyDefinition, value: unknown): st
       return value ? "✓" : "";
     case "url":
       return String(value);
+    case "calculated":
+      return typeof value === "number" && isFinite(value) ? String(value) : "";
     default:
       return "";
   }
@@ -74,6 +76,8 @@ export function defaultPropertyValue(type: PropertyType): PropertyValue {
       return false;
     case "url":
       return "";
+    case "calculated":
+      return null;
     default:
       return null;
   }
@@ -188,6 +192,8 @@ export function getDefaultFilterOperators(type: PropertyType): PropertyFilterOpe
       return ["is_true", "is_false"];
     case "url":
       return ["contains", "equals", "not_equals", "is_empty", "is_not_empty"];
+    case "calculated":
+      return [];
     default:
       return [];
   }
