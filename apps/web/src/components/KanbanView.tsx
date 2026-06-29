@@ -560,7 +560,7 @@ function KanbanColumn({
 
   return (
     <div
-      className="flex flex-col min-w-[220px] max-w-[280px] flex-1 rounded-lg transition-colors"
+      className="flex flex-col min-w-[220px] w-fit max-w-[340px] rounded-lg transition-colors shrink-0"
       style={{
         background: isDragOver
           ? "color-mix(in srgb, var(--accent) 8%, var(--surface))"
