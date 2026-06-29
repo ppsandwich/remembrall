@@ -135,7 +135,7 @@ describe("formatPropertyValue", () => {
   });
 
   it("formats number", () => {
-    expect(formatPropertyValue(makeDef({ type: "number" }), 42)).toBe("42");
+    expect(formatPropertyValue(makeDef({ type: "number" }), 42)).toBe("42.00");
   });
 
   it("formats multi-select as comma-separated", () => {

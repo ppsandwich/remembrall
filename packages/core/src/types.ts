@@ -15,6 +15,7 @@ export interface PropertyDefinition {
   type: PropertyType;
   options?: string[];
   formula?: string;
+  showOnCards?: boolean;
 }
 
 export type PropertyValue = string | number | boolean | string[] | null;

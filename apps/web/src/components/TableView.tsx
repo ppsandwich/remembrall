@@ -205,8 +205,14 @@ function InlinePropertyEditor({
       return (
         <input
           type="number"
+          step="0.01"
           value={value !== null && value !== undefined ? String(value) : ""}
           onChange={(e) => onChange(e.target.value === "" ? null : Number(e.target.value))}
+          onBlur={(e) => {
+            if (e.target.value !== "" && !isNaN(Number(e.target.value))) {
+              onChange(Math.round(Number(e.target.value) * 100) / 100);
+            }
+          }}
           style={style}
           onMouseEnter={() => setHovered(true)}
           onMouseLeave={() => setHovered(false)}
@@ -272,13 +278,14 @@ function InlinePropertyEditor({
       );
     case "calculated": {
       const num = typeof value === "number" && isFinite(value) ? value : null;
+      const display = num !== null ? (Math.round(num * 100) / 100).toFixed(2) : "\u2014";
       return (
         <span
           className="text-xs px-1 py-0.5 font-mono"
           style={{ color: num !== null ? "var(--text)" : "var(--text-muted)" }}
           title={num !== null ? String(num) : "Cannot evaluate"}
         >
-          {num !== null ? String(num) : "\u2014"}
+          {display}
         </span>
       );
     }

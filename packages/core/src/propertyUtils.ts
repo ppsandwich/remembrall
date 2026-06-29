@@ -42,7 +42,7 @@ export function formatPropertyValue(def: PropertyDefinition, value: unknown): st
     case "text":
       return String(value);
     case "number":
-      return String(value);
+      return typeof value === "number" ? round2(value) : String(value);
     case "date":
       return String(value);
     case "select":
@@ -54,10 +54,18 @@ export function formatPropertyValue(def: PropertyDefinition, value: unknown): st
     case "url":
       return String(value);
     case "calculated":
-      return typeof value === "number" && isFinite(value) ? String(value) : "";
+      return typeof value === "number" && isFinite(value) ? round2(value) : "";
     default:
       return "";
   }
+}
+
+function round2(n: number): string {
+  const rounded = Math.round(n * 100) / 100;
+  const s = String(rounded);
+  if (!s.includes(".")) return s + ".00";
+  const [whole, dec] = s.split(".");
+  return whole + "." + dec.padEnd(2, "0");
 }
 
 export function defaultPropertyValue(type: PropertyType): PropertyValue {
