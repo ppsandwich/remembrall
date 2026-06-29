@@ -12,6 +12,25 @@ export const NOTE_SOURCES = [
 
 export const noteSourceSchema = z.enum(NOTE_SOURCES);
 
+export const PROPERTY_TYPES = ["text", "number", "date", "select", "multi-select", "checkbox", "url"] as const;
+
+export const propertyTypeSchema = z.enum(PROPERTY_TYPES);
+
+export const propertyDefinitionSchema = z.object({
+  id: z.string().uuid(),
+  name: z.string().min(1).max(100),
+  type: propertyTypeSchema,
+  options: z.array(z.string().max(100)).max(100).optional(),
+});
+
+export const propertyValueSchema = z.union([
+  z.string(),
+  z.number(),
+  z.boolean(),
+  z.array(z.string()),
+  z.null(),
+]);
+
 export const encryptedPayloadSchema = z.object({
   version: z.literal(1),
   algorithm: z.literal("AES-GCM"),

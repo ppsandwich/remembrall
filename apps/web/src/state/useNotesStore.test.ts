@@ -24,6 +24,7 @@ function makeNote(overrides: Partial<DecryptedNote> = {}): DecryptedNote {
     color: "",
     page_id: null,
     title: "",
+    properties: {},
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
     ...overrides,

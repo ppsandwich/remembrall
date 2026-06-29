@@ -7,6 +7,17 @@ export type NoteSource =
   | "import"
   | "welcome";
 
+export type PropertyType = "text" | "number" | "date" | "select" | "multi-select" | "checkbox" | "url";
+
+export interface PropertyDefinition {
+  id: string;
+  name: string;
+  type: PropertyType;
+  options?: string[];
+}
+
+export type PropertyValue = string | number | boolean | string[] | null;
+
 export interface EncryptedPayload {
   version: 1;
   algorithm: "AES-GCM";
@@ -33,6 +44,7 @@ export interface Note {
   color: string;
   page_id: string | null;
   title: string;
+  properties: Record<string, unknown>;
   created_at: string;
   updated_at: string;
 }
@@ -51,6 +63,7 @@ export interface DecryptedNote {
   color: string;
   page_id: string | null;
   title: string;
+  properties: Record<string, unknown>;
   created_at: string;
   updated_at: string;
 }
@@ -60,6 +73,7 @@ export interface NotePage {
   user_id: string;
   name: string;
   position: number;
+  property_definitions: PropertyDefinition[];
   created_at: string;
   updated_at: string;
 }

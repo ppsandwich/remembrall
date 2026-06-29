@@ -1,6 +1,6 @@
 import { create } from "zustand";
-import type { DecryptedNote, NoteSource, EncryptedPayload, NotePage, Attachment } from "@brall/core";
-import { derivePreview, searchNotes as filterNotes, extractTags, addTag, removeTag, stripTags, MAX_ATTACHMENT_SIZE, ALLOWED_MIME_PREFIXES } from "@brall/core";
+import type { DecryptedNote, NoteSource, EncryptedPayload, NotePage, Attachment, PropertyDefinition, PropertyFilter } from "@brall/core";
+import { derivePreview, searchNotes as filterNotes, extractTags, addTag, removeTag, stripTags, MAX_ATTACHMENT_SIZE, ALLOWED_MIME_PREFIXES, filterNotesByProperties, defaultPropertyValue } from "@brall/core";
 import { useEncryptionStore } from "./useEncryptionStore";
 import { useAuthStore } from "./useAuthStore";
 import { useUIStore } from "./useUIStore";
@@ -123,6 +123,8 @@ interface NotesState {
   attachments: Map<string, Attachment[]>;
   storageUsed: number;
   gridCols: number;
+  propertyFilters: Map<string, PropertyFilter>;
+  viewMode: "grid" | "table";
 
   fetchAll: () => Promise<void>;
   fetchPages: () => Promise<void>;
@@ -172,6 +174,14 @@ interface NotesState {
   uploadAttachment: (noteId: string, file: File) => Promise<void>;
   deleteAttachment: (attachmentId: string) => Promise<void>;
   getNoteAttachments: (noteId: string) => Attachment[];
+  addPropertyDefinition: (def: PropertyDefinition) => Promise<void>;
+  updatePropertyDefinition: (defId: string, updates: Partial<PropertyDefinition>) => Promise<void>;
+  deletePropertyDefinition: (defId: string) => Promise<void>;
+  updateNoteProperty: (noteId: string, propId: string, value: unknown) => Promise<void>;
+  setPropertyFilter: (propId: string, filter: PropertyFilter | null) => void;
+  clearPropertyFilters: () => void;
+  setViewMode: (mode: "grid" | "table") => void;
+  getActivePropertyDefinitions: () => PropertyDefinition[];
 }
 
 export const useNotesStore = create<NotesState>((set, get) => ({
@@ -199,6 +209,8 @@ export const useNotesStore = create<NotesState>((set, get) => ({
   attachments: new Map(),
   storageUsed: 0,
   gridCols: 4,
+  propertyFilters: new Map(),
+  viewMode: "grid",
 
   fetchAll: async () => {
     const user = useAuthStore.getState().user;
@@ -226,6 +238,7 @@ export const useNotesStore = create<NotesState>((set, get) => ({
             color: note.color || "",
             page_id: note.page_id,
             title: note.title || "",
+            properties: (note.properties as Record<string, unknown>) || {},
             created_at: note.created_at,
             updated_at: note.updated_at,
           });
@@ -244,6 +257,7 @@ export const useNotesStore = create<NotesState>((set, get) => ({
             color: note.color || "",
             page_id: note.page_id,
             title: note.title || "",
+            properties: (note.properties as Record<string, unknown>) || {},
             created_at: note.created_at,
             updated_at: note.updated_at,
           });
@@ -408,6 +422,7 @@ export const useNotesStore = create<NotesState>((set, get) => ({
       color,
       page_id: targetPageId,
       title,
+      properties: {},
       created_at: created.created_at,
       updated_at: created.updated_at,
     };
@@ -564,6 +579,7 @@ export const useNotesStore = create<NotesState>((set, get) => ({
         color: original.color,
         page_id: original.page_id,
         title: original.title,
+        properties: original.properties,
         created_at: original.created_at,
         updated_at: original.updated_at,
       },
@@ -587,6 +603,7 @@ export const useNotesStore = create<NotesState>((set, get) => ({
       color: original.color,
       page_id: original.page_id,
       title: original.title,
+      properties: { ...original.properties },
       created_at: created.created_at,
       updated_at: created.updated_at,
     };
@@ -769,7 +786,7 @@ export const useNotesStore = create<NotesState>((set, get) => ({
   },
 
   getFilteredNotes: () => {
-    const { notes, searchQuery, filterTag, clusterMode, isDragging, frozenOrderIds, colorChangeFrozenIds, activePageId } = get();
+    const { notes, searchQuery, filterTag, clusterMode, isDragging, frozenOrderIds, colorChangeFrozenIds, activePageId, propertyFilters } = get();
     const showArchived = useUIStore.getState().showArchived;
     
     const active = showArchived
@@ -780,6 +797,13 @@ export const useNotesStore = create<NotesState>((set, get) => ({
     let filtered = filterNotes(active, searchQuery);
     if (filterTag) {
       filtered = filtered.filter((n) => extractTags(n.body).includes(filterTag));
+    }
+
+    if (propertyFilters.size > 0) {
+      const page = get().pages.find((p) => p.id === activePageId);
+      const defs = page?.property_definitions || [];
+      const filters = Array.from(propertyFilters.values());
+      filtered = filterNotesByProperties(filtered, filters, defs);
     }
 
     if (isDragging && frozenOrderIds) {
@@ -906,6 +930,84 @@ export const useNotesStore = create<NotesState>((set, get) => ({
 
   getNoteAttachments: (noteId: string) => {
     return get().attachments.get(noteId) || [];
+  },
+
+  addPropertyDefinition: async (def: PropertyDefinition) => {
+    const { activePageId, pages } = get();
+    if (!activePageId) return;
+    const page = pages.find((p) => p.id === activePageId);
+    if (!page) return;
+    const defs = [...(page.property_definitions || []), def];
+    await pagesApi.updatePage(activePageId, { property_definitions: defs });
+    set((s) => ({
+      pages: s.pages.map((p) => (p.id === activePageId ? { ...p, property_definitions: defs } : p)),
+    }));
+  },
+
+  updatePropertyDefinition: async (defId: string, updates: Partial<PropertyDefinition>) => {
+    const { activePageId, pages } = get();
+    if (!activePageId) return;
+    const page = pages.find((p) => p.id === activePageId);
+    if (!page) return;
+    const defs = (page.property_definitions || []).map((d) => (d.id === defId ? { ...d, ...updates } : d));
+    await pagesApi.updatePage(activePageId, { property_definitions: defs });
+    set((s) => ({
+      pages: s.pages.map((p) => (p.id === activePageId ? { ...p, property_definitions: defs } : p)),
+    }));
+  },
+
+  deletePropertyDefinition: async (defId: string) => {
+    const { activePageId, pages, notes } = get();
+    if (!activePageId) return;
+    const page = pages.find((p) => p.id === activePageId);
+    if (!page) return;
+    const defs = (page.property_definitions || []).filter((d) => d.id !== defId);
+    await pagesApi.updatePage(activePageId, { property_definitions: defs });
+    set((s) => ({
+      pages: s.pages.map((p) => (p.id === activePageId ? { ...p, property_definitions: defs } : p)),
+    }));
+    // Clean up property values from notes on this page
+    for (const note of notes) {
+      if (note.page_id === activePageId && note.properties?.[defId] !== undefined) {
+        const { [defId]: _, ...rest } = note.properties;
+        await api.updateNote(note.id, { properties: rest });
+        set((s) => ({
+          notes: s.notes.map((n) => (n.id === note.id ? { ...n, properties: rest } : n)),
+        }));
+      }
+    }
+  },
+
+  updateNoteProperty: async (noteId: string, propId: string, value: unknown) => {
+    const note = get().notes.find((n) => n.id === noteId);
+    if (!note) return;
+    const newProps = { ...note.properties, [propId]: value };
+    await api.updateNote(noteId, { properties: newProps });
+    set((s) => ({
+      notes: s.notes.map((n) => (n.id === noteId ? { ...n, properties: newProps } : n)),
+    }));
+  },
+
+  setPropertyFilter: (propId: string, filter: PropertyFilter | null) => {
+    set((s) => {
+      const next = new Map(s.propertyFilters);
+      if (filter) next.set(propId, filter);
+      else next.delete(propId);
+      return { propertyFilters: next };
+    });
+  },
+
+  clearPropertyFilters: () => set({ propertyFilters: new Map() }),
+
+  setViewMode: (mode: "grid" | "table") => {
+    localStorage.setItem("remembrall-view-mode", mode);
+    set({ viewMode: mode });
+  },
+
+  getActivePropertyDefinitions: () => {
+    const { pages, activePageId } = get();
+    const page = pages.find((p) => p.id === activePageId);
+    return page?.property_definitions || [];
   },
 }));
 
@@ -1118,6 +1220,7 @@ export async function seedWelcomeNotes(force = false) {
         color,
         page_id: activePageId,
         title: "",
+        properties: {},
         created_at: created.created_at,
         updated_at: created.updated_at,
       };

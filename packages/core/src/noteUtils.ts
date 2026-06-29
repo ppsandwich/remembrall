@@ -41,7 +41,19 @@ export function sortNotes(notes: DecryptedNote[]): DecryptedNote[] {
 export function searchNotes(notes: DecryptedNote[], query: string): DecryptedNote[] {
   if (!query.trim()) return sortNotes(notes);
   const lower = query.toLowerCase();
-  const filtered = notes.filter((n) => htmlToPlainText(n.body).toLowerCase().includes(lower));
+  const filtered = notes.filter((n) => {
+    if (htmlToPlainText(n.body).toLowerCase().includes(lower)) return true;
+    const props = n.properties;
+    if (!props) return false;
+    return Object.values(props).some((v) => {
+      if (v === null || v === undefined) return false;
+      if (typeof v === "string") return v.toLowerCase().includes(lower);
+      if (typeof v === "number") return String(v).includes(lower);
+      if (typeof v === "boolean") return (v ? "true" : "false").includes(lower);
+      if (Array.isArray(v)) return v.some((s) => typeof s === "string" && s.toLowerCase().includes(lower));
+      return false;
+    });
+  });
   return sortNotes(filtered);
 }
 
