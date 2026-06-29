@@ -69,7 +69,7 @@ function getColumnValues(notes: DecryptedNote[], groupBy: GroupBy, propId: strin
   return [];
 }
 
-function groupNotesIntoColumns(notes: DecryptedNote[], groupBy: GroupBy, propId: string | null, defs: PropertyDefinition[]): Column[] {
+function groupNotesIntoColumns(notes: DecryptedNote[], groupBy: GroupBy, propId: string | null, defs: PropertyDefinition[], colorNames: Record<string, string>): Column[] {
   if (groupBy === "color") {
     const colorOrder = NOTE_COLORS.filter((c) => c.name !== "none").map((c) => c.name);
     const columns: Column[] = [];
@@ -78,7 +78,7 @@ function groupNotesIntoColumns(notes: DecryptedNote[], groupBy: GroupBy, propId:
       if (colNotes.length > 0) {
         columns.push({
           id: color,
-          label: getColorDisplayName(color, {}),
+          label: getColorDisplayName(color, colorNames),
           color,
           notes: colNotes,
         });
@@ -145,7 +145,7 @@ function groupNotesIntoColumns(notes: DecryptedNote[], groupBy: GroupBy, propId:
   return [{ id: "__all__", label: "All", notes }];
 }
 
-function groupBySwimlane(notes: DecryptedNote[], swimlaneBy: SwimlaneBy, propId: string | null, defs: PropertyDefinition[]): { id: string; label: string; notes: DecryptedNote[] }[] {
+function groupBySwimlane(notes: DecryptedNote[], swimlaneBy: SwimlaneBy, propId: string | null, defs: PropertyDefinition[], colorNames: Record<string, string>): { id: string; label: string; notes: DecryptedNote[] }[] {
   if (swimlaneBy === "none") {
     return [{ id: "__all__", label: "", notes }];
   }
@@ -155,7 +155,7 @@ function groupBySwimlane(notes: DecryptedNote[], swimlaneBy: SwimlaneBy, propId:
     for (const color of colorOrder) {
       const groupNotes = notes.filter((n) => n.color === color);
       if (groupNotes.length > 0) {
-        groups.push({ id: `swim:${color}`, label: getColorDisplayName(color, {}), notes: groupNotes });
+        groups.push({ id: `swim:${color}`, label: getColorDisplayName(color, colorNames), notes: groupNotes });
       }
     }
     const noColor = notes.filter((n) => !n.color);
@@ -214,7 +214,7 @@ export default function KanbanView({ notes, definitions }: { notes: DecryptedNot
   const {
     kanbanGroupBy, kanbanGroupPropId, kanbanSwimlaneBy, kanbanSwimlanePropId,
     setKanbanGroupBy, setKanbanSwimlaneBy, updateNoteColor, moveNoteToPage,
-    activePageId,
+    activePageId, colorNames,
   } = useNotesStore();
   const { showToast } = useUIStore();
   const [dragOverColumn, setDragOverColumn] = useState<string | null>(null);
@@ -310,7 +310,7 @@ export default function KanbanView({ notes, definitions }: { notes: DecryptedNot
   }, [draggedNoteId, notes, kanbanGroupBy, kanbanGroupPropId, definitions, updateNoteColor, showToast]);
 
   const swimlanes = useMemo(() => {
-    return groupBySwimlane(notes, kanbanSwimlaneBy, kanbanSwimlanePropId, definitions);
+    return groupBySwimlane(notes, kanbanSwimlaneBy, kanbanSwimlanePropId, definitions, colorNames);
   }, [notes, kanbanSwimlaneBy, kanbanSwimlanePropId, definitions]);
 
   if (notes.length === 0) {
@@ -331,7 +331,7 @@ export default function KanbanView({ notes, definitions }: { notes: DecryptedNot
       />
 
       {swimlanes.map((swimlane) => {
-        const columns = groupNotesIntoColumns(swimlane.notes, kanbanGroupBy, kanbanGroupPropId, definitions);
+        const columns = groupNotesIntoColumns(swimlane.notes, kanbanGroupBy, kanbanGroupPropId, definitions, colorNames);
         if (columns.length === 0) return null;
 
         return (
