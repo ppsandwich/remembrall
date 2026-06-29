@@ -162,8 +162,9 @@ export default function AppShell() {
     >
       <Header />
       <main ref={mainRef} className="flex-1 max-w-7xl w-full mx-auto px-8 py-6 flex flex-col gap-4 relative">
-        <TagFilter />
-        <PropertyFilterBar />
+        <TagFilter>
+          <PropertyFilterBar />
+        </TagFilter>
         <BulkToolbar />
         {viewMode === "table" ? (
           <TableView notes={getFilteredNotes()} definitions={getActivePropertyDefinitions()} />

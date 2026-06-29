@@ -4,7 +4,7 @@ import { useMemo } from "react";
 import { useNotesStore } from "@/state/useNotesStore";
 import { extractTags } from "@brall/core";
 
-export default function TagFilter() {
+export default function TagFilter({ children }: { children?: React.ReactNode }) {
   const filterTag = useNotesStore((s) => s.filterTag);
   const setFilterTag = useNotesStore((s) => s.setFilterTag);
   const notes = useNotesStore((s) => s.notes);
@@ -49,6 +49,7 @@ export default function TagFilter() {
           Clear
         </button>
       )}
+      {children}
     </div>
   );
 }
