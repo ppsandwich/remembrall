@@ -26,6 +26,7 @@ import {
   Underline as LucideUnderline,
   List as LucideList,
   ListOrdered as LucideListOrdered,
+  ListChecks as LucideListChecks,
   Volleyball as LucideVolleyball,
   Plus as LucidePlus,
   Minus as LucideMinus,
@@ -109,3 +110,4 @@ export const RotateCw = (props: LucideProps) => <LucideRotateCw {...p} {...props
 export const Loader = (props: LucideProps) => <LucideLoader {...p} {...props} />;
 export const Eye = (props: LucideProps) => <LucideEye {...p} {...props} />;
 export const Code2 = (props: LucideProps) => <LucideCode2 {...p} {...props} />;
+export const CheckList = (props: LucideProps) => <LucideListChecks {...p} {...props} />;

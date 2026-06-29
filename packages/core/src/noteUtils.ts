@@ -13,6 +13,8 @@ export function derivePreview(body: string): string {
 function htmlToPlainText(html: string): string {
   if (!/<[a-z][\s\S]*>/i.test(html)) return html;
   let text = html;
+  text = text.replace(/<div[^>]*class="checklist-item"[^>]*data-checked="true"[^>]*>(.*?)<\/div>/gi, "[x] $1\n");
+  text = text.replace(/<div[^>]*class="checklist-item"[^>]*data-checked="false"[^>]*>(.*?)<\/div>/gi, "[ ] $1\n");
   text = text.replace(/<\/li>/gi, "\n");
   text = text.replace(/<br\s*\/?>/gi, "\n");
   text = text.replace(/<\/p>/gi, "\n\n");
@@ -24,6 +26,7 @@ function htmlToPlainText(html: string): string {
   text = text.replace(/&lt;/g, "<");
   text = text.replace(/&gt;/g, ">");
   text = text.replace(/&quot;/g, '"');
+  text = text.replace(/\u200B/g, "");
   text = text.replace(/\n{3,}/g, "\n\n");
   return text.trim();
 }
@@ -92,4 +95,16 @@ export function removeTag(body: string, tag: string): string {
     .replace(new RegExp(`(?:^|\\s)#${lower}(?=\\s|$)`, "gi"), "")
     .replace(/\n{3,}/g, "\n\n")
     .trim();
+}
+
+export interface ChecklistStats {
+  total: number;
+  done: number;
+}
+
+export function parseChecklists(body: string): ChecklistStats | null {
+  const total = (body.match(/class="checklist-item"/g) || []).length;
+  if (total === 0) return null;
+  const done = (body.match(/data-checked="true"/g) || []).length;
+  return { total, done };
 }
