@@ -65,6 +65,8 @@ export const DARK_NOTE_COLORS = [
   { name: "pink", hex: "#6B1D4A" },
 ];
 
+const EMPTY_PROPERTY_DEFINITIONS: PropertyDefinition[] = [];
+
 export const DEFAULT_COLOR_NAMES: Record<string, string> = {
   none: "None",
   red: "Red",
@@ -801,7 +803,7 @@ export const useNotesStore = create<NotesState>((set, get) => ({
 
     if (propertyFilters.size > 0) {
       const page = get().pages.find((p) => p.id === activePageId);
-      const defs = page?.property_definitions || [];
+      const defs = page?.property_definitions || EMPTY_PROPERTY_DEFINITIONS;
       const filters = Array.from(propertyFilters.values());
       filtered = filterNotesByProperties(filtered, filters, defs);
     }
@@ -1007,7 +1009,7 @@ export const useNotesStore = create<NotesState>((set, get) => ({
   getActivePropertyDefinitions: () => {
     const { pages, activePageId } = get();
     const page = pages.find((p) => p.id === activePageId);
-    return page?.property_definitions || [];
+    return page?.property_definitions || EMPTY_PROPERTY_DEFINITIONS;
   },
 }));
 

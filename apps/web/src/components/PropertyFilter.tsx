@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import type { PropertyDefinition, PropertyFilter as PropertyFilterType, PropertyFilterOperator } from "@brall/core";
 import { getDefaultFilterOperators } from "@brall/core";
 import { useNotesStore } from "@/state/useNotesStore";
@@ -26,7 +26,12 @@ const OPERATOR_LABELS: Record<PropertyFilterOperator, string> = {
 };
 
 export default function PropertyFilterBar() {
-  const definitions = useNotesStore((s) => s.getActivePropertyDefinitions());
+  const pages = useNotesStore((s) => s.pages);
+  const activePageId = useNotesStore((s) => s.activePageId);
+  const definitions = useMemo(() => {
+    const page = pages.find((p) => p.id === activePageId);
+    return page?.property_definitions || [];
+  }, [pages, activePageId]);
   const propertyFilters = useNotesStore((s) => s.propertyFilters);
   const setPropertyFilter = useNotesStore((s) => s.setPropertyFilter);
   const clearPropertyFilters = useNotesStore((s) => s.clearPropertyFilters);

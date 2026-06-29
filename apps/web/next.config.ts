@@ -8,11 +8,11 @@ const nextConfig: NextConfig = {
     "@brall/supabase",
   ],
   allowedDevOrigins: ["http://192.168.68.90:3000", "https://192.168.68.90:3000"],
-  output: "export",
   trailingSlash: true,
   images: {
     unoptimized: true,
   },
+  ...(process.env.NODE_ENV === "production" && { output: "export" }),
 };
 
 export default nextConfig;
