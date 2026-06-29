@@ -20,6 +20,8 @@ export function htmlToPlainText(html: string): string {
   if (!html || !isHtml(html)) return html;
 
   let text = html;
+  text = text.replace(/<div[^>]*class="checklist-item"[^>]*data-checked="true"[^>]*>(.*?)<\/div>/gi, "[x] $1\n");
+  text = text.replace(/<div[^>]*class="checklist-item"[^>]*data-checked="false"[^>]*>(.*?)<\/div>/gi, "[ ] $1\n");
   text = text.replace(/<\/li>/gi, "\n");
   text = text.replace(/<br\s*\/?>/gi, "\n");
   text = text.replace(/<\/p>/gi, "\n\n");
@@ -31,6 +33,7 @@ export function htmlToPlainText(html: string): string {
   text = text.replace(/&lt;/g, "<");
   text = text.replace(/&gt;/g, ">");
   text = text.replace(/&quot;/g, '"');
+  text = text.replace(/\u200B/g, "");
   text = text.replace(/\n{3,}/g, "\n\n");
   return text.trim();
 }

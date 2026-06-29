@@ -1,7 +1,7 @@
 "use client";
 
 import type { DecryptedNote } from "@brall/core";
-import { extractTags, stripTags, evaluateFormula } from "@brall/core";
+import { extractTags, stripTags, evaluateFormula, parseChecklists } from "@brall/core";
 import { useNotesStore, NOTE_COLORS, DARK_NOTE_COLORS, getColorDisplayName } from "@/state/useNotesStore";
 import { writeClipboard } from "@/lib/clipboard";
 import { useUIStore } from "@/state/useUIStore";
@@ -412,6 +412,7 @@ export default function NoteCard({ note, index, highlighted, onHighlightEnd }: P
   const timeAgo = formatTimeAgo(note.updated_at);
   const noteTags = extractTags(note.body);
   const cleanPreview = stripTags(note.preview).replace(/[\r\n]+/g, " ");
+  const checklistStats = parseChecklists(note.body);
   const isPinned = note.pinned;
   const isDragged = dragState.isDragging && dragState.draggedId === note.id;
 
@@ -571,6 +572,27 @@ export default function NoteCard({ note, index, highlighted, onHighlightEnd }: P
           >
             {cleanPreview}
           </p>
+          {checklistStats && (
+            <div className="mt-2">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-xs" style={{ color: "var(--text-muted)" }}>
+                  {checklistStats.done}/{checklistStats.total} done
+                </span>
+              </div>
+              <div
+                className="w-full h-1 rounded-full overflow-hidden"
+                style={{ background: "var(--surface-subtle)" }}
+              >
+                <div
+                  className="h-full rounded-full transition-all"
+                  style={{
+                    width: `${checklistStats.total > 0 ? (checklistStats.done / checklistStats.total) * 100 : 0}%`,
+                    background: checklistStats.done === checklistStats.total ? "#22C55E" : "var(--accent)",
+                  }}
+                />
+              </div>
+            </div>
+          )}
           <div className="flex items-center gap-3 mt-3">
             <span className="text-xs" style={{ color: "var(--text-muted)" }}>
               {timeAgo}

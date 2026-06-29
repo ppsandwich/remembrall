@@ -31,7 +31,8 @@ export {
   propertyValueSchema,
 } from "./validation";
 
-export { derivePreview, sortNotes, searchNotes, formatBulkCopy, extractTags, stripTags, addTag, removeTag } from "./noteUtils";
+export { derivePreview, sortNotes, searchNotes, formatBulkCopy, extractTags, stripTags, addTag, removeTag, parseChecklists } from "./noteUtils";
+export type { ChecklistStats } from "./noteUtils";
 
 export {
   validatePropertyValue,
