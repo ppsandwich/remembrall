@@ -27,6 +27,16 @@ const COLOR_HEX: Record<string, string> = {
   pink: "#FBCFE8",
 };
 
+const COLOR_NAMES: Record<string, string> = {
+  red: "Red",
+  orange: "Orange",
+  teal: "Teal",
+  blue: "Blue",
+  green: "Green",
+  purple: "Purple",
+  pink: "Pink",
+};
+
 const COLOR_PATTERNS: Record<string, string> = {
   red: `url("data:image/svg+xml,%3Csvg width='42' height='44' viewBox='0 0 42 44' xmlns='http://www.w3.org/2000/svg'%3E%3Cg id='Page-1' fill='none' fill-rule='evenodd'%3E%3Cg id='brick-wall' fill='%23fef2f2' fill-opacity='0.4'%3E%3Cpath d='M0 0h42v44H0V0zm1 1h40v20H1V1zM0 23h20v20H0V23zm22 0h20v20H22V23z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
   orange: `url("data:image/svg+xml,%3Csvg width='12' height='16' viewBox='0 0 12 16' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M4 .99C4 .445 4.444 0 5 0c.552 0 1 .45 1 .99v4.02C6 5.555 5.556 6 5 6c-.552 0-1-.45-1-.99V.99zm6 8c0-.546.444-.99 1-.99.552 0 1 .45 1 .99v4.02c0 .546-.444.99-1 .99-.552 0-1-.45-1-.99V8.99z' fill='%23fff7ed' fill-opacity='0.3' fill-rule='evenodd'/%3E%3C/svg%3E")`,
@@ -198,6 +208,7 @@ export default function EmbedView({ token }: { token: string }) {
 
   const pinned = data.notes.filter((n) => n.pinned);
   const unpinned = data.notes.filter((n) => !n.pinned);
+  const usedColors = [...new Set(data.notes.map((n) => n.color).filter(Boolean))];
 
   return (
     <div
@@ -221,6 +232,42 @@ export default function EmbedView({ token }: { token: string }) {
         >
           {data.section_name}
         </h1>
+        {usedColors.length > 0 && (
+          <div
+            style={{
+              display: "flex",
+              flexWrap: "wrap",
+              gap: "8px 16px",
+              marginBottom: 16,
+            }}
+          >
+            {usedColors.map((color) => (
+              <span
+                key={color}
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 6,
+                  fontSize: 13,
+                  color: "#484844",
+                }}
+              >
+                <span
+                  style={{
+                    display: "inline-block",
+                    width: 14,
+                    height: 14,
+                    borderRadius: 4,
+                    background: COLOR_HEX[color] || "#CCCCCC",
+                    border: "1px solid rgba(0,0,0,0.1)",
+                    flexShrink: 0,
+                  }}
+                />
+                {COLOR_NAMES[color] || color}
+              </span>
+            ))}
+          </div>
+        )}
         <div
           style={{
             display: "grid",
