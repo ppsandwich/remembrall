@@ -1,8 +1,9 @@
 import { getSupabase } from "./supabaseClient";
 
-export async function generateEmbedToken(sectionId: string): Promise<string> {
+export async function generateEmbedToken(sectionId: string, colorNames?: Record<string, string>): Promise<string> {
   const { data, error } = await getSupabase().rpc("generate_embed_token", {
     p_section_id: sectionId,
+    p_color_names: colorNames ?? {},
   });
 
   if (error) throw error;

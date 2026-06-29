@@ -14,6 +14,7 @@ interface EmbedNote {
 
 interface EmbedData {
   section_name: string;
+  color_names: Record<string, string>;
   notes: EmbedNote[];
 }
 
@@ -208,7 +209,12 @@ export default function EmbedView({ token }: { token: string }) {
 
   const pinned = data.notes.filter((n) => n.pinned);
   const unpinned = data.notes.filter((n) => !n.pinned);
-  const usedColors = [...new Set(data.notes.map((n) => n.color).filter(Boolean))];
+  const customColorNames = data.color_names || {};
+  const legendColors = [...new Set(data.notes.map((n) => n.color).filter(Boolean))]
+    .filter((color) => {
+      const custom = customColorNames[color];
+      return custom && custom !== COLOR_NAMES[color];
+    });
 
   return (
     <div
@@ -232,7 +238,7 @@ export default function EmbedView({ token }: { token: string }) {
         >
           {data.section_name}
         </h1>
-        {usedColors.length > 0 && (
+        {legendColors.length > 0 && (
           <div
             style={{
               display: "flex",
@@ -241,7 +247,7 @@ export default function EmbedView({ token }: { token: string }) {
               marginBottom: 16,
             }}
           >
-            {usedColors.map((color) => (
+            {legendColors.map((color) => (
               <span
                 key={color}
                 style={{
@@ -263,7 +269,7 @@ export default function EmbedView({ token }: { token: string }) {
                     flexShrink: 0,
                   }}
                 />
-                {COLOR_NAMES[color] || color}
+                {customColorNames[color]}
               </span>
             ))}
           </div>

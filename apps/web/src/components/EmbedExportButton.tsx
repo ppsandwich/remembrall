@@ -18,10 +18,11 @@ interface Props {
 export default function EmbedExportButton({ sectionId, sectionName, notes }: Props) {
   const [showConfirm, setShowConfirm] = useState(false);
   const { showToast } = useUIStore();
+  const colorNames = useNotesStore((s) => s.colorNames);
 
   const handleGenerate = async () => {
     try {
-      const token = await generateEmbedToken(sectionId);
+      const token = await generateEmbedToken(sectionId, colorNames);
 
       for (const note of notes) {
         await syncEmbedNote({
