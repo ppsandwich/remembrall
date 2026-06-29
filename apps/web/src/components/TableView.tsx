@@ -3,7 +3,7 @@
 import { useCallback, useState, useRef } from "react";
 import type { DecryptedNote, PropertyDefinition } from "@brall/core";
 import { formatPropertyValue, extractTags, evaluateFormula } from "@brall/core";
-import { useNotesStore } from "@/state/useNotesStore";
+import { useNotesStore, getColorDisplayName, NOTE_COLORS, DARK_NOTE_COLORS } from "@/state/useNotesStore";
 import { useUIStore } from "@/state/useUIStore";
 
 interface Props {
@@ -15,6 +15,7 @@ export default function TableView({ notes, definitions }: Props) {
   const setEditingId = useNotesStore((s) => s.setEditingId);
   const updateNoteProperty = useNotesStore((s) => s.updateNoteProperty);
   const sectionPermissions = useNotesStore((s) => s.sectionPermissions);
+  const colorNames = useNotesStore((s) => s.colorNames);
   const showToast = useUIStore((s) => s.showToast);
   const resolvedTheme = useUIStore((s) => s.resolvedTheme);
 
@@ -53,12 +54,18 @@ export default function TableView({ notes, definitions }: Props) {
               className="text-left px-3 py-2 font-medium"
               style={{ color: "var(--text-muted)", background: "var(--surface)" }}
             >
+              Category
+            </th>
+            <th
+              className="text-left px-3 py-2 font-medium"
+              style={{ color: "var(--text-muted)", background: "var(--surface)" }}
+            >
               Preview
             </th>
             {definitions.map((def) => (
               <th
                 key={def.id}
-                className="text-left px-3 py-2 font-medium whitespace-nowrap"
+                className={`text-left font-medium whitespace-nowrap ${def.type === "number" || def.type === "calculated" ? "px-1 py-2" : "px-3 py-2"}`}
                 style={{ color: "var(--text-muted)", background: "var(--surface)" }}
               >
                 {def.name}
@@ -84,6 +91,8 @@ export default function TableView({ notes, definitions }: Props) {
               key={note.id}
               note={note}
               definitions={definitions}
+              colorNames={colorNames}
+              resolvedTheme={resolvedTheme}
               onClick={() => handleRowClick(note)}
               onPropertyChange={(propId, value) => updateNoteProperty(note.id, propId, value)}
             />
@@ -97,11 +106,15 @@ export default function TableView({ notes, definitions }: Props) {
 function TableRow({
   note,
   definitions,
+  colorNames,
+  resolvedTheme,
   onClick,
   onPropertyChange,
 }: {
   note: DecryptedNote;
   definitions: PropertyDefinition[];
+  colorNames: Record<string, string>;
+  resolvedTheme: string;
   onClick: () => void;
   onPropertyChange: (propId: string, value: unknown) => void;
 }) {
@@ -122,11 +135,32 @@ function TableRow({
       >
         {note.title || "—"}
       </td>
+      <td className="px-3 py-2 whitespace-nowrap" style={{ color: "var(--text-secondary)" }}>
+        {note.color && note.color !== "none" ? (
+          <span className="inline-flex items-center gap-1.5">
+            <span
+              className="inline-block w-2.5 h-2.5 rounded-full shrink-0"
+              style={{
+                background: (resolvedTheme === "dark" ? DARK_NOTE_COLORS : NOTE_COLORS).find(
+                  (c) => c.name === note.color
+                )?.hex || "var(--border)",
+              }}
+            />
+            {getColorDisplayName(note.color, colorNames)}
+          </span>
+        ) : (
+          "—"
+        )}
+      </td>
       <td className="px-3 py-2 max-w-[240px] truncate" style={{ color: "var(--text-secondary)" }}>
         {cleanPreview}
       </td>
       {definitions.map((def) => (
-        <td key={def.id} className="px-3 py-2" onClick={(e) => e.stopPropagation()}>
+        <td
+          key={def.id}
+          className={def.type === "number" || def.type === "calculated" ? "px-1 py-2" : "px-3 py-2"}
+          onClick={(e) => e.stopPropagation()}
+        >
           <InlinePropertyEditor
             definition={def}
             value={def.type === "calculated"
