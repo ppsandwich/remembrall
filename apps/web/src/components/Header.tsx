@@ -30,11 +30,8 @@ export default function Header() {
   const openrouterKey = useNotesStore((s) => s.openrouterKey);
   const createNote = useNotesStore((s) => s.createNote);
   const setHighlightNoteId = useNotesStore((s) => s.setHighlightNoteId);
-  const viewMode = useNotesStore((s) => s.viewMode);
-  const setViewMode = useNotesStore((s) => s.setViewMode);
 
   const [propertyManagerOpen, setPropertyManagerOpen] = useState(false);
-
   const MAX_RECORDING_SECONDS = 60;
   const { isRecording, start, stop, isSupported, getRecordingDurationMs } = useVoiceRecording();
   const [transcribing, setTranscribing] = useState(false);
@@ -434,9 +431,7 @@ export default function Header() {
               <HeaderButton onClick={() => setClusterMode(!clusterMode)} title={clusterMode ? "Sort by colour" : "Manual sort"} active={clusterMode}>
                 <Layers />
               </HeaderButton>
-              <HeaderButton onClick={() => setViewMode(viewMode === "grid" ? "table" : "grid")} title={viewMode === "grid" ? "Table view" : "Grid view"} active={viewMode === "table"}>
-                {viewMode === "grid" ? <TableIcon /> : <GridIcon />}
-              </HeaderButton>
+              <ViewModeSwitcher />
               <HeaderButton onClick={() => setPropertyManagerOpen(true)} title="Manage properties">
                 <SlidersIcon />
               </HeaderButton>
@@ -635,5 +630,65 @@ function SlidersIcon() {
       <circle cx="8" cy="10" r="1.5" fill="currentColor" />
       <circle cx="12" cy="4" r="1.5" fill="currentColor" />
     </svg>
+  );
+}
+
+function ColumnIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="1.5" y="1.5" width="3.5" height="13" rx="1" />
+      <rect x="6.25" y="1.5" width="3.5" height="13" rx="1" />
+      <rect x="11" y="1.5" width="3.5" height="13" rx="1" />
+    </svg>
+  );
+}
+
+function ViewModeSwitcher() {
+  const viewMode = useNotesStore((s) => s.viewMode);
+  const setViewMode = useNotesStore((s) => s.setViewMode);
+
+  const modes = [
+    { mode: "grid" as const, icon: GridIcon, label: "Grid view", color: "#3B82F6" },
+    { mode: "columns" as const, icon: ColumnIcon, label: "Columns view", color: "#F97316" },
+    { mode: "table" as const, icon: TableIcon, label: "Table view", color: "#A855F7" },
+  ];
+
+  return (
+    <div
+      className="flex items-center rounded-md overflow-hidden"
+      style={{ border: "1px solid var(--border)" }}
+    >
+      {modes.map(({ mode, icon: Icon, label, color }) => {
+        const isActive = viewMode === mode;
+        return (
+          <button
+            key={mode}
+            onClick={() => setViewMode(mode)}
+            className="p-2 transition-colors"
+            style={{
+              color: isActive ? color : "var(--text-muted)",
+              background: isActive ? `${color}15` : "transparent",
+            }}
+            title={label}
+            aria-label={label}
+            aria-pressed={isActive}
+            onMouseEnter={(e) => {
+              if (!isActive) {
+                e.currentTarget.style.background = "var(--surface-subtle)";
+                e.currentTarget.style.color = "var(--text-secondary)";
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (!isActive) {
+                e.currentTarget.style.background = "transparent";
+                e.currentTarget.style.color = "var(--text-muted)";
+              }
+            }}
+          >
+            <Icon />
+          </button>
+        );
+      })}
+    </div>
   );
 }

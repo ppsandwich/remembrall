@@ -126,7 +126,11 @@ interface NotesState {
   storageUsed: number;
   gridCols: number;
   propertyFilters: Map<string, PropertyFilter>;
-  viewMode: "grid" | "table";
+  viewMode: "grid" | "table" | "columns";
+  kanbanGroupBy: "tag" | "color" | "property";
+  kanbanGroupPropId: string | null;
+  kanbanSwimlaneBy: "none" | "tag" | "color" | "property";
+  kanbanSwimlanePropId: string | null;
 
   fetchAll: () => Promise<void>;
   fetchPages: () => Promise<void>;
@@ -182,7 +186,9 @@ interface NotesState {
   updateNoteProperty: (noteId: string, propId: string, value: unknown) => Promise<void>;
   setPropertyFilter: (propId: string, filter: PropertyFilter | null) => void;
   clearPropertyFilters: () => void;
-  setViewMode: (mode: "grid" | "table") => void;
+  setViewMode: (mode: "grid" | "table" | "columns") => void;
+  setKanbanGroupBy: (groupBy: "tag" | "color" | "property", propId?: string | null) => void;
+  setKanbanSwimlaneBy: (swimlaneBy: "none" | "tag" | "color" | "property", propId?: string | null) => void;
   getActivePropertyDefinitions: () => PropertyDefinition[];
 }
 
@@ -212,7 +218,17 @@ export const useNotesStore = create<NotesState>((set, get) => ({
   storageUsed: 0,
   gridCols: 4,
   propertyFilters: new Map(),
-  viewMode: "grid",
+  viewMode: (() => {
+    try {
+      const stored = localStorage.getItem("remembrall-view-mode");
+      if (stored === "grid" || stored === "table" || stored === "columns") return stored;
+    } catch {}
+    return "grid";
+  })(),
+  kanbanGroupBy: "color",
+  kanbanGroupPropId: null,
+  kanbanSwimlaneBy: "none",
+  kanbanSwimlanePropId: null,
 
   fetchAll: async () => {
     const user = useAuthStore.getState().user;
@@ -1001,9 +1017,23 @@ export const useNotesStore = create<NotesState>((set, get) => ({
 
   clearPropertyFilters: () => set({ propertyFilters: new Map() }),
 
-  setViewMode: (mode: "grid" | "table") => {
+  setViewMode: (mode: "grid" | "table" | "columns") => {
     localStorage.setItem("remembrall-view-mode", mode);
     set({ viewMode: mode });
+  },
+
+  setKanbanGroupBy: (groupBy: "tag" | "color" | "property", propId?: string | null) => {
+    const current = get();
+    const newSwimlane = groupBy === current.kanbanSwimlaneBy ? "none" : current.kanbanSwimlaneBy;
+    set({
+      kanbanGroupBy: groupBy,
+      kanbanGroupPropId: propId ?? null,
+      kanbanSwimlaneBy: newSwimlane as "none" | "tag" | "color" | "property",
+    });
+  },
+
+  setKanbanSwimlaneBy: (swimlaneBy: "none" | "tag" | "color" | "property", propId?: string | null) => {
+    set({ kanbanSwimlaneBy: swimlaneBy, kanbanSwimlanePropId: propId ?? null });
   },
 
   getActivePropertyDefinitions: () => {
