@@ -280,13 +280,13 @@ export const useNotesStore = create<NotesState>((set, get) => ({
     if (!user) return;
     try {
       const pages = await pagesApi.fetchPages(user.id);
-      set({ pages });
-      if (pages.length > 0 && !get().activePageId) {
+      let activePageId = get().activePageId;
+      if (pages.length > 0 && !activePageId) {
         let saved: string | null = null;
         try { saved = localStorage.getItem("activePageId"); } catch {}
-        const restored = saved && pages.some((p) => p.id === saved) ? saved : pages[0].id;
-        set({ activePageId: restored });
+        activePageId = saved && pages.some((p) => p.id === saved) ? saved : pages[0].id;
       }
+      set({ pages, activePageId });
     } catch {}
   },
 
