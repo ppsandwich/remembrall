@@ -16,7 +16,7 @@ const GRID_CLASS = "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-
 export default function NoteList() {
   const {
     loading, notes, pages, activePageId, searchQuery, filterTag, clusterMode,
-    colorOrder, moveNote, saveNoteOrder,
+    colorOrder, moveNote, saveNoteOrder, gridCols, setGridCols,
     lastRecoloredId, clearLastRecoloredId,
     highlightNoteId, setHighlightNoteId,
     setActivePage, scrollToPageId, setScrollToPageId,
@@ -62,10 +62,39 @@ export default function NoteList() {
             noColor.push(note);
           }
         }
+        const c = Math.max(1, gridCols);
+        const adj = (n: number, w: number): number => {
+          if (n <= 1) return 0;
+          const fullRows = Math.floor(n / w);
+          const partial = n % w;
+          const fullAdj = fullRows * (2 * w - 1) - w;
+          if (partial === 0) return fullAdj;
+          return fullAdj + (partial - 1) + (fullRows > 0 ? partial : 0);
+        };
+        const bestW = (n: number): number => {
+          if (n <= 1) return 1;
+          let bw = 1, ba = -1;
+          for (let w = 1; w <= Math.min(n, c); w++) {
+            const a = adj(n, w);
+            if (a > ba) { ba = a; bw = w; }
+          }
+          return bw;
+        };
         const clustered: typeof pageNotes = [];
         for (const color of colorOrder) {
           const group = colorGroups.get(color);
-          if (group) clustered.push(...group);
+          if (!group) continue;
+          const n = group.length;
+          const w = bestW(n);
+          const h = Math.ceil(n / w);
+          const padded = new Array<typeof pageNotes[0] | null>(h * w).fill(null);
+          for (let i = 0; i < n; i++) padded[i] = group[i];
+          for (let col = 0; col < w; col++) {
+            for (let row = 0; row < h; row++) {
+              const note = padded[row * w + col];
+              if (note) clustered.push(note);
+            }
+          }
         }
         clustered.push(...noColor);
         pageNotes = clustered;
@@ -78,7 +107,7 @@ export default function NoteList() {
 
       return { page, notes: pageNotes };
     }).filter((s) => s.notes.length > 0 || !searchQuery.trim());
-  }, [notes, pages, searchQuery, filterTag, clusterMode, colorOrder, showArchived]);
+  }, [notes, pages, searchQuery, filterTag, clusterMode, colorOrder, showArchived, gridCols]);
 
   // IntersectionObserver: update activePageId when scrolling to a section
   useEffect(() => {
@@ -105,6 +134,21 @@ export default function NoteList() {
     entries.forEach((el) => observer.observe(el));
     return () => observer.disconnect();
   }, [sections]);
+
+  // Track grid column count for compact colour clustering
+  useEffect(() => {
+    const el = gridRef.current;
+    if (!el) return;
+    const update = () => {
+      const w = el.offsetWidth;
+      const c = w >= 1920 ? 7 : w >= 1536 ? 6 : w >= 1280 ? 5 : w >= 1024 ? 4 : w >= 768 ? 3 : w >= 640 ? 2 : 1;
+      if (c !== useNotesStore.getState().gridCols) setGridCols(c);
+    };
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [setGridCols]);
 
   // Scroll to section when tab is clicked
   useEffect(() => {

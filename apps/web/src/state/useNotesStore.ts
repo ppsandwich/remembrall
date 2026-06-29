@@ -122,6 +122,7 @@ interface NotesState {
   sectionShares: Map<string, string[]>;
   attachments: Map<string, Attachment[]>;
   storageUsed: number;
+  gridCols: number;
 
   fetchAll: () => Promise<void>;
   fetchPages: () => Promise<void>;
@@ -155,6 +156,7 @@ interface NotesState {
   setColorName: (name: string, displayName: string) => void;
   resetColorName: (name: string) => void;
   setColorOrder: (order: string[]) => void;
+  setGridCols: (cols: number) => void;
   setOpenrouterKey: (key: string | null) => void;
   setScrollToPageId: (id: string | null) => void;
   toggleSelect: (id: string) => void;
@@ -196,6 +198,7 @@ export const useNotesStore = create<NotesState>((set, get) => ({
   sectionShares: new Map(),
   attachments: new Map(),
   storageUsed: 0,
+  gridCols: 4,
 
   fetchAll: async () => {
     const user = useAuthStore.getState().user;
@@ -701,6 +704,10 @@ export const useNotesStore = create<NotesState>((set, get) => ({
     }
   },
 
+  setGridCols: (cols: number) => {
+    set({ gridCols: cols });
+  },
+
   setOpenrouterKey: (key: string | null) => {
     if (key) {
       localStorage.setItem("remembrall-openrouter-key", key);
@@ -794,7 +801,7 @@ export const useNotesStore = create<NotesState>((set, get) => ({
     }
 
     if (clusterMode) {
-      return clusterNotes(filtered, get().colorOrder);
+      return clusterNotes(filtered, get().colorOrder, get().gridCols);
     }
 
     return filtered.sort((a, b) => {
@@ -902,7 +909,7 @@ export const useNotesStore = create<NotesState>((set, get) => ({
   },
 }));
 
-function clusterNotes(notes: DecryptedNote[], colorOrder: string[]): DecryptedNote[] {
+function clusterNotes(notes: DecryptedNote[], colorOrder: string[], cols: number): DecryptedNote[] {
   const colorGroups = new Map<string, DecryptedNote[]>();
   const noColor: DecryptedNote[] = [];
 
@@ -916,11 +923,47 @@ function clusterNotes(notes: DecryptedNote[], colorOrder: string[]): DecryptedNo
     }
   }
 
+  const c = Math.max(1, cols);
+
+  function adjacencies(n: number, w: number): number {
+    if (n <= 1) return 0;
+    const fullRows = Math.floor(n / w);
+    const partial = n % w;
+    const fullAdj = fullRows * (2 * w - 1) - w;
+    if (partial === 0) return fullAdj;
+    let lastAdj = partial - 1;
+    if (fullRows > 0) lastAdj += partial;
+    return fullAdj + lastAdj;
+  }
+
+  function bestBlockWidth(n: number): number {
+    if (n <= 1) return 1;
+    let bestW = 1;
+    let bestAdj = -1;
+    for (let w = 1; w <= Math.min(n, c); w++) {
+      const a = adjacencies(n, w);
+      if (a > bestAdj) {
+        bestAdj = a;
+        bestW = w;
+      }
+    }
+    return bestW;
+  }
+
   const result: DecryptedNote[] = [];
   for (const color of colorOrder) {
     const group = colorGroups.get(color);
-    if (group) {
-      result.push(...group);
+    if (!group) continue;
+    const n = group.length;
+    const w = bestBlockWidth(n);
+    const h = Math.ceil(n / w);
+    const padded = new Array<DecryptedNote | null>(h * w).fill(null);
+    for (let i = 0; i < n; i++) padded[i] = group[i];
+    for (let col = 0; col < w; col++) {
+      for (let row = 0; row < h; row++) {
+        const note = padded[row * w + col];
+        if (note) result.push(note);
+      }
     }
   }
   result.push(...noColor);
