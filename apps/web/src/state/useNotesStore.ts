@@ -9,6 +9,39 @@ import * as prefApi from "@/lib/preferencesApi";
 import * as pagesApi from "@/lib/pagesApi";
 import * as shareApi from "@/lib/shareApi";
 import * as attachApi from "@/lib/attachmentsApi";
+import * as embedApi from "@/lib/embedApi";
+
+async function syncNoteToEmbeds(note: DecryptedNote): Promise<void> {
+  try {
+    if (!note.page_id) return;
+    const tokens = await embedApi.getEmbedTokensForPage(note.page_id);
+    for (const token of tokens) {
+      await embedApi.syncEmbedNote({
+        token,
+        noteId: note.id,
+        title: note.title || "",
+        body: note.body || note.preview || "",
+        color: note.color || "",
+        pinned: note.pinned,
+        position: note.position,
+      });
+    }
+  } catch {
+    // Embed sync is best-effort
+  }
+}
+
+async function deleteNoteFromEmbeds(noteId: string, pageId: string | null): Promise<void> {
+  try {
+    if (!pageId) return;
+    const tokens = await embedApi.getEmbedTokensForPage(pageId);
+    for (const token of tokens) {
+      await embedApi.deleteEmbedNote(token, noteId);
+    }
+  } catch {
+    // Embed sync is best-effort
+  }
+}
 
 export const NOTE_COLORS = [
   { name: "none", hex: "" },
@@ -377,6 +410,7 @@ export const useNotesStore = create<NotesState>((set, get) => ({
     };
 
     set((s) => ({ notes: [note, ...s.notes] }));
+    syncNoteToEmbeds(note);
     return created.id;
   },
 
@@ -402,6 +436,8 @@ export const useNotesStore = create<NotesState>((set, get) => ({
           : n
       ),
     }));
+    const updated = get().notes.find((n) => n.id === id);
+    if (updated) syncNoteToEmbeds(updated);
   },
 
   updateNoteColor: async (id: string, color: string) => {
@@ -415,6 +451,8 @@ export const useNotesStore = create<NotesState>((set, get) => ({
     } catch {
       // Color column may not exist yet - local state is already updated
     }
+    const updated = get().notes.find((n) => n.id === id);
+    if (updated) syncNoteToEmbeds(updated);
   },
 
   updateNoteTitle: async (id: string, title: string) => {
@@ -424,6 +462,8 @@ export const useNotesStore = create<NotesState>((set, get) => ({
     try {
       await api.updateNote(id, { title });
     } catch {}
+    const updated = get().notes.find((n) => n.id === id);
+    if (updated) syncNoteToEmbeds(updated);
   },
 
   moveNoteToPage: async (noteId: string, pageId: string) => {
@@ -440,6 +480,7 @@ export const useNotesStore = create<NotesState>((set, get) => ({
     if (!note) return;
 
     await api.softDeleteNote(id);
+    deleteNoteFromEmbeds(note.id, note.page_id);
 
     const timeout = setTimeout(() => {
       set((s) => ({ undoStack: s.undoStack.filter((u) => u.note.id !== id) }));
@@ -479,6 +520,7 @@ export const useNotesStore = create<NotesState>((set, get) => ({
       notes: s.notes.map((n) => n.id === entry.note.id ? { ...n, deleted_at: null } : n),
       undoStack: s.undoStack.slice(0, -1),
     }));
+    syncNoteToEmbeds(entry.note);
   },
 
   restoreNote: async (id: string) => {
@@ -489,6 +531,8 @@ export const useNotesStore = create<NotesState>((set, get) => ({
     set((s) => ({
       notes: s.notes.map((n) => n.id === id ? { ...n, deleted_at: null } : n),
     }));
+    const restored = get().notes.find((n) => n.id === id);
+    if (restored) syncNoteToEmbeds(restored);
   },
 
   duplicateNote: async (id: string) => {
@@ -545,6 +589,7 @@ export const useNotesStore = create<NotesState>((set, get) => ({
     };
 
     set((s) => ({ notes: [note, ...s.notes] }));
+    syncNoteToEmbeds(note);
 
     // Clone attachments from original note
     try {
@@ -568,6 +613,8 @@ export const useNotesStore = create<NotesState>((set, get) => ({
     set((s) => ({
       notes: s.notes.map((n) => (n.id === id ? { ...n, pinned: newPinned } : n)),
     }));
+    const updated = get().notes.find((n) => n.id === id);
+    if (updated) syncNoteToEmbeds(updated);
   },
 
   moveNote: (id: string, targetIndex: number) => {
@@ -598,6 +645,9 @@ export const useNotesStore = create<NotesState>((set, get) => ({
     const active = notes.filter((n) => !n.deleted_at);
     const positions = active.map((n, i) => ({ id: n.id, position: i }));
     await api.updateNotePositions(positions);
+    for (const note of active) {
+      syncNoteToEmbeds(note);
+    }
   },
 
   setSearchQuery: (query: string) => set({ searchQuery: query }),

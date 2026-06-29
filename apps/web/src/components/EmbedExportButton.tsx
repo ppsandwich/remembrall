@@ -5,7 +5,7 @@ import type { DecryptedNote } from "@brall/core";
 import { useNotesStore } from "@/state/useNotesStore";
 import { useUIStore } from "@/state/useUIStore";
 import { writeClipboard } from "@/lib/clipboard";
-import { generateEmbedHtml } from "@/lib/embedExport";
+import { generateEmbedToken, syncEmbedNote } from "@/lib/embedApi";
 import { Code2, X } from "./Icons";
 import { useFocusTrap } from "@/lib/useFocusTrap";
 
@@ -17,14 +17,34 @@ interface Props {
 
 export default function EmbedExportButton({ sectionId, sectionName, notes }: Props) {
   const [showConfirm, setShowConfirm] = useState(false);
-  const colorNames = useNotesStore((s) => s.colorNames);
   const { showToast } = useUIStore();
 
   const handleGenerate = async () => {
-    const html = generateEmbedHtml({ sectionName, notes, colorNames });
-    const ok = await writeClipboard(html);
-    showToast(ok ? "Embed HTML copied to clipboard." : "Could not copy to clipboard.");
-    setShowConfirm(false);
+    try {
+      const token = await generateEmbedToken(sectionId);
+
+      for (const note of notes) {
+        await syncEmbedNote({
+          token,
+          noteId: note.id,
+          title: note.title || "",
+          body: note.body || note.preview || "",
+          color: note.color || "",
+          pinned: note.pinned,
+          position: note.position,
+        });
+      }
+
+      const origin = typeof window !== "undefined" ? window.location.origin : "";
+      const embedUrl = `${origin}/embed/${token}`;
+      const iframe = `<iframe src="${embedUrl}" style="width:100%;height:600px;border:none;border-radius:8px;" title="${sectionName} notes"></iframe>`;
+
+      await writeClipboard(iframe);
+      showToast("Embed iframe copied to clipboard.");
+      setShowConfirm(false);
+    } catch (err) {
+      showToast("Failed to generate embed token.");
+    }
   };
 
   return (
@@ -78,7 +98,7 @@ function EmbedConfirmDialog({
       >
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-sm font-semibold" style={{ color: "var(--text)" }}>
-            Export embeddable frame
+            Create live embed
           </h3>
           <button
             onClick={onCancel}
@@ -96,11 +116,11 @@ function EmbedConfirmDialog({
           className="rounded-lg p-3 mb-5 text-xs leading-relaxed"
           style={{ background: "var(--surface-subtle)", color: "var(--text-secondary)", border: "1px solid var(--border)" }}
         >
-          <strong style={{ color: "var(--text)" }}>Warning:</strong> Notes in this section will be visible to anyone viewing the embedded frame (but not editable).
+          <strong style={{ color: "var(--text)" }}>Note:</strong> This creates a live iframe embed for <strong style={{ color: "var(--text-secondary)" }}>{sectionName}</strong> ({noteCount} {noteCount === 1 ? "note" : "notes"}). The embed will update in realtime as you edit notes.
         </div>
 
         <p className="text-xs mb-5" style={{ color: "var(--text-muted)" }}>
-          This will copy a self-contained HTML snippet for <strong style={{ color: "var(--text-secondary)" }}>{sectionName}</strong> ({noteCount} {noteCount === 1 ? "note" : "notes"}) to your clipboard. You can paste it into any website to display your notes as a read-only embed.
+          An iframe snippet will be copied to your clipboard. Anyone with the link can view (but not edit) the notes in this section.
         </p>
 
         <div className="flex justify-end gap-2">
@@ -120,7 +140,7 @@ function EmbedConfirmDialog({
             onMouseEnter={(e) => { e.currentTarget.style.opacity = "0.85"; }}
             onMouseLeave={(e) => { e.currentTarget.style.opacity = "1"; }}
           >
-            Copy embed HTML
+            Copy embed iframe
           </button>
         </div>
       </div>
