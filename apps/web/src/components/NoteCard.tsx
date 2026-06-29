@@ -620,6 +620,7 @@ export default function NoteCard({ note, index, highlighted, onHighlightEnd }: P
             const defs = getActivePropertyDefinitions();
             if (defs.length === 0) return null;
             const propEntries = defs.filter((d) => {
+              if (d.showOnCards === false) return false;
               if (d.type === "calculated") return !!d.formula;
               return note.properties[d.id] !== undefined && note.properties[d.id] !== null;
             });

@@ -40,11 +40,13 @@ export default function PropertyManager({ open, onClose }: Props) {
   const [newType, setNewType] = useState<PropertyType>("text");
   const [newOptions, setNewOptions] = useState("");
   const [newFormula, setNewFormula] = useState("");
+  const [newShowOnCards, setNewShowOnCards] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
   const [editType, setEditType] = useState<PropertyType>("text");
   const [editOptions, setEditOptions] = useState("");
   const [editFormula, setEditFormula] = useState("");
+  const [editShowOnCards, setEditShowOnCards] = useState(true);
 
   const handleAdd = useCallback(async () => {
     if (!newName.trim()) return;
@@ -65,6 +67,7 @@ export default function PropertyManager({ open, onClose }: Props) {
       ...(newType === "calculated"
         ? { formula: newFormula.trim() }
         : {}),
+      showOnCards: newShowOnCards,
     };
     await addPropertyDefinition(def);
     setAdding(false);
@@ -72,8 +75,9 @@ export default function PropertyManager({ open, onClose }: Props) {
     setNewType("text");
     setNewOptions("");
     setNewFormula("");
+    setNewShowOnCards(true);
     showToast("Property added.");
-  }, [newName, newType, newOptions, newFormula, definitions, addPropertyDefinition, showToast]);
+  }, [newName, newType, newOptions, newFormula, newShowOnCards, definitions, addPropertyDefinition, showToast]);
 
   const handleUpdate = useCallback(async () => {
     if (!editingId || !editName.trim()) return;
@@ -93,10 +97,11 @@ export default function PropertyManager({ open, onClose }: Props) {
       ...(editType === "calculated"
         ? { formula: editFormula.trim() }
         : {}),
+      showOnCards: editShowOnCards,
     });
     setEditingId(null);
     showToast("Property updated.");
-  }, [editingId, editName, editType, editOptions, editFormula, definitions, updatePropertyDefinition, showToast]);
+  }, [editingId, editName, editType, editOptions, editFormula, editShowOnCards, definitions, updatePropertyDefinition, showToast]);
 
   const handleDelete = useCallback(async (defId: string) => {
     await deletePropertyDefinition(defId);
@@ -109,6 +114,7 @@ export default function PropertyManager({ open, onClose }: Props) {
     setEditType(def.type);
     setEditOptions(def.options?.join(", ") || "");
     setEditFormula(def.formula || "");
+    setEditShowOnCards(def.showOnCards !== false);
   };
 
   if (!open) return null;
@@ -155,12 +161,14 @@ export default function PropertyManager({ open, onClose }: Props) {
                     type={editType}
                     options={editOptions}
                     formula={editFormula}
+                    showOnCards={editShowOnCards}
                     definitions={definitions}
                     selfId={editingId}
                     onNameChange={setEditName}
                     onTypeChange={setEditType}
                     onOptionsChange={setEditOptions}
                     onFormulaChange={setEditFormula}
+                    onShowOnCardsChange={setEditShowOnCards}
                     onSave={handleUpdate}
                     onCancel={() => setEditingId(null)}
                     saveLabel="Update"
@@ -220,11 +228,13 @@ export default function PropertyManager({ open, onClose }: Props) {
                 type={newType}
                 options={newOptions}
                 formula={newFormula}
+                showOnCards={newShowOnCards}
                 definitions={definitions}
                 onNameChange={setNewName}
                 onTypeChange={setNewType}
                 onOptionsChange={setNewOptions}
                 onFormulaChange={setNewFormula}
+                onShowOnCardsChange={setNewShowOnCards}
                 onSave={handleAdd}
                 onCancel={() => setAdding(false)}
                 saveLabel="Add"
@@ -253,12 +263,14 @@ function PropertyForm({
   type,
   options,
   formula,
+  showOnCards,
   definitions,
   selfId,
   onNameChange,
   onTypeChange,
   onOptionsChange,
   onFormulaChange,
+  onShowOnCardsChange,
   onSave,
   onCancel,
   saveLabel,
@@ -267,12 +279,14 @@ function PropertyForm({
   type: PropertyType;
   options: string;
   formula: string;
+  showOnCards: boolean;
   definitions: PropertyDefinition[];
   selfId?: string;
   onNameChange: (v: string) => void;
   onTypeChange: (v: PropertyType) => void;
   onOptionsChange: (v: string) => void;
   onFormulaChange: (v: string) => void;
+  onShowOnCardsChange: (v: boolean) => void;
   onSave: () => void;
   onCancel: () => void;
   saveLabel: string;
@@ -403,6 +417,16 @@ function PropertyForm({
           )}
         </div>
       )}
+      <label className="flex items-center gap-2 cursor-pointer">
+        <input
+          type="checkbox"
+          checked={showOnCards}
+          onChange={(e) => onShowOnCardsChange(e.target.checked)}
+          className="rounded"
+          style={{ accentColor: "var(--accent)" }}
+        />
+        <span className="text-xs" style={{ color: "var(--text)" }}>Show on cards</span>
+      </label>
       <div className="flex justify-end gap-2">
         <button
           onClick={onCancel}

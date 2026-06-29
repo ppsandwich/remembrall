@@ -98,8 +98,14 @@ function NumberInput({ name, value, onChange }: { name: string; value: number | 
       <span className="text-xs shrink-0" style={{ color: "var(--text-muted)" }}>{name}</span>
       <input
         type="number"
+        step="0.01"
         value={value ?? ""}
         onChange={(e) => onChange(e.target.value === "" ? null : Number(e.target.value))}
+        onBlur={(e) => {
+          if (e.target.value !== "" && !isNaN(Number(e.target.value))) {
+            onChange(Math.round(Number(e.target.value) * 100) / 100);
+          }
+        }}
         className="px-2 py-1 text-xs outline-none w-20"
         style={fieldStyle()}
       />
@@ -265,7 +271,7 @@ function CalculatedDisplay({
   const result = definition.formula
     ? evaluateFormula(definition.formula, values, definitions)
     : null;
-  const display = result !== null ? String(result) : "\u2014";
+  const display = result !== null ? (Math.round(result * 100) / 100).toFixed(2) : "\u2014";
 
   return (
     <label className="flex items-center gap-1.5">

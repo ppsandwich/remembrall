@@ -22,6 +22,7 @@ export const propertyDefinitionSchema = z.object({
   type: propertyTypeSchema,
   options: z.array(z.string().max(100)).max(100).optional(),
   formula: z.string().max(1000).optional(),
+  showOnCards: z.boolean().optional(),
 });
 
 export const propertyValueSchema = z.union([
