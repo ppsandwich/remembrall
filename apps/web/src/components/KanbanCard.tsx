@@ -10,6 +10,8 @@ import { Copy, Pin, PinOff, Download, Trash, Palette, Undo, Paperclip } from "./
 import PropertyBadge from "./PropertyBadge";
 import { useRef, useState, useCallback } from "react";
 
+const EMPTY_ATTACHMENTS: never[] = [];
+
 interface Props {
   note: DecryptedNote;
   index: number;
@@ -18,7 +20,7 @@ interface Props {
 
 export default function KanbanCard({ note, index, onDragStart }: Props) {
   const { toggleSelect, selectedIds, setEditingId, deleteNote, restoreNote, togglePin, updateNoteColor, colorNames, sectionPermissions, getActivePropertyDefinitions } = useNotesStore();
-  const noteAttachments = useNotesStore((s) => s.attachments.get(note.id) ?? []);
+  const noteAttachments = useNotesStore((s) => s.attachments.get(note.id) ?? EMPTY_ATTACHMENTS);
   const { showToast, selectMode, resolvedTheme } = useUIStore();
   const isSelected = selectedIds.has(note.id);
   const [showColors, setShowColors] = useState(false);
