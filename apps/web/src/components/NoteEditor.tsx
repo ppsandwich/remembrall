@@ -44,7 +44,10 @@ export default function NoteEditor() {
   const [selectedPageId, setSelectedPageId] = useState<string | null>(null);
   const [propertyValues, setPropertyValues] = useState<Record<string, unknown>>({});
 
-  const propertyDefinitions = getActivePropertyDefinitions();
+  const notePageId = note?.page_id;
+  const propertyDefinitions = notePageId
+    ? (pages.find((p) => p.id === notePageId)?.property_definitions ?? [])
+    : getActivePropertyDefinitions();
 
   useEffect(() => {
     if (!isOpen) return;
