@@ -332,7 +332,6 @@ export default function KanbanView({ notes, definitions }: { notes: DecryptedNot
 
       <div
         className="flex flex-col gap-4 -mx-8 px-8"
-        style={{ overflowX: "auto", scrollbarWidth: "thin" }}
       >
         {swimlanes.map((swimlane) => {
           const columns = groupNotesIntoColumns(swimlane.notes, kanbanGroupBy, kanbanGroupPropId, definitions, colorNames);
@@ -352,7 +351,7 @@ export default function KanbanView({ notes, definitions }: { notes: DecryptedNot
                 </h3>
               )}
               <div
-                className="flex gap-3 pb-3"
+                className="flex flex-wrap gap-3 pb-3"
               >
               {columns.map((col) => (
                 <KanbanColumn
@@ -564,7 +563,7 @@ function KanbanColumn({
 
   return (
     <div
-      className="flex flex-col min-w-[220px] w-fit max-w-[340px] rounded-lg transition-colors shrink-0"
+      className="flex flex-col min-w-[220px] flex-1 max-w-[340px] rounded-lg transition-colors"
       style={{
         background: isDragOver
           ? "color-mix(in srgb, var(--accent) 8%, var(--surface))"
