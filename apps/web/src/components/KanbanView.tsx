@@ -25,13 +25,13 @@ interface SwimlaneGroup {
   columns: Column[];
 }
 
-function getColumnValues(notes: DecryptedNote[], groupBy: GroupBy, propId: string | null, defs: PropertyDefinition[]): string[] {
+function getColumnValues(notes: DecryptedNote[], groupBy: GroupBy, propId: string | null, defs: PropertyDefinition[], colorOrder: string[]): string[] {
   if (groupBy === "color") {
     const usedColors = new Set<string>();
     for (const n of notes) {
       if (n.color) usedColors.add(n.color);
     }
-    const ordered = NOTE_COLORS.filter((c) => c.name !== "none" && usedColors.has(c.name)).map((c) => c.name);
+    const ordered = colorOrder.filter((c) => usedColors.has(c));
     if (usedColors.has("")) ordered.push("");
     const hasNoColor = notes.some((n) => !n.color);
     if (hasNoColor && !ordered.includes("")) ordered.push("");
@@ -69,9 +69,8 @@ function getColumnValues(notes: DecryptedNote[], groupBy: GroupBy, propId: strin
   return [];
 }
 
-function groupNotesIntoColumns(notes: DecryptedNote[], groupBy: GroupBy, propId: string | null, defs: PropertyDefinition[], colorNames: Record<string, string>): Column[] {
+function groupNotesIntoColumns(notes: DecryptedNote[], groupBy: GroupBy, propId: string | null, defs: PropertyDefinition[], colorNames: Record<string, string>, colorOrder: string[]): Column[] {
   if (groupBy === "color") {
-    const colorOrder = NOTE_COLORS.filter((c) => c.name !== "none").map((c) => c.name);
     const columns: Column[] = [];
     for (const color of colorOrder) {
       const colNotes = notes.filter((n) => n.color === color);
@@ -145,12 +144,11 @@ function groupNotesIntoColumns(notes: DecryptedNote[], groupBy: GroupBy, propId:
   return [{ id: "__all__", label: "All", notes }];
 }
 
-function groupBySwimlane(notes: DecryptedNote[], swimlaneBy: SwimlaneBy, propId: string | null, defs: PropertyDefinition[], colorNames: Record<string, string>): { id: string; label: string; notes: DecryptedNote[] }[] {
+function groupBySwimlane(notes: DecryptedNote[], swimlaneBy: SwimlaneBy, propId: string | null, defs: PropertyDefinition[], colorNames: Record<string, string>, colorOrder: string[]): { id: string; label: string; notes: DecryptedNote[] }[] {
   if (swimlaneBy === "none") {
     return [{ id: "__all__", label: "", notes }];
   }
   if (swimlaneBy === "color") {
-    const colorOrder = NOTE_COLORS.filter((c) => c.name !== "none").map((c) => c.name);
     const groups: { id: string; label: string; notes: DecryptedNote[] }[] = [];
     for (const color of colorOrder) {
       const groupNotes = notes.filter((n) => n.color === color);
@@ -214,7 +212,7 @@ export default function KanbanView({ notes, definitions }: { notes: DecryptedNot
   const {
     kanbanGroupBy, kanbanGroupPropId, kanbanSwimlaneBy, kanbanSwimlanePropId,
     setKanbanGroupBy, setKanbanSwimlaneBy, updateNoteColor, moveNoteToPage,
-    activePageId, colorNames,
+    activePageId, colorNames, colorOrder,
   } = useNotesStore();
   const { showToast } = useUIStore();
   const [dragOverColumn, setDragOverColumn] = useState<string | null>(null);
@@ -310,8 +308,8 @@ export default function KanbanView({ notes, definitions }: { notes: DecryptedNot
   }, [draggedNoteId, notes, kanbanGroupBy, kanbanGroupPropId, definitions, updateNoteColor, showToast]);
 
   const swimlanes = useMemo(() => {
-    return groupBySwimlane(notes, kanbanSwimlaneBy, kanbanSwimlanePropId, definitions, colorNames);
-  }, [notes, kanbanSwimlaneBy, kanbanSwimlanePropId, definitions]);
+    return groupBySwimlane(notes, kanbanSwimlaneBy, kanbanSwimlanePropId, definitions, colorNames, colorOrder);
+  }, [notes, kanbanSwimlaneBy, kanbanSwimlanePropId, definitions, colorOrder]);
 
   if (notes.length === 0) {
     return <EmptyState />;
@@ -334,7 +332,7 @@ export default function KanbanView({ notes, definitions }: { notes: DecryptedNot
         className="flex flex-col gap-4 -mx-8 px-8"
       >
         {swimlanes.map((swimlane) => {
-          const columns = groupNotesIntoColumns(swimlane.notes, kanbanGroupBy, kanbanGroupPropId, definitions, colorNames);
+          const columns = groupNotesIntoColumns(swimlane.notes, kanbanGroupBy, kanbanGroupPropId, definitions, colorNames, colorOrder);
           if (columns.length === 0) return null;
 
           return (
