@@ -18,7 +18,7 @@ export default function DesktopFab({ right }: { right: number }) {
   const activePageId = useNotesStore((s) => s.activePageId);
   const setHighlightNoteId = useNotesStore((s) => s.setHighlightNoteId);
 
-  const { isRecording, start, stop, isSupported } = useVoiceRecording();
+  const { isRecording, start, stop, isSupported, getRecordingDurationMs } = useVoiceRecording();
   const [transcribing, setTranscribing] = useState(false);
   const [remaining, setRemaining] = useState(MAX_RECORDING_SECONDS);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -52,6 +52,10 @@ export default function DesktopFab({ right }: { right: number }) {
     if (isRecording) {
       try {
         const blob = await stop();
+        if (getRecordingDurationMs() < 2500) {
+          showToast("Notes aren't created for voice recordings of less than 3 seconds.");
+          return;
+        }
         setTranscribing(true);
         const text = await transcribeAudio(openrouterKey!, blob);
         if (text) {
@@ -75,7 +79,7 @@ export default function DesktopFab({ right }: { right: number }) {
         showToast("Microphone access denied.");
       }
     }
-  }, [isRecording, stop, start, openrouterKey, createNote, pages, activePageId, showToast, setHighlightNoteId, transcribing]);
+  }, [isRecording, stop, start, openrouterKey, createNote, pages, activePageId, showToast, setHighlightNoteId, transcribing, getRecordingDurationMs]);
 
   if (!openrouterKey || !isSupported) {
     return (

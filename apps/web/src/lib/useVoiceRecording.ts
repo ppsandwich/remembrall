@@ -5,6 +5,7 @@ export function useVoiceRecording() {
   const recorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const streamRef = useRef<MediaStream | null>(null);
+  const startTimeRef = useRef<number>(0);
 
   const isSupported =
     typeof navigator !== "undefined" &&
@@ -27,6 +28,7 @@ export function useVoiceRecording() {
 
     recorder.start();
     recorderRef.current = recorder;
+    startTimeRef.current = Date.now();
     setIsRecording(true);
   }, []);
 
@@ -61,5 +63,10 @@ export function useVoiceRecording() {
     });
   }, []);
 
-  return { isRecording, start, stop, isSupported };
+  const getRecordingDurationMs = useCallback(() => {
+    if (!startTimeRef.current) return 0;
+    return Date.now() - startTimeRef.current;
+  }, []);
+
+  return { isRecording, start, stop, isSupported, getRecordingDurationMs };
 }
