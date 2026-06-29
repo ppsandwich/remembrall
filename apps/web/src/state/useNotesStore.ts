@@ -78,7 +78,7 @@ export const DEFAULT_COLOR_NAMES: Record<string, string> = {
 
 export const DEFAULT_COLOR_ORDER = ["red", "orange", "teal", "blue", "green", "purple", "pink"];
 
-function detectColorFromTags(body: string): { color: string; cleanedBody: string } {
+export function detectColorFromTags(body: string): { color: string; cleanedBody: string } {
   const tags = extractTags(body);
   for (const tag of tags) {
     const match = NOTE_COLORS.find((c) => c.name !== "none" && c.name === tag);
@@ -909,7 +909,7 @@ export const useNotesStore = create<NotesState>((set, get) => ({
   },
 }));
 
-function clusterNotes(notes: DecryptedNote[], colorOrder: string[], cols: number): DecryptedNote[] {
+export function clusterNotes(notes: DecryptedNote[], colorOrder: string[], cols: number): DecryptedNote[] {
   const colorGroups = new Map<string, DecryptedNote[]>();
   const noColor: DecryptedNote[] = [];
 

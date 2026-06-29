@@ -9,7 +9,7 @@ interface EncryptionState {
   decryptPayload: (payload: EncryptedPayload) => Promise<string>;
 }
 
-function wrapText(text: string): EncryptedPayload {
+export function wrapText(text: string): EncryptedPayload {
   return {
     version: 1,
     algorithm: "AES-GCM",
@@ -21,7 +21,7 @@ function wrapText(text: string): EncryptedPayload {
   };
 }
 
-function unwrapText(payload: EncryptedPayload): string {
+export function unwrapText(payload: EncryptedPayload): string {
   if (payload.ciphertext) {
     try {
       return decodeURIComponent(escape(atob(payload.ciphertext)));
