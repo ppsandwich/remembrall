@@ -121,8 +121,9 @@ export default function NoteEditor() {
       for (const tag of tags) {
         fullBody = addTag(fullBody, tag);
       }
-      await createNote(fullBody);
+      await createNote(fullBody, undefined, title || undefined);
       showToast("Saved.");
+      setTitle("");
       setBodyHtml("");
       setTags([]);
       setShowQuickCapture(false);
@@ -293,19 +294,17 @@ export default function NoteEditor() {
           </div>
         )}
 
-        {!isNewNote && (
-          <div className="px-4 py-2" style={{ borderBottom: "1px solid var(--border)" }}>
-            <input
-              type="text"
-              value={title}
-              onChange={(e) => handleTitleChange(e.target.value)}
-              placeholder="Title (optional)"
-              dir="ltr"
-              className="w-full text-sm font-medium outline-none bg-transparent"
-              style={{ color: "var(--text)" }}
-            />
-          </div>
-        )}
+        <div className="px-4 py-2" style={{ borderBottom: "1px solid var(--border)" }}>
+          <input
+            type="text"
+            value={title}
+            onChange={(e) => isNewNote ? setTitle(e.target.value) : handleTitleChange(e.target.value)}
+            placeholder="Title (optional)"
+            dir="ltr"
+            className="w-full text-sm font-medium outline-none bg-transparent"
+            style={{ color: "var(--text)" }}
+          />
+        </div>
 
         <div className={`px-4 py-1.5 ${isNewNote ? "hidden md:block" : ""}`} style={{ borderBottom: "1px solid var(--border)" }}>
           <TagInput tags={tags} onChange={handleTagsChange} compact={isNewNote} />
