@@ -2,7 +2,7 @@
 
 import { useCallback, useState, useRef } from "react";
 import type { DecryptedNote, PropertyDefinition } from "@brall/core";
-import { formatPropertyValue, extractTags } from "@brall/core";
+import { formatPropertyValue, extractTags, evaluateFormula } from "@brall/core";
 import { useNotesStore } from "@/state/useNotesStore";
 import { useUIStore } from "@/state/useUIStore";
 
@@ -129,7 +129,9 @@ function TableRow({
         <td key={def.id} className="px-3 py-2" onClick={(e) => e.stopPropagation()}>
           <InlinePropertyEditor
             definition={def}
-            value={note.properties?.[def.id] ?? null}
+            value={def.type === "calculated"
+              ? evaluateFormula(def.formula || "", note.properties || {}, definitions)
+              : (note.properties?.[def.id] ?? null)}
             onChange={(v) => onPropertyChange(def.id, v)}
           />
         </td>
@@ -268,6 +270,18 @@ function InlinePropertyEditor({
           </button>
         </div>
       );
+    case "calculated": {
+      const num = typeof value === "number" && isFinite(value) ? value : null;
+      return (
+        <span
+          className="text-xs px-1 py-0.5 font-mono"
+          style={{ color: num !== null ? "var(--text)" : "var(--text-muted)" }}
+          title={num !== null ? String(num) : "Cannot evaluate"}
+        >
+          {num !== null ? String(num) : "\u2014"}
+        </span>
+      );
+    }
     default:
       return <span style={{ color: "var(--text-muted)" }}>—</span>;
   }

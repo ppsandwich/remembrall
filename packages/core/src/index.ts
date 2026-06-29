@@ -43,3 +43,5 @@ export {
 } from "./propertyUtils";
 
 export type { PropertyFilter, PropertyFilterOperator } from "./propertyUtils";
+
+export { evaluateFormula, validateFormula, getReferencedPropertyIds } from "./formulaEngine";

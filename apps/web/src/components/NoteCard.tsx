@@ -1,7 +1,7 @@
 "use client";
 
 import type { DecryptedNote } from "@brall/core";
-import { extractTags, stripTags } from "@brall/core";
+import { extractTags, stripTags, evaluateFormula } from "@brall/core";
 import { useNotesStore, NOTE_COLORS, DARK_NOTE_COLORS, getColorDisplayName } from "@/state/useNotesStore";
 import { writeClipboard } from "@/lib/clipboard";
 import { useUIStore } from "@/state/useUIStore";
@@ -616,16 +616,22 @@ export default function NoteCard({ note, index, highlighted, onHighlightEnd }: P
               ))}
             </div>
           )}
-          {note.properties && Object.keys(note.properties).length > 0 && (() => {
+          {(() => {
             const defs = getActivePropertyDefinitions();
             if (defs.length === 0) return null;
-            const propEntries = defs.filter((d) => note.properties[d.id] !== undefined && note.properties[d.id] !== null);
+            const propEntries = defs.filter((d) => {
+              if (d.type === "calculated") return !!d.formula;
+              return note.properties[d.id] !== undefined && note.properties[d.id] !== null;
+            });
             if (propEntries.length === 0) return null;
             return (
               <div className="flex flex-wrap gap-1 mt-2">
-                {propEntries.map((def) => (
-                  <PropertyBadge key={def.id} definition={def} value={note.properties[def.id]} />
-                ))}
+                {propEntries.map((def) => {
+                  const value = def.type === "calculated"
+                    ? evaluateFormula(def.formula || "", note.properties || {}, defs)
+                    : note.properties[def.id];
+                  return <PropertyBadge key={def.id} definition={def} value={value} />;
+                })}
               </div>
             );
           })()}

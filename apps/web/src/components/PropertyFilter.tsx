@@ -42,7 +42,7 @@ export default function PropertyFilterBar() {
   if (definitions.length === 0) return null;
 
   const activeFilters = Array.from(propertyFilters.entries());
-  const availableDefs = definitions.filter((d) => !propertyFilters.has(d.id));
+  const availableDefs = definitions.filter((d) => !propertyFilters.has(d.id) && d.type !== "calculated");
 
   return (
     <div className="flex items-center gap-1.5 flex-wrap">

@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useMemo } from "react";
 import type { PropertyDefinition, PropertyType } from "@brall/core";
-import { PROPERTY_TYPES } from "@brall/core";
+import { PROPERTY_TYPES, validateFormula } from "@brall/core";
 import { useNotesStore } from "@/state/useNotesStore";
 import { useUIStore } from "@/state/useUIStore";
 import { X, Plus, Trash, Pencil } from "./Icons";
@@ -15,6 +15,7 @@ const TYPE_LABELS: Record<PropertyType, string> = {
   "multi-select": "Multi-select",
   checkbox: "Checkbox",
   url: "URL",
+  calculated: "Calculated",
 };
 
 interface Props {
@@ -38,13 +39,22 @@ export default function PropertyManager({ open, onClose }: Props) {
   const [newName, setNewName] = useState("");
   const [newType, setNewType] = useState<PropertyType>("text");
   const [newOptions, setNewOptions] = useState("");
+  const [newFormula, setNewFormula] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
   const [editType, setEditType] = useState<PropertyType>("text");
   const [editOptions, setEditOptions] = useState("");
+  const [editFormula, setEditFormula] = useState("");
 
   const handleAdd = useCallback(async () => {
     if (!newName.trim()) return;
+    if (newType === "calculated") {
+      const validation = validateFormula(newFormula, definitions);
+      if (!validation.valid) {
+        showToast(validation.error || "Invalid formula");
+        return;
+      }
+    }
     const def: PropertyDefinition = {
       id: crypto.randomUUID(),
       name: newName.trim(),
@@ -52,27 +62,41 @@ export default function PropertyManager({ open, onClose }: Props) {
       ...(newType === "select" || newType === "multi-select"
         ? { options: newOptions.split(",").map((o) => o.trim()).filter(Boolean) }
         : {}),
+      ...(newType === "calculated"
+        ? { formula: newFormula.trim() }
+        : {}),
     };
     await addPropertyDefinition(def);
     setAdding(false);
     setNewName("");
     setNewType("text");
     setNewOptions("");
+    setNewFormula("");
     showToast("Property added.");
-  }, [newName, newType, newOptions, addPropertyDefinition, showToast]);
+  }, [newName, newType, newOptions, newFormula, definitions, addPropertyDefinition, showToast]);
 
   const handleUpdate = useCallback(async () => {
     if (!editingId || !editName.trim()) return;
+    if (editType === "calculated") {
+      const validation = validateFormula(editFormula, definitions, editingId);
+      if (!validation.valid) {
+        showToast(validation.error || "Invalid formula");
+        return;
+      }
+    }
     await updatePropertyDefinition(editingId, {
       name: editName.trim(),
       type: editType,
       ...(editType === "select" || editType === "multi-select"
         ? { options: editOptions.split(",").map((o) => o.trim()).filter(Boolean) }
         : {}),
+      ...(editType === "calculated"
+        ? { formula: editFormula.trim() }
+        : {}),
     });
     setEditingId(null);
     showToast("Property updated.");
-  }, [editingId, editName, editType, editOptions, updatePropertyDefinition, showToast]);
+  }, [editingId, editName, editType, editOptions, editFormula, definitions, updatePropertyDefinition, showToast]);
 
   const handleDelete = useCallback(async (defId: string) => {
     await deletePropertyDefinition(defId);
@@ -84,6 +108,7 @@ export default function PropertyManager({ open, onClose }: Props) {
     setEditName(def.name);
     setEditType(def.type);
     setEditOptions(def.options?.join(", ") || "");
+    setEditFormula(def.formula || "");
   };
 
   if (!open) return null;
@@ -129,9 +154,13 @@ export default function PropertyManager({ open, onClose }: Props) {
                     name={editName}
                     type={editType}
                     options={editOptions}
+                    formula={editFormula}
+                    definitions={definitions}
+                    selfId={editingId}
                     onNameChange={setEditName}
                     onTypeChange={setEditType}
                     onOptionsChange={setEditOptions}
+                    onFormulaChange={setEditFormula}
                     onSave={handleUpdate}
                     onCancel={() => setEditingId(null)}
                     saveLabel="Update"
@@ -153,6 +182,11 @@ export default function PropertyManager({ open, onClose }: Props) {
                     {def.options && def.options.length > 0 && (
                       <span className="text-xs" style={{ color: "var(--text-muted)" }}>
                         {def.options.join(", ")}
+                      </span>
+                    )}
+                    {def.type === "calculated" && def.formula && (
+                      <span className="text-xs font-mono truncate max-w-[140px]" style={{ color: "var(--text-muted)" }} title={def.formula}>
+                        {def.formula}
                       </span>
                     )}
                   </div>
@@ -185,9 +219,12 @@ export default function PropertyManager({ open, onClose }: Props) {
                 name={newName}
                 type={newType}
                 options={newOptions}
+                formula={newFormula}
+                definitions={definitions}
                 onNameChange={setNewName}
                 onTypeChange={setNewType}
                 onOptionsChange={setNewOptions}
+                onFormulaChange={setNewFormula}
                 onSave={handleAdd}
                 onCancel={() => setAdding(false)}
                 saveLabel="Add"
@@ -215,9 +252,13 @@ function PropertyForm({
   name,
   type,
   options,
+  formula,
+  definitions,
+  selfId,
   onNameChange,
   onTypeChange,
   onOptionsChange,
+  onFormulaChange,
   onSave,
   onCancel,
   saveLabel,
@@ -225,14 +266,25 @@ function PropertyForm({
   name: string;
   type: PropertyType;
   options: string;
+  formula: string;
+  definitions: PropertyDefinition[];
+  selfId?: string;
   onNameChange: (v: string) => void;
   onTypeChange: (v: PropertyType) => void;
   onOptionsChange: (v: string) => void;
+  onFormulaChange: (v: string) => void;
   onSave: () => void;
   onCancel: () => void;
   saveLabel: string;
 }) {
   const needsOptions = type === "select" || type === "multi-select";
+  const isCalculated = type === "calculated";
+  const formulaValidation = isCalculated ? validateFormula(formula, definitions, selfId) : null;
+  const numberProperties = definitions.filter((d) => d.type === "number" || (d.type === "calculated" && d.id !== selfId));
+
+  const insertPropertyRef = (propId: string) => {
+    onFormulaChange(formula + `{${propId}}`);
+  };
 
   return (
     <div className="space-y-2">
@@ -283,6 +335,74 @@ function PropertyForm({
           }}
         />
       )}
+      {isCalculated && (
+        <div className="space-y-1.5">
+          <div className="flex gap-1 flex-wrap items-center">
+            <span className="text-xs" style={{ color: "var(--text-muted)" }}>Insert:</span>
+            {numberProperties.map((prop) => (
+              <button
+                key={prop.id}
+                type="button"
+                onClick={() => insertPropertyRef(prop.id)}
+                className="text-xs px-1.5 py-0.5 rounded transition-colors"
+                style={{ background: "var(--surface-subtle)", color: "var(--accent)", border: "1px solid var(--border)" }}
+                title={`{${prop.id}}`}
+              >
+                {prop.name}
+              </button>
+            ))}
+          </div>
+          <div className="flex gap-1 flex-wrap items-center">
+            <span className="text-xs" style={{ color: "var(--text-muted)" }}>Operators:</span>
+            {["+", "-", "*", "/", "%", "^", "(", ")"].map((op) => (
+              <button
+                key={op}
+                type="button"
+                onClick={() => onFormulaChange(formula + op)}
+                className="text-xs px-1.5 py-0.5 rounded font-mono"
+                style={{ background: "var(--surface-subtle)", color: "var(--text)", border: "1px solid var(--border)" }}
+              >
+                {op}
+              </button>
+            ))}
+          </div>
+          <div className="flex gap-1 flex-wrap items-center">
+            <span className="text-xs" style={{ color: "var(--text-muted)" }}>Functions:</span>
+            {["ABS(", "ROUND(", "MIN(", "MAX(", "CEIL(", "FLOOR("].map((fn) => (
+              <button
+                key={fn}
+                type="button"
+                onClick={() => onFormulaChange(formula + fn)}
+                className="text-xs px-1.5 py-0.5 rounded font-mono"
+                style={{ background: "var(--surface-subtle)", color: "var(--text)", border: "1px solid var(--border)" }}
+              >
+                {fn}
+              </button>
+            ))}
+          </div>
+          <input
+            type="text"
+            value={formula}
+            onChange={(e) => onFormulaChange(e.target.value)}
+            placeholder="e.g. {price} * {quantity}"
+            className="w-full px-2 py-1.5 text-xs outline-none rounded font-mono"
+            style={{
+              background: "var(--surface-subtle)",
+              border: `1px solid ${formulaValidation?.valid === false ? "var(--danger, #EF4444)" : "var(--border)"}`,
+              color: "var(--text)",
+            }}
+          />
+          {formulaValidation && !formulaValidation.valid && (
+            <p className="text-xs" style={{ color: "var(--danger, #EF4444)" }}>{formulaValidation.error}</p>
+          )}
+          {formula && formulaValidation?.valid && (
+            <p className="text-xs" style={{ color: "var(--text-muted)" }}>Preview: <span className="font-mono">{formula.replace(/\{[^}]+\}/g, (m) => {
+              const def = definitions.find((d) => d.id === m.slice(1, -1));
+              return def ? `{${def.name}}` : m;
+            })}</span></p>
+          )}
+        </div>
+      )}
       <div className="flex justify-end gap-2">
         <button
           onClick={onCancel}
@@ -293,7 +413,7 @@ function PropertyForm({
         </button>
         <button
           onClick={onSave}
-          disabled={!name.trim()}
+          disabled={!name.trim() || (isCalculated && formulaValidation?.valid === false)}
           className="px-2.5 py-1 text-xs rounded transition-colors disabled:opacity-40"
           style={{ background: "var(--accent)", color: "var(--surface)" }}
         >

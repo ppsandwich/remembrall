@@ -7,13 +7,14 @@ export type NoteSource =
   | "import"
   | "welcome";
 
-export type PropertyType = "text" | "number" | "date" | "select" | "multi-select" | "checkbox" | "url";
+export type PropertyType = "text" | "number" | "date" | "select" | "multi-select" | "checkbox" | "url" | "calculated";
 
 export interface PropertyDefinition {
   id: string;
   name: string;
   type: PropertyType;
   options?: string[];
+  formula?: string;
 }
 
 export type PropertyValue = string | number | boolean | string[] | null;

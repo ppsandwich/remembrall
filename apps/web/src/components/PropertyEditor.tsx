@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useRef, useEffect } from "react";
 import type { PropertyDefinition } from "@brall/core";
-import { defaultPropertyValue } from "@brall/core";
+import { defaultPropertyValue, evaluateFormula } from "@brall/core";
 
 interface Props {
   definitions: PropertyDefinition[];
@@ -22,7 +22,9 @@ export default function PropertyEditor({ definitions, values, onChange }: Props)
         <PropertyField
           key={def.id}
           definition={def}
+          allDefinitions={definitions}
           value={values[def.id] ?? defaultPropertyValue(def.type)}
+          values={values}
           onChange={(v) => onChange(def.id, v)}
         />
       ))}
@@ -32,11 +34,15 @@ export default function PropertyEditor({ definitions, values, onChange }: Props)
 
 function PropertyField({
   definition,
+  allDefinitions,
   value,
+  values,
   onChange,
 }: {
   definition: PropertyDefinition;
+  allDefinitions: PropertyDefinition[];
   value: unknown;
+  values: Record<string, unknown>;
   onChange: (v: unknown) => void;
 }) {
   switch (definition.type) {
@@ -54,6 +60,8 @@ function PropertyField({
       return <CheckboxInput name={definition.name} value={!!value} onChange={onChange} />;
     case "url":
       return <UrlInput name={definition.name} value={String(value ?? "")} onChange={onChange} />;
+    case "calculated":
+      return <CalculatedDisplay name={definition.name} definition={definition} values={values} definitions={allDefinitions} />;
     default:
       return null;
   }
@@ -239,6 +247,42 @@ function UrlInput({ name, value, onChange }: { name: string; value: string; onCh
         className="px-2 py-1 text-xs outline-none w-32"
         style={fieldStyle()}
       />
+    </label>
+  );
+}
+
+function CalculatedDisplay({
+  name,
+  definition,
+  values,
+  definitions,
+}: {
+  name: string;
+  definition: PropertyDefinition;
+  values: Record<string, unknown>;
+  definitions: PropertyDefinition[];
+}) {
+  const result = definition.formula
+    ? evaluateFormula(definition.formula, values, definitions)
+    : null;
+  const display = result !== null ? String(result) : "\u2014";
+
+  return (
+    <label className="flex items-center gap-1.5">
+      <span className="text-xs shrink-0" style={{ color: "var(--text-muted)" }}>{name}</span>
+      <span
+        className="px-2 py-1 text-xs w-20 truncate"
+        style={{
+          background: "var(--surface-subtle)",
+          border: "1px solid var(--border)",
+          borderRadius: "6px",
+          color: result !== null ? "var(--text)" : "var(--text-muted)",
+          fontSize: "12px",
+        }}
+        title={result !== null ? String(result) : "Cannot evaluate"}
+      >
+        {display}
+      </span>
     </label>
   );
 }
