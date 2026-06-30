@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
-import { Volleyball, Layers, Shield, Zap, Monitor, Download, Clipboard, AudioLines, Grid3X3, Users } from "./Icons";
+import { Volleyball, Layers, Shield, Zap, Monitor, Download, Clipboard, AudioLines, Grid3X3, Users, Code2, Scale, GitCommitHorizontal } from "./Icons";
 import LoginPopover from "./LoginPopover";
 
 type LoginMode = "login" | "signup";
@@ -128,6 +128,7 @@ export default function LandingPage() {
         <KeyFeaturesSection />
         <ScreenshotsSection />
         <CTASection onGetStarted={handleCta} isReturning={isReturning} />
+        <GitHubActivitySection />
       </main>
       <LandingFooter />
       {showLogin && <LoginPopover onClose={() => setShowLogin(false)} defaultMode={loginMode} />}
@@ -871,6 +872,168 @@ function CTASection({ onGetStarted, isReturning }: { onGetStarted: () => void; i
         >
           {isReturning ? "Go to notes" : "Sign up — it's free"}
         </button>
+      </div>
+    </section>
+  );
+}
+
+function GitHubActivitySection() {
+  const commits = [
+    { hash: "f0ff876", date: "2026-06-30", message: "Tweak landing page button styles" },
+    { hash: "43b6066", date: "2026-06-30", message: "Remove landing page aurora animation" },
+    { hash: "9b9e62a", date: "2026-06-30", message: "Add background image to landing page hero section" },
+    { hash: "147b871", date: "2026-06-30", message: "Add key features section to landing page" },
+    { hash: "540b352", date: "2026-06-30", message: "UI polish — sizing, toolbar reorg, color dropdown" },
+    { hash: "ea59507", date: "2026-06-30", message: "Add guest link sharing for individual notes" },
+    { hash: "9dfb8aa", date: "2026-06-30", message: "Add command palette with Ctrl+K shortcut" },
+    { hash: "708ac65", date: "2026-06-30", message: "Add note templates with gallery and save-as-template" },
+    { hash: "d2792fb", date: "2026-06-30", message: "Add formatting slash menu to rich text editor" },
+    { hash: "8fb88a9", date: "2026-06-30", message: "Add resizable columns and sorting to table view" },
+  ];
+
+  return (
+    <section className="relative py-20 md:py-28 px-6 overflow-hidden">
+      {/* Grain */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{ backgroundImage: GRAIN, backgroundRepeat: "repeat", opacity: 0.4 }}
+      />
+
+      <div className="relative max-w-5xl mx-auto">
+        <div className="text-center mb-12">
+          <p
+            className="text-xs tracking-widest uppercase mb-3"
+            style={{ color: GOLD_STOPS[1] }}
+          >
+            Open Source
+          </p>
+          <h2
+            style={{
+              fontFamily: "var(--font-almendra), serif",
+              fontSize: "clamp(1.5rem, 3.5vw, 2.25rem)",
+              fontWeight: 700,
+              color: "var(--text)",
+              letterSpacing: "-0.01em",
+              lineHeight: 1.2,
+              marginBottom: "0.75rem",
+            }}
+          >
+            Built in the open
+          </h2>
+          <p className="text-sm max-w-md mx-auto" style={{ color: "var(--text-muted)" }}>
+            Brall is developed transparently on GitHub. Follow along, file issues, or contribute.
+          </p>
+        </div>
+
+        <div className="grid md:grid-cols-2 gap-10">
+          {/* Timeline */}
+          <div>
+            <div className="flex items-center gap-2 mb-5">
+              <Code2 size={16} style={{ color: GOLD_STOPS[1] }} />
+              <h3 className="text-sm font-semibold" style={{ color: "var(--text)" }}>
+                Recent activity
+              </h3>
+            </div>
+            <div className="relative pl-5">
+              {/* Vertical line */}
+              <div
+                className="absolute left-[7px] top-1 bottom-1 w-px"
+                style={{ background: "var(--border)" }}
+              />
+              <ul className="space-y-3">
+                {commits.map((c) => (
+                  <li key={c.hash} className="relative flex items-start gap-3">
+                    <div
+                      className="absolute left-[-17px] top-[7px] w-[7px] h-[7px] rounded-full shrink-0"
+                      style={{ background: "var(--border-strong)", border: "1.5px solid var(--bg)" }}
+                    />
+                    <div className="min-w-0">
+                      <p className="text-xs truncate" style={{ color: "var(--text-secondary)" }}>
+                        {c.message}
+                      </p>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <span className="text-[10px] font-mono" style={{ color: "var(--text-muted)", opacity: 0.7 }}>
+                          {c.hash}
+                        </span>
+                        <span className="text-[10px]" style={{ color: "var(--text-muted)", opacity: 0.5 }}>
+                          {c.date}
+                        </span>
+                      </div>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+
+          {/* Repo link + License */}
+          <div className="flex flex-col gap-6">
+            {/* Repo card */}
+            <a
+              href="https://github.com/ppsandwich/remembrall"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group rounded-xl p-5 transition-all"
+              style={{
+                background: "var(--surface-subtle)",
+                border: "1px solid var(--border)",
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--border-strong)"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--border)"; }}
+            >
+              <div className="flex items-center gap-2 mb-3">
+                <svg viewBox="0 0 16 16" width="20" height="20" fill="currentColor" style={{ color: "var(--text)" }}>
+                  <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z" />
+                </svg>
+                <span className="text-sm font-semibold" style={{ color: "var(--text)" }}>
+                  ppsandwich/remembrall
+                </span>
+              </div>
+              <p className="text-xs mb-4" style={{ color: "var(--text-muted)" }}>
+                The speed-first, privacy-respecting note capture app. View source, report issues, or contribute.
+              </p>
+              <span
+                className="inline-flex items-center gap-1.5 text-xs font-medium transition-colors"
+                style={{ color: GOLD_STOPS[1] }}
+              >
+                View on GitHub
+                <span style={{ fontSize: "10px" }}>&#8599;</span>
+              </span>
+            </a>
+
+            {/* License card */}
+            <div
+              className="rounded-xl p-5"
+              style={{
+                background: "var(--surface-subtle)",
+                border: "1px solid var(--border)",
+              }}
+            >
+              <div className="flex items-center gap-2 mb-3">
+                <Scale size={16} style={{ color: GOLD_STOPS[1] }} />
+                <h3 className="text-sm font-semibold" style={{ color: "var(--text)" }}>
+                  License
+                </h3>
+              </div>
+              <p className="text-xs leading-relaxed" style={{ color: "var(--text-muted)" }}>
+                Brall is released under the{" "}
+                <strong style={{ color: "var(--text-secondary)" }}>GNU General Public License v3 (GPLv3)</strong>.
+                You are free to use, modify, and distribute the software, provided that derivative works
+                are also licensed under GPLv3. See the{" "}
+                <a
+                  href="https://github.com/ppsandwich/remembrall/blob/main/LICENSE"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline transition-colors"
+                  style={{ color: GOLD_STOPS[1] }}
+                >
+                  full license
+                </a>{" "}
+                for details.
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
     </section>
   );
