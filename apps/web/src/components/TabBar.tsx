@@ -275,56 +275,56 @@ export default function TabBar() {
             const globalIndex = pages.findIndex((p) => p.id === page.id);
             return renderTab(page, i, globalIndex);
           })}
-        </div>
-        {showDropdownButton && (
-          <div className="relative" ref={dropdownRef}>
-            <button
-              ref={dropdownButtonRef}
-              onClick={() => {
-                if (!showDropdown && dropdownButtonRef.current) {
-                  const rect = dropdownButtonRef.current.getBoundingClientRect();
-                  setDropdownPos({ top: rect.bottom + 4, left: rect.left });
-                }
-                setShowDropdown(!showDropdown);
-              }}
-              className="p-1 rounded-md transition-colors"
-              style={{ color: "var(--text-muted)", border: "1px solid var(--border)" }}
-              title="More pages"
-              aria-label="More pages"
-              onMouseEnter={(e) => { e.currentTarget.style.background = "var(--surface-subtle)"; e.currentTarget.style.color = "var(--text-secondary)"; }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--text-muted)"; }}
-            >
-              <ChevronDown size={14} />
-            </button>
-            {showDropdown && createPortal(
-              <div
-                ref={dropdownMenuRef}
-                className="fixed rounded-lg shadow-lg z-50 py-1 min-w-[8rem]"
-                style={{ background: "var(--surface)", border: "1px solid var(--border)", top: dropdownPos.top, left: dropdownPos.left }}
+          {showDropdownButton && (
+            <div className="relative" ref={dropdownRef}>
+              <button
+                ref={dropdownButtonRef}
+                onClick={() => {
+                  if (!showDropdown && dropdownButtonRef.current) {
+                    const rect = dropdownButtonRef.current.getBoundingClientRect();
+                    setDropdownPos({ top: rect.bottom + 4, left: rect.left });
+                  }
+                  setShowDropdown(!showDropdown);
+                }}
+                className="p-1 rounded-md transition-colors"
+                style={{ color: "var(--text-muted)", border: "1px solid var(--border)" }}
+                title="More pages"
+                aria-label="More pages"
+                onMouseEnter={(e) => { e.currentTarget.style.background = "var(--surface-subtle)"; e.currentTarget.style.color = "var(--text-secondary)"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--text-muted)"; }}
               >
-                {overflowPages.map((page) => (
-                  <button
-                    key={page.id}
-                    onClick={() => {
-                      setActivePage(page.id);
-                      setShowDropdown(false);
-                    }}
-                    className="w-full text-left px-3 py-1.5 text-xs transition-colors"
-                    style={{
-                      color: activePageId === page.id ? "var(--text)" : "var(--text-muted)",
-                      background: activePageId === page.id ? "var(--surface-subtle)" : "transparent",
-                    }}
-                    onMouseEnter={(e) => { e.currentTarget.style.background = "var(--surface-subtle)"; e.currentTarget.style.color = "var(--text-secondary)"; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.background = activePageId === page.id ? "var(--surface-subtle)" : "transparent"; e.currentTarget.style.color = activePageId === page.id ? "var(--text)" : "var(--text-muted)"; }}
-                  >
-                    {page.name}
-                  </button>
-                ))}
-              </div>,
-              document.body
-            )}
-          </div>
-        )}
+                <ChevronDown size={14} />
+              </button>
+              {showDropdown && createPortal(
+                <div
+                  ref={dropdownMenuRef}
+                  className="fixed rounded-lg shadow-lg z-50 py-1 min-w-[8rem]"
+                  style={{ background: "var(--surface)", border: "1px solid var(--border)", top: dropdownPos.top, left: dropdownPos.left }}
+                >
+                  {overflowPages.map((page) => (
+                    <button
+                      key={page.id}
+                      onClick={() => {
+                        setActivePage(page.id);
+                        setShowDropdown(false);
+                      }}
+                      className="w-full text-left px-3 py-1.5 text-xs transition-colors"
+                      style={{
+                        color: activePageId === page.id ? "var(--text)" : "var(--text-muted)",
+                        background: activePageId === page.id ? "var(--surface-subtle)" : "transparent",
+                      }}
+                      onMouseEnter={(e) => { e.currentTarget.style.background = "var(--surface-subtle)"; e.currentTarget.style.color = "var(--text-secondary)"; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.background = activePageId === page.id ? "var(--surface-subtle)" : "transparent"; e.currentTarget.style.color = activePageId === page.id ? "var(--text)" : "var(--text-muted)"; }}
+                    >
+                      {page.name}
+                    </button>
+                  ))}
+                </div>,
+                document.body
+              )}
+            </div>
+          )}
+        </div>
         <button
           onClick={() => setEditMode(!editMode)}
           className="p-1 rounded-md transition-colors"
