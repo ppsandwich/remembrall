@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
-import { Volleyball, Layers, Shield, Zap, Monitor, Download } from "./Icons";
+import { Volleyball, Layers, Shield, Zap, Monitor, Download, Clipboard, AudioLines, Grid3X3, Users } from "./Icons";
 import LoginPopover from "./LoginPopover";
 
 type LoginMode = "login" | "signup";
@@ -43,6 +43,51 @@ const FEATURES = [
   },
 ];
 
+const KEY_FEATURES = [
+  {
+    icon: Monitor,
+    title: "Capture everywhere",
+    description:
+      "System tray app with a global shortcut, Chrome extension with right-click capture, installable PWA, and mobile share target — all feeding into one encrypted note store. Capture thoughts from any context, instantly.",
+    texture: "crosshatch",
+  },
+  {
+    icon: AudioLines,
+    title: "Voice-to-note with AI",
+    description:
+      "Record a voice memo, have it transcribed via Whisper, then immediately summarise, extract key points, fix grammar, or translate — all in one seamless pipeline. No other notes app connects voice and AI this tightly.",
+    texture: "waves",
+  },
+  {
+    icon: Grid3X3,
+    title: "Three views, one dataset",
+    description:
+      "Switch between Grid, Table, and Kanban views on any page. Custom properties with eight types — including calculated formulas — power sortable columns, inline editing, filters, and drag-and-drop cards.",
+    texture: "brick",
+  },
+  {
+    icon: Shield,
+    title: "Encrypted by default",
+    description:
+      "Every note is encrypted client-side with AES-GCM before it ever leaves your device. Search, edit, collaborate, and use AI — all on decrypted data that never touches the server.",
+    texture: "dots",
+  },
+  {
+    icon: Clipboard,
+    title: "Instant clipboard dump",
+    description:
+      "Select text anywhere on your desktop, hit Cmd+Shift+B, and it becomes an encrypted note. No app switching, no paste step. The fastest path from thought to safekeeping.",
+    texture: "crosshatch",
+  },
+  {
+    icon: Users,
+    title: "Share sections, not just notes",
+    description:
+      "Share entire pages with viewer or editor roles via email invitations. Generate public embeddable views for websites — all while maintaining end-to-end encryption.",
+    texture: "waves",
+  },
+];
+
 const TEXTURES: Record<string, string> = {
   brick: `url("data:image/svg+xml,%3Csvg width='42' height='44' viewBox='0 0 42 44' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Cpath d='M0 0h42v44H0V0zm1 1h40v20H1V1zM0 23h20v20H0V23zm22 0h20v20H22V23z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
   dots: `url("data:image/svg+xml,%3Csvg width='12' height='16' viewBox='0 0 12 16' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M4 .99C4 .445 4.444 0 5 0c.552 0 1 .45 1 .99v4.02C6 5.555 5.556 6 5 6c-.552 0-1-.45-1-.99V.99zm6 8c0-.546.444-.99 1-.99.552 0 1 .45 1 .99v4.02c0 .546-.444.99-1 .99-.552 0-1-.45-1-.99V8.99z' fill='%23ffffff' fill-opacity='0.04' fill-rule='evenodd'/%3E%3C/svg%3E")`,
@@ -80,6 +125,7 @@ export default function LandingPage() {
       <main className="flex-1">
         <HeroSection onGetStarted={handleCta} isReturning={isReturning} />
         <FeaturesSection />
+        <KeyFeaturesSection />
         <ScreenshotsSection />
         <CTASection onGetStarted={handleCta} isReturning={isReturning} />
       </main>
@@ -550,6 +596,93 @@ function FeatureCard({ feature, index }: { feature: typeof FEATURES[number]; ind
         e.currentTarget.style.borderColor = "var(--border-strong)";
         e.currentTarget.style.transform = "translateY(-2px)";
         e.currentTarget.style.boxShadow = "0 8px 32px rgba(0,0,0,0.08)";
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.borderColor = "var(--border)";
+        e.currentTarget.style.transform = "translateY(0)";
+        e.currentTarget.style.boxShadow = "none";
+      }}
+    >
+      <div
+        className="w-10 h-10 rounded-lg flex items-center justify-center mb-4"
+        style={{
+          background: `color-mix(in srgb, ${GOLD_STOPS[1]} 10%, var(--surface))`,
+          border: `1px solid color-mix(in srgb, ${GOLD_STOPS[1]} 20%, var(--border))`,
+        }}
+      >
+        <Icon size={18} strokeWidth={1.5} style={{ color: GOLD_STOPS[1] }} />
+      </div>
+      <h3
+        className="text-sm font-semibold mb-2"
+        style={{ color: "var(--text)", letterSpacing: "-0.01em" }}
+      >
+        {feature.title}
+      </h3>
+      <p className="text-xs leading-relaxed" style={{ color: "var(--text-muted)" }}>
+        {feature.description}
+      </p>
+    </div>
+  );
+}
+
+function KeyFeaturesSection() {
+  return (
+    <section className="relative py-24 md:py-32 px-6" style={{ background: "var(--surface-subtle)" }}>
+      <div
+        className="absolute top-0 left-0 right-0 h-px"
+        style={{ background: "linear-gradient(90deg, transparent, var(--border), transparent)" }}
+      />
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{ backgroundImage: GRAIN, backgroundRepeat: "repeat", opacity: 0.4 }}
+      />
+
+      <div className="relative max-w-5xl mx-auto">
+        <div className="text-center mb-16">
+          <p
+            className="text-xs tracking-widest uppercase mb-3"
+            style={{ color: GOLD_STOPS[1] }}
+          >
+            Key features
+          </p>
+          <h2
+            style={{
+              fontFamily: "var(--font-almendra), serif",
+              fontSize: "clamp(1.75rem, 4vw, 2.75rem)",
+              fontWeight: 700,
+              color: "var(--text)",
+              letterSpacing: "-0.01em",
+              lineHeight: 1.2,
+            }}
+          >
+            What sets Brall apart
+          </h2>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-5">
+          {KEY_FEATURES.map((feature, i) => (
+            <KeyFeatureCard key={feature.title} feature={feature} index={i} />
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function KeyFeatureCard({ feature, index }: { feature: typeof KEY_FEATURES[number]; index: number }) {
+  const Icon = feature.icon;
+  return (
+    <div
+      className={`landing-fade-up landing-fade-up-d${index + 1} relative rounded-xl p-6 md:p-8 transition-all overflow-hidden`}
+      style={{
+        background: "var(--surface)",
+        border: "1px solid var(--border)",
+        backgroundImage: TEXTURES[feature.texture],
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.borderColor = `color-mix(in srgb, ${GOLD_STOPS[1]} 40%, var(--border))`;
+        e.currentTarget.style.transform = "translateY(-2px)";
+        e.currentTarget.style.boxShadow = `0 8px 32px color-mix(in srgb, ${GOLD_STOPS[1]} 10%, transparent)`;
       }}
       onMouseLeave={(e) => {
         e.currentTarget.style.borderColor = "var(--border)";
