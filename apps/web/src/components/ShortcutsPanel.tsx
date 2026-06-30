@@ -17,10 +17,9 @@ const SHORTCUTS = [
 
 export default function ShortcutsPanel() {
   const { showShortcuts, setShowShortcuts } = useUIStore();
+  const focusTrapRef = useFocusTrap<HTMLDivElement>(() => setShowShortcuts(false));
 
   if (!showShortcuts) return null;
-
-  const focusTrapRef = useFocusTrap<HTMLDivElement>(() => setShowShortcuts(false));
 
   return (
     <div
