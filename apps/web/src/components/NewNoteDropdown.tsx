@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useLayoutEffect } from "react";
+import { createPortal } from "react-dom";
 import { useUIStore } from "@/state/useUIStore";
 import { Plus, LayoutTemplate, FileText2 } from "./Icons";
 
@@ -13,12 +14,23 @@ export default function NewNoteDropdown({ size = 22, className, style, title }: 
   const [open, setOpen] = useState(false);
   const setShowQuickCapture = useUIStore((s) => s.setShowQuickCapture);
   const setShowTemplateGallery = useUIStore((s) => s.setShowTemplateGallery);
+  const buttonRef = useRef<HTMLButtonElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
+
+  useLayoutEffect(() => {
+    if (!open || !buttonRef.current) return;
+    const rect = buttonRef.current.getBoundingClientRect();
+    setPos({ top: rect.bottom + 4, left: rect.right - 160 });
+  }, [open]);
 
   useEffect(() => {
     if (!open) return;
     const handler = (e: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+      if (
+        dropdownRef.current && !dropdownRef.current.contains(e.target as Node) &&
+        buttonRef.current && !buttonRef.current.contains(e.target as Node)
+      ) {
         setOpen(false);
       }
     };
@@ -46,10 +58,11 @@ export default function NewNoteDropdown({ size = 22, className, style, title }: 
   };
 
   return (
-    <div ref={dropdownRef} className="relative" style={{ display: "inline-flex" }}>
+    <>
       <button
+        ref={buttonRef}
         onClick={() => setOpen((v) => !v)}
-        className="flex items-center justify-center transition-all active:scale-95"
+        className={className}
         style={style}
         title={title || "New note"}
         aria-label={title || "New note"}
@@ -69,13 +82,18 @@ export default function NewNoteDropdown({ size = 22, className, style, title }: 
       >
         <Plus size={size} />
       </button>
-      {open && (
+      {open && pos && createPortal(
         <div
-          className="absolute right-0 top-full mt-1 rounded-lg shadow-lg overflow-hidden z-50"
+          ref={dropdownRef}
+          className="rounded-lg shadow-lg overflow-hidden"
           style={{
+            position: "fixed",
+            top: pos.top,
+            left: pos.left,
             background: "var(--surface)",
             border: "1px solid var(--border)",
             minWidth: "160px",
+            zIndex: 99999,
           }}
         >
           <button
@@ -98,8 +116,9 @@ export default function NewNoteDropdown({ size = 22, className, style, title }: 
             <LayoutTemplate size={14} />
             From template
           </button>
-        </div>
+        </div>,
+        document.body
       )}
-    </div>
+    </>
   );
 }
