@@ -88,12 +88,12 @@ export default function TagInput({ tags, onChange, compact }: Props) {
     }
   };
 
-  const sizeClasses = compact ? "text-sm px-1.5 py-0.5" : "text-sm px-2 py-1";
+  const sizeClasses = compact ? "text-[11px] px-1 py-0.5" : "text-[11px] px-1.5 py-0.5";
 
   return (
     <div className="relative">
       <div
-        className="flex flex-wrap items-center gap-1.5 cursor-text"
+        className="flex flex-wrap items-center gap-1 cursor-text"
         onClick={() => inputRef.current?.focus()}
       >
         {!compact && (
@@ -114,7 +114,7 @@ export default function TagInput({ tags, onChange, compact }: Props) {
               className="hover:opacity-70"
               style={{ color: "var(--text-muted)" }}
             >
-              <X />
+              <X size={12} />
             </button>
           </span>
         ))}
@@ -129,7 +129,7 @@ export default function TagInput({ tags, onChange, compact }: Props) {
           onFocus={() => setShowDropdown(true)}
           onKeyDown={handleKeyDown}
           placeholder={tags.length === 0 ? "Tags (you can also put #tags in the note text)" : ""}
-          className="flex-1 min-w-[60px] outline-none text-sm"
+          className="flex-1 min-w-[60px] outline-none text-[11px]"
           style={{ background: "transparent", color: "var(--text)" }}
           aria-label="Add tag"
         />

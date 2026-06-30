@@ -362,7 +362,7 @@ export default function Header() {
                 placeholder="Search"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-[168px] lg:w-[216px] px-3 py-1 rounded-md text-xs outline-none"
+                className="w-[134px] lg:w-[173px] px-3 py-1 rounded-md text-xs outline-none"
                 style={{
                   background: "var(--surface-subtle)",
                   border: "1px solid var(--border)",
@@ -417,7 +417,7 @@ export default function Header() {
               <HeaderButton onClick={toggleSelectMode} title={selectMode ? "Exit select mode" : "Select mode"} active={selectMode}>
                 {selectMode ? <CheckSquare /> : <Square />}
               </HeaderButton>
-              <HeaderButton onClick={() => setClusterMode(!clusterMode)} title={clusterMode ? "Sort by colour" : "Manual sort"} active={clusterMode}>
+              <HeaderButton onClick={() => setClusterMode(!clusterMode)} title={clusterMode ? "Sort by colour" : "Manual sort"} active={!clusterMode}>
                 <Layers />
               </HeaderButton>
               <ViewModeSwitcher />

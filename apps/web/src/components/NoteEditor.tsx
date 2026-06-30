@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { useNotesStore } from "@/state/useNotesStore";
+import { useNotesStore, NOTE_COLORS, DARK_NOTE_COLORS, getColorDisplayName } from "@/state/useNotesStore";
 import { useFocusTrap } from "@/lib/useFocusTrap";
 import { writeClipboard, readClipboard } from "@/lib/clipboard";
 import { useUIStore } from "@/state/useUIStore";
@@ -11,7 +11,7 @@ import { extractTags, addTag } from "@brall/core";
 import type { PropertyDefinition } from "@brall/core";
 import { htmlToPlainText, stripTagsFromHtml } from "@/lib/html";
 import { generateNoteShareToken } from "@/lib/embedApi";
-import { Copy, Pin, PinOff, Duplicate, Download, Trash, X, Save, Clipboard, Undo, Bookmark, LayoutTemplate, LinkIcon } from "./Icons";
+import { Copy, Pin, PinOff, Download, Trash, X, Save, Clipboard, Undo, LinkIcon } from "./Icons";
 import TagInput from "./TagInput";
 import RichTextEditor from "./RichTextEditor";
 import AttachmentList, { AttachmentUploadButton } from "./AttachmentList";
@@ -26,7 +26,7 @@ function buildBody(htmlBody: string, tags: string[]): string {
 }
 
 export default function NoteEditor() {
-  const { editingId, notes, setEditingId, createNote, updateNote, updateNoteTitle, deleteNote, restoreNote, duplicateNote, togglePin, pages, activePageId, moveNoteToPage, sectionPermissions, updateNoteProperty, getActivePropertyDefinitions } =
+  const { editingId, notes, setEditingId, createNote, updateNote, updateNoteTitle, deleteNote, restoreNote, togglePin, pages, activePageId, moveNoteToPage, sectionPermissions, updateNoteProperty, getActivePropertyDefinitions, updateNoteColor, colorNames } =
     useNotesStore();
   const showToast = useUIStore((s) => s.showToast);
   const showToastWithAction = useUIStore((s) => s.showToastWithAction);
@@ -35,6 +35,7 @@ export default function NoteEditor() {
   const showQuickCapture = useUIStore((s) => s.showQuickCapture);
   const setShowQuickCapture = useUIStore((s) => s.setShowQuickCapture);
   const showArchived = useUIStore((s) => s.showArchived);
+  const resolvedTheme = useUIStore((s) => s.resolvedTheme);
   const setShowTemplateGallery = useUIStore((s) => s.setShowTemplateGallery);
   const templateGalleryMode = useUIStore((s) => s.templateGalleryMode);
   const setTemplateGalleryMode = useUIStore((s) => s.setTemplateGalleryMode);
@@ -44,6 +45,8 @@ export default function NoteEditor() {
   const isNewNote = showQuickCapture && !editingId;
   const isOpen = isNewNote || !!editingId;
   const note = notes.find((n) => n.id === editingId);
+  const currentColor = note?.color || "";
+  const colors = resolvedTheme === "dark" ? DARK_NOTE_COLORS : NOTE_COLORS;
 
   const [title, setTitle] = useState("");
   const [bodyHtml, setBodyHtml] = useState("");
@@ -440,9 +443,6 @@ export default function NoteEditor() {
               <EditorButton onClick={() => note && togglePin(note.id)} title={note?.pinned ? "Unpin" : "Pin"}>
                 {note?.pinned ? <PinOff /> : <Pin />}
               </EditorButton>
-              <EditorButton onClick={() => note && duplicateNote(note.id)} title="Duplicate">
-                <Duplicate />
-              </EditorButton>
               {note && <AttachmentUploadButton noteId={note.id} />}
               <EditorButton onClick={handleExport} title="Export" className="hidden md:flex">
                 <Download />
@@ -452,12 +452,6 @@ export default function NoteEditor() {
                   <LinkIcon />
                 </EditorButton>
               )}
-              <EditorButton onClick={handleTemplateGallery} title="Templates">
-                <LayoutTemplate />
-              </EditorButton>
-              <EditorButton onClick={handleSaveAsTemplate} title="Save as template">
-                <Bookmark />
-              </EditorButton>
               <div className="w-px h-4 mx-1" style={{ background: "var(--border)" }} />
               {note?.deleted_at ? (
                 <EditorButton onClick={() => { if (note) { restoreNote(note.id); setEditingId(null); } }} title="Restore">
@@ -525,6 +519,8 @@ export default function NoteEditor() {
           placeholder="Start typing…"
           autoFocus={isNewNote}
           compact={isNewNote}
+          onTemplateGallery={handleTemplateGallery}
+          onSaveAsTemplate={!isNewNote ? handleSaveAsTemplate : undefined}
         />
 
         <div
@@ -566,26 +562,23 @@ export default function NoteEditor() {
                 >
                   <Clipboard />
                 </button>
-                <button
-                  onClick={handleTemplateGallery}
-                  disabled={saving}
-                  className="p-2 rounded-md transition-colors"
-                  style={{ color: "var(--text-muted)", border: "1px solid var(--border)" }}
-                  title="Templates"
-                  aria-label="Templates"
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = "var(--surface-subtle)";
-                    e.currentTarget.style.color = "var(--text-secondary)";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = "transparent";
-                    e.currentTarget.style.color = "var(--text-muted)";
-                  }}
-                >
-                  <LayoutTemplate />
-                </button>
               </div>
               <div className="flex items-center gap-2">
+                <select
+                  value={currentColor}
+                  onChange={(e) => {
+                    if (note) updateNoteColor(note.id, e.target.value);
+                  }}
+                  className="px-2 py-1 rounded outline-none text-xs"
+                  style={{ background: "var(--surface-subtle)", color: "var(--text-muted)", border: "1px solid var(--border)" }}
+                  title="Note color"
+                >
+                  {colors.map((c) => (
+                    <option key={c.name} value={c.name === "none" ? "" : c.name}>
+                      {getColorDisplayName(c.name, colorNames)}
+                    </option>
+                  ))}
+                </select>
                 {pages.length > 1 && (
                   <select
                     value={selectedPageId || ""}
@@ -616,6 +609,21 @@ export default function NoteEditor() {
             <>
               <span>{note ? new Date(note.updated_at).toLocaleString() : ""}</span>
               <div className="flex items-center gap-3">
+                <select
+                  value={currentColor}
+                  onChange={(e) => {
+                    if (note) updateNoteColor(note.id, e.target.value);
+                  }}
+                  className="px-2 py-1 rounded outline-none text-xs"
+                  style={{ background: "var(--surface-subtle)", color: "var(--text-muted)", border: "1px solid var(--border)" }}
+                  title="Note color"
+                >
+                  {colors.map((c) => (
+                    <option key={c.name} value={c.name === "none" ? "" : c.name}>
+                      {getColorDisplayName(c.name, colorNames)}
+                    </option>
+                  ))}
+                </select>
                 {pages.length > 1 && (
                   <select
                     value={selectedPageId || ""}

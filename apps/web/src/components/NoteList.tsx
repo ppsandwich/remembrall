@@ -304,7 +304,7 @@ export default function NoteList() {
               )}
               <div className="flex items-center gap-1.5 mb-3 ml-1">
                 <h2
-                  className="text-[1.3125rem] font-medium"
+                  className="text-[1.18125rem] font-medium"
                   style={{ color: "var(--text-secondary)" }}
                 >
                   {section.page.name}
