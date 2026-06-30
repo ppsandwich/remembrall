@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useCallback, useEffect, useState } from "react";
-import { Bold, Italic, UnderlineIcon, ListUnordered, ListOrdered, CheckList, Sparkles, TextQuote, Code2, Minus, LinkIcon } from "./Icons";
+import { Bold, Italic, UnderlineIcon, ListUnordered, ListOrdered, CheckList, Sparkles, TextQuote, Code2, Minus, LinkIcon, LayoutTemplate, Bookmark } from "./Icons";
 import { plainTextToHtml, isHtml } from "@/lib/html";
 import { AIActionsDropdown, AIProgressIndicator, useAIActions, SlashCommandMenu } from "./AIActionsMenu";
 import { AIActionId, AI_ACTIONS } from "@/lib/aiActions";
@@ -15,6 +15,8 @@ interface Props {
   placeholder?: string;
   autoFocus?: boolean;
   compact?: boolean;
+  onTemplateGallery?: () => void;
+  onSaveAsTemplate?: () => void;
 }
 
 function ToolbarButton({
@@ -161,7 +163,7 @@ function insertEmbed(url: string) {
   sel.addRange(newRange);
 }
 
-export default function RichTextEditor({ body, onChange, onKeyDown, placeholder, autoFocus, compact }: Props) {
+export default function RichTextEditor({ body, onChange, onKeyDown, placeholder, autoFocus, compact, onTemplateGallery, onSaveAsTemplate }: Props) {
   const editorRef = useRef<HTMLDivElement>(null);
   const initializedRef = useRef(false);
   const bodyRef = useRef(body);
@@ -658,6 +660,22 @@ export default function RichTextEditor({ body, onChange, onKeyDown, placeholder,
             actionLabel={AI_ACTIONS.find((a) => a.id === running)?.label ?? "Processing"}
             onCancel={cancel}
           />
+        )}
+        {onTemplateGallery && (
+          <ToolbarButton
+            onMouseDown={(e) => { e.preventDefault(); onTemplateGallery(); }}
+            title="Templates"
+          >
+            <LayoutTemplate />
+          </ToolbarButton>
+        )}
+        {onSaveAsTemplate && (
+          <ToolbarButton
+            onMouseDown={(e) => { e.preventDefault(); onSaveAsTemplate(); }}
+            title="Save as template"
+          >
+            <Bookmark />
+          </ToolbarButton>
         )}
       </div>
 
