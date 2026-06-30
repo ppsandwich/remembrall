@@ -13,18 +13,27 @@ import * as embedApi from "@/lib/embedApi";
 
 async function syncNoteToEmbeds(note: DecryptedNote): Promise<void> {
   try {
-    if (!note.page_id) return;
-    const tokens = await embedApi.getEmbedTokensForPage(note.page_id);
-    for (const token of tokens) {
-      await embedApi.syncEmbedNote({
-        token,
-        noteId: note.id,
-        title: note.title || "",
-        body: note.body || note.preview || "",
-        color: note.color || "",
-        pinned: note.pinned,
-        position: note.position,
-      });
+    const syncPayload = {
+      noteId: note.id,
+      title: note.title || "",
+      body: note.body || note.preview || "",
+      color: note.color || "",
+      pinned: note.pinned,
+      position: note.position,
+    };
+
+    // Sync to page-level embed tokens
+    if (note.page_id) {
+      const pageTokens = await embedApi.getEmbedTokensForPage(note.page_id);
+      for (const token of pageTokens) {
+        await embedApi.syncEmbedNote({ token, ...syncPayload });
+      }
+    }
+
+    // Sync to note-level guest link tokens
+    const noteTokens = await embedApi.getShareTokensForNote(note.id);
+    for (const token of noteTokens) {
+      await embedApi.syncEmbedNote({ token, ...syncPayload });
     }
   } catch {
     // Embed sync is best-effort
@@ -33,9 +42,17 @@ async function syncNoteToEmbeds(note: DecryptedNote): Promise<void> {
 
 async function deleteNoteFromEmbeds(noteId: string, pageId: string | null): Promise<void> {
   try {
-    if (!pageId) return;
-    const tokens = await embedApi.getEmbedTokensForPage(pageId);
-    for (const token of tokens) {
+    // Delete from page-level embed tokens
+    if (pageId) {
+      const pageTokens = await embedApi.getEmbedTokensForPage(pageId);
+      for (const token of pageTokens) {
+        await embedApi.deleteEmbedNote(token, noteId);
+      }
+    }
+
+    // Delete from note-level guest link tokens
+    const noteTokens = await embedApi.getShareTokensForNote(noteId);
+    for (const token of noteTokens) {
       await embedApi.deleteEmbedNote(token, noteId);
     }
   } catch {

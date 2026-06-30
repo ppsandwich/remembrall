@@ -6,7 +6,8 @@ import { useNotesStore, NOTE_COLORS, DARK_NOTE_COLORS, getColorDisplayName } fro
 import { writeClipboard } from "@/lib/clipboard";
 import { useUIStore } from "@/state/useUIStore";
 import { exportSingleNote, downloadMarkdown, singleNoteFilename } from "@brall/export";
-import { Copy, Pin, PinOff, Download, Trash, Palette, Undo, X, Paperclip } from "./Icons";
+import { generateNoteShareToken } from "@/lib/embedApi";
+import { Copy, Pin, PinOff, Download, Trash, Palette, Undo, X, Paperclip, LinkIcon } from "./Icons";
 import { useDragContext } from "./DragContext";
 import RadialColorPicker from "./RadialColorPicker";
 import PropertyBadge from "./PropertyBadge";
@@ -82,6 +83,18 @@ export default function NoteCard({ note, index, highlighted, onHighlightEnd }: P
   const handleExport = () => {
     const md = exportSingleNote(note);
     downloadMarkdown(md, singleNoteFilename());
+  };
+
+  const handleShareLink = async () => {
+    try {
+      const token = await generateNoteShareToken(note.id);
+      const origin = typeof window !== "undefined" ? window.location.origin : "";
+      const url = `${origin}/share?token=${token}`;
+      const ok = await writeClipboard(url);
+      showToast(ok ? "Share link copied to clipboard." : "Could not copy link.");
+    } catch {
+      showToast("Failed to generate share link.");
+    }
   };
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
@@ -690,6 +703,11 @@ export default function NoteCard({ note, index, highlighted, onHighlightEnd }: P
         <CardButton onClick={handleExport} title="Export" className="hidden md:flex">
           <Download />
         </CardButton>
+        {!note.deleted_at && (
+          <CardButton onClick={handleShareLink} title="Share link" className="hidden md:flex">
+            <LinkIcon />
+          </CardButton>
+        )}
         <div className="relative" data-color-picker>
           <CardButton onClick={() => setShowColors(!showColors)} title="Set color">
             <Palette />
