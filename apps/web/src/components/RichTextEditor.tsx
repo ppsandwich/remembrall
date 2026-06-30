@@ -723,6 +723,12 @@ export default function RichTextEditor({ body, onChange, onKeyDown, placeholder,
           padding-left: 1.5em;
           margin: 0.25em 0;
         }
+        [contenteditable] ul li {
+          list-style-type: disc;
+        }
+        [contenteditable] ol li {
+          list-style-type: decimal;
+        }
         [contenteditable] b, [contenteditable] strong {
           font-weight: 700;
         }
