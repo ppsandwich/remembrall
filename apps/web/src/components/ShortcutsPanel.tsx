@@ -4,6 +4,7 @@ import { useUIStore } from "@/state/useUIStore";
 import { useFocusTrap } from "@/lib/useFocusTrap";
 
 const SHORTCUTS = [
+  { key: "Cmd+K", desc: "Command palette" },
   { key: "/", desc: "Focus search" },
   { key: "N", desc: "New note" },
   { key: "Cmd+Shift+V", desc: "Dump clipboard as note" },

@@ -20,6 +20,7 @@ import TableView from "./TableView";
 import KanbanView from "./KanbanView";
 import PropertyFilterBar from "./PropertyFilter";
 import TemplateGalleryModal from "./TemplateGalleryModal";
+import CommandPalette from "./CommandPalette";
 import { useTemplateStore } from "@/state/useTemplateStore";
 
 export default function AppShell() {
@@ -28,7 +29,7 @@ export default function AppShell() {
   const viewMode = useNotesStore((s) => s.viewMode);
   const getFilteredNotes = useNotesStore((s) => s.getFilteredNotes);
   const getActivePropertyDefinitions = useNotesStore((s) => s.getActivePropertyDefinitions);
-  const { showSettings, setShowSettings, setShowShortcuts, setShowQuickCapture, showToast, setSelectMode, dragHint } = useUIStore();
+  const { showSettings, setShowSettings, setShowShortcuts, setShowQuickCapture, showToast, setSelectMode, dragHint, showCommandPalette, setShowCommandPalette } = useUIStore();
   const showTemplateGallery = useUIStore((s) => s.showTemplateGallery);
   const setShowTemplateGallery = useUIStore((s) => s.setShowTemplateGallery);
   const fetchUserTemplates = useTemplateStore((s) => s.fetchUserTemplates);
@@ -106,6 +107,12 @@ export default function AppShell() {
       registerShortcut({ key: "a", ctrl: true, handler: () => { if (!editingId) selectAll(); }, allowInInput: false }),
       registerShortcut({ key: "?", handler: () => setShowShortcuts(true), allowInInput: false }),
       registerShortcut({
+        key: "k",
+        ctrl: true,
+        handler: () => setShowCommandPalette(!showCommandPalette),
+        allowInInput: true,
+      }),
+      registerShortcut({
         key: "Delete",
         handler: () => {
           const ids = Array.from(selectedIds);
@@ -129,7 +136,7 @@ export default function AppShell() {
       cleanups.forEach((c) => c());
       cleanAll();
     };
-  }, [createNote, deleteNote, duplicateNote, selectedIds, editingId, clearSelection, selectAll, setShowShortcuts, setShowQuickCapture, showToast, setSelectMode]);
+  }, [createNote, deleteNote, duplicateNote, selectedIds, editingId, clearSelection, selectAll, setShowShortcuts, setShowQuickCapture, showToast, setSelectMode, setShowCommandPalette, showCommandPalette]);
 
   const isDesktop = typeof window !== "undefined" && !!(window as any).electronAPI;
   const mainRef = useRef<HTMLElement>(null);
@@ -210,6 +217,7 @@ export default function AppShell() {
         </div>
       )}
       <ShortcutsPanel />
+      <CommandPalette />
       {showSettings && <SettingsPanel onClose={() => setShowSettings(false)} />}
       {showTemplateGallery && <TemplateGalleryModal />}
     </div>

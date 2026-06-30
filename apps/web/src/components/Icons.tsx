@@ -71,6 +71,7 @@ import {
   FileText as LucideFileText2,
   LayoutTemplate as LucideLayoutTemplate,
   ChevronDown as LucideChevronDown2,
+  Command as LucideCommand,
   type LucideProps,
 } from "lucide-react";
 
@@ -148,3 +149,4 @@ export const Rocket = (props: LucideProps) => <LucideRocket {...p} {...props} />
 export const RefreshCw = (props: LucideProps) => <LucideRefreshCw {...p} {...props} />;
 export const FileText2 = (props: LucideProps) => <LucideFileText2 {...p} {...props} />;
 export const LayoutTemplate = (props: LucideProps) => <LucideLayoutTemplate {...p} {...props} />;
+export const Command = (props: LucideProps) => <LucideCommand {...p} {...props} />;
