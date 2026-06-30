@@ -12,6 +12,7 @@ interface UIState {
   showSettings: boolean;
   showQuickCapture: boolean;
   showTemplateGallery: boolean;
+  showCommandPalette: boolean;
   templateGalleryMode: "new" | "apply";
   selectMode: boolean;
   toastMessage: string | null;
@@ -25,6 +26,7 @@ interface UIState {
   setShowSettings: (show: boolean) => void;
   setShowQuickCapture: (show: boolean) => void;
   setShowTemplateGallery: (show: boolean) => void;
+  setShowCommandPalette: (show: boolean) => void;
   setTemplateGalleryMode: (mode: "new" | "apply") => void;
   setSelectMode: (on: boolean) => void;
   setEnterToSave: (on: boolean) => void;
@@ -53,6 +55,7 @@ export const useUIStore = create<UIState>((set) => ({
   showSettings: false,
   showQuickCapture: false,
   showTemplateGallery: false,
+  showCommandPalette: false,
   templateGalleryMode: "new",
   selectMode: false,
   toastMessage: null,
@@ -72,6 +75,7 @@ export const useUIStore = create<UIState>((set) => ({
   setShowSettings: (show) => set({ showSettings: show }),
   setShowQuickCapture: (show) => set({ showQuickCapture: show }),
   setShowTemplateGallery: (show) => set({ showTemplateGallery: show }),
+  setShowCommandPalette: (show) => set({ showCommandPalette: show }),
   setTemplateGalleryMode: (mode) => set({ templateGalleryMode: mode }),
   setSelectMode: (on) => set({ selectMode: on }),
   setDragHint: (message) => set({ dragHint: message }),
