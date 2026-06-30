@@ -7,9 +7,10 @@ import { useNotesStore } from "@/state/useNotesStore";
 import { addTag } from "@brall/core";
 import { useVoiceRecording } from "@/lib/useVoiceRecording";
 import { transcribeAudio } from "@/lib/openrouter";
-import { Sun, Moon, HelpCircle, Settings, LogOut, CheckSquare, Square, Layers, Search, X, Plus, Minus, ChevronDown, TableOfContents, Pencil, AudioLines } from "./Icons";
+import { Sun, Moon, HelpCircle, Settings, LogOut, CheckSquare, Square, Layers, Search, X, Minus, ChevronDown, TableOfContents, Pencil, AudioLines } from "./Icons";
 import TabBar from "./TabBar";
 import PropertyManager from "./PropertyManager";
+import NewNoteDropdown from "./NewNoteDropdown";
 import { useFocusTrap } from "@/lib/useFocusTrap";
 
 export default function Header() {
@@ -338,33 +339,23 @@ export default function Header() {
                   )}
                 </button>
                 {!isRecording && !transcribing && (
-                  <button
-                    onClick={() => setShowQuickCapture(true)}
+                  <NewNoteDropdown
+                    size={20}
                     className="flex items-center justify-center transition-all active:scale-95 rounded-r-full"
                     style={{ width: "2.25rem", height: "2.25rem", color: "#22C55E", background: "rgba(34,197,94,0.15)" }}
                     title="New note"
-                    aria-label="New note"
-                    onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(34,197,94,0.25)"; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(34,197,94,0.15)"; }}
-                  >
-                    <Plus size={20} />
-                  </button>
+                  />
                 )}
               </div>
             )}
 
             {!openrouterKey && (
-              <button
-                onClick={() => setShowQuickCapture(true)}
+              <NewNoteDropdown
+                size={20}
                 className="mr-1 rounded-full flex items-center justify-center transition-all active:scale-95 hidden md:flex"
                 style={{ width: "2.25rem", height: "2.25rem", color: "#22C55E", background: "rgba(34,197,94,0.15)", backdropFilter: "blur(12px)" }}
                 title="New note"
-                aria-label="New note"
-                onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(34,197,94,0.25)"; }}
-                onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(34,197,94,0.15)"; }}
-              >
-                <Plus size={20} />
-              </button>
+              />
             )}
 
             <div className="hidden md:block ml-1">
@@ -495,27 +486,21 @@ export default function Header() {
             )}
           </button>
           {!isRecording && !transcribing && (
-            <button
-              onClick={() => setShowQuickCapture(true)}
+            <NewNoteDropdown
+              size={24}
               className="flex items-center justify-center transition-transform active:scale-95 rounded-r-full"
               style={{ width: "2.75rem", height: "3.25rem", color: "white", background: "#22C55E" }}
               title="New note"
-              aria-label="New note"
-            >
-              <Plus size={24} />
-            </button>
+            />
           )}
         </div>
       ) : (
-        <button
-          onClick={() => setShowQuickCapture(true)}
+        <NewNoteDropdown
+          size={24}
           className="fixed bottom-6 right-6 z-40 md:hidden rounded-full flex items-center justify-center shadow-lg transition-transform active:scale-95"
           style={{ width: "3.25rem", height: "3.25rem", background: "#22C55E", color: "white" }}
           title="New note"
-          aria-label="New note"
-        >
-          <Plus size={24} />
-        </button>
+        />
       )}
     </>
   );

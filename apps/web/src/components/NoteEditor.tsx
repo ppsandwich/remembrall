@@ -5,10 +5,12 @@ import { useNotesStore } from "@/state/useNotesStore";
 import { useFocusTrap } from "@/lib/useFocusTrap";
 import { writeClipboard, readClipboard } from "@/lib/clipboard";
 import { useUIStore } from "@/state/useUIStore";
+import { useTemplateStore, isTemplateDefinition, getTemplateBody, getTemplateName, getTemplateProperties } from "@/state/useTemplateStore";
 import { exportSingleNote, downloadMarkdown, singleNoteFilename } from "@brall/export";
 import { extractTags, addTag } from "@brall/core";
+import type { PropertyDefinition } from "@brall/core";
 import { htmlToPlainText, stripTagsFromHtml } from "@/lib/html";
-import { Copy, Pin, PinOff, Duplicate, Download, Trash, X, Save, Clipboard, Undo } from "./Icons";
+import { Copy, Pin, PinOff, Duplicate, Download, Trash, X, Save, Clipboard, Undo, Bookmark } from "./Icons";
 import TagInput from "./TagInput";
 import RichTextEditor from "./RichTextEditor";
 import AttachmentList, { AttachmentUploadButton } from "./AttachmentList";
@@ -32,6 +34,7 @@ export default function NoteEditor() {
   const showQuickCapture = useUIStore((s) => s.showQuickCapture);
   const setShowQuickCapture = useUIStore((s) => s.setShowQuickCapture);
   const showArchived = useUIStore((s) => s.showArchived);
+  const { templateToApply, setTemplateToApply, saveAsTemplate } = useTemplateStore();
 
   const isNewNote = showQuickCapture && !editingId;
   const isOpen = isNewNote || !!editingId;
@@ -46,6 +49,9 @@ export default function NoteEditor() {
   const [propertyValues, setPropertyValues] = useState<Record<string, unknown>>({});
   const [ignoredTags, setIgnoredTags] = useState<Set<string>>(new Set());
   const [shownTags, setShownTags] = useState<Set<string>>(new Set());
+  const [showTemplateNameInput, setShowTemplateNameInput] = useState(false);
+  const [templateNameInput, setTemplateNameInput] = useState("");
+  const [templatePropertyDefs, setTemplatePropertyDefs] = useState<PropertyDefinition[]>([]);
 
   const notePageId = note?.page_id;
   const propertyDefinitions = notePageId
@@ -68,6 +74,21 @@ export default function NoteEditor() {
       setIgnoredTags(new Set());
       setShownTags(new Set());
       setSelectedPageId(useNotesStore.getState().activePageId);
+      setPropertyValues({});
+      setTemplatePropertyDefs([]);
+
+      if (templateToApply) {
+        const templateBody = getTemplateBody(templateToApply);
+        const templateName = getTemplateName(templateToApply);
+        const templateProps = getTemplateProperties(templateToApply);
+        const extractedTags = extractTags(templateBody);
+        const cleanBody = stripTagsFromHtml(templateBody);
+        setTitle(templateName);
+        setBodyHtml(cleanBody);
+        setTags(extractedTags);
+        setTemplatePropertyDefs(templateProps);
+        setTemplateToApply(null);
+      }
       return;
     }
     const current = useNotesStore.getState().notes.find((n) => n.id === editingId);
@@ -258,6 +279,32 @@ export default function NoteEditor() {
     downloadMarkdown(md, singleNoteFilename());
   }, [note, bodyHtml, tags]);
 
+  const handleSaveAsTemplate = useCallback(() => {
+    const defaultName = title.trim() || "Untitled Template";
+    setTemplateNameInput(defaultName);
+    setShowTemplateNameInput(true);
+  }, [title]);
+
+  const handleConfirmSaveAsTemplate = useCallback(async () => {
+    const name = templateNameInput.trim();
+    if (!name) return;
+    const fullBody = buildBody(bodyHtml, tags);
+    const defs = propertyDefinitions.length > 0 ? propertyDefinitions : templatePropertyDefs;
+    try {
+      await saveAsTemplate({
+        name,
+        body: fullBody,
+        color: note?.color || "",
+        properties: defs,
+      });
+      showToast("Template saved.");
+    } catch {
+      showToast("Failed to save template.");
+    }
+    setShowTemplateNameInput(false);
+    setTemplateNameInput("");
+  }, [templateNameInput, bodyHtml, tags, propertyDefinitions, templatePropertyDefs, note, saveAsTemplate, showToast]);
+
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
     const isSmallScreen = typeof window !== "undefined" && window.innerWidth < 768;
     if (!isSmallScreen && enterToSave && e.key === "Enter" && !e.metaKey && !e.ctrlKey && !e.shiftKey) {
@@ -339,6 +386,11 @@ export default function NoteEditor() {
               <EditorButton onClick={handleExport} title="Export" className="hidden md:flex">
                 <Download />
               </EditorButton>
+              {!isNewNote && (
+                <EditorButton onClick={handleSaveAsTemplate} title="Save as template">
+                  <Bookmark />
+                </EditorButton>
+              )}
               <div className="w-px h-4 mx-1" style={{ background: "var(--border)" }} />
               {note?.deleted_at ? (
                 <EditorButton onClick={() => { if (note) { restoreNote(note.id); setEditingId(null); } }} title="Restore">
@@ -375,6 +427,25 @@ export default function NoteEditor() {
             values={propertyValues}
             onChange={handlePropertyChange}
           />
+        )}
+
+        {isNewNote && templatePropertyDefs.length > 0 && (
+          <div className="px-4 py-2" style={{ borderBottom: "1px solid var(--border)" }}>
+            <div className="flex flex-wrap gap-1.5">
+              {templatePropertyDefs.map((def) => (
+                <span
+                  key={def.id}
+                  className="text-xs px-2 py-0.5 rounded-full"
+                  style={{ background: "var(--surface-subtle)", color: "var(--text-muted)", border: "1px solid var(--border)" }}
+                >
+                  {def.name}: {def.type}
+                </span>
+              ))}
+            </div>
+            <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>
+              These properties will be added when you save this note.
+            </p>
+          </div>
         )}
 
         {!isNewNote && note && <AttachmentList noteId={note.id} />}
@@ -496,6 +567,52 @@ export default function NoteEditor() {
           )}
         </div>
       </div>
+
+      {showTemplateNameInput && (
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center p-4"
+          style={{ background: "rgba(0,0,0,0.3)", backdropFilter: "blur(2px)" }}
+          onClick={() => setShowTemplateNameInput(false)}
+        >
+          <div
+            className="w-full max-w-sm rounded-xl shadow-xl p-4"
+            style={{ background: "var(--surface)", border: "1px solid var(--border)" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-sm font-medium mb-3" style={{ color: "var(--text)" }}>Save as Template</h3>
+            <input
+              type="text"
+              value={templateNameInput}
+              onChange={(e) => setTemplateNameInput(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter") handleConfirmSaveAsTemplate(); if (e.key === "Escape") setShowTemplateNameInput(false); }}
+              placeholder="Template name"
+              autoFocus
+              dir="ltr"
+              className="w-full px-3 py-2 rounded-md text-sm outline-none"
+              style={{ background: "var(--surface-subtle)", color: "var(--text)", border: "1px solid var(--border)" }}
+            />
+            <div className="flex justify-end gap-2 mt-3">
+              <button
+                onClick={() => setShowTemplateNameInput(false)}
+                className="px-3 py-1.5 rounded-md text-xs transition-colors"
+                style={{ color: "var(--text-muted)", border: "1px solid var(--border)" }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = "var(--surface-subtle)"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmSaveAsTemplate}
+                disabled={!templateNameInput.trim()}
+                className="px-3 py-1.5 rounded-md text-xs transition-colors disabled:opacity-40"
+                style={{ background: templateNameInput.trim() ? "#22C55E" : "var(--surface-subtle)", color: templateNameInput.trim() ? "white" : "var(--text-muted)" }}
+              >
+                Save
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

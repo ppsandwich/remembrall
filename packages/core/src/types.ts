@@ -130,3 +130,28 @@ export interface Attachment {
   gcs_object_path: string;
   created_at: string;
 }
+
+export interface TemplateDefinition {
+  id: string;
+  name: string;
+  body: string;
+  color: string;
+  icon: string;
+  category: string;
+  properties: PropertyDefinition[];
+}
+
+export interface NoteTemplate {
+  id: string;
+  user_id: string;
+  name: string;
+  encrypted_body: EncryptedPayload;
+  body_preview_encrypted: EncryptedPayload | null;
+  color: string;
+  icon: string;
+  category: string;
+  properties: PropertyDefinition[];
+  built_in: boolean;
+  created_at: string;
+  updated_at: string;
+}

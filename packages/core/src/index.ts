@@ -11,6 +11,8 @@ export type {
   PropertyType,
   PropertyDefinition,
   PropertyValue,
+  TemplateDefinition,
+  NoteTemplate,
 } from "./types";
 
 export {
@@ -21,6 +23,8 @@ export {
   bulkDeleteSchema,
   bulkDuplicateSchema,
   bulkCopySchema,
+  createTemplateSchema,
+  updateTemplateSchema,
   NOTE_SOURCES,
   MAX_ATTACHMENT_SIZE,
   MAX_USER_STORAGE,
@@ -46,3 +50,5 @@ export {
 export type { PropertyFilter, PropertyFilterOperator } from "./propertyUtils";
 
 export { evaluateFormula, validateFormula, getReferencedPropertyIds } from "./formulaEngine";
+
+export { getBuiltinTemplates, getBuiltinTemplateById, TEMPLATE_CATEGORIES } from "./templates";

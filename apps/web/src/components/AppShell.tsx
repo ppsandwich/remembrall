@@ -19,6 +19,8 @@ import DropZoneOverlay from "./DropZoneOverlay";
 import TableView from "./TableView";
 import KanbanView from "./KanbanView";
 import PropertyFilterBar from "./PropertyFilter";
+import TemplateGalleryModal from "./TemplateGalleryModal";
+import { useTemplateStore } from "@/state/useTemplateStore";
 
 export default function AppShell() {
   const { fetchAll, fetchPages, fetchSharedPages, fetchSectionShares, createNote, editingId, selectedIds, deleteNote, duplicateNote, clearSelection, selectAll, pages, activePageId, setHighlightNoteId } =
@@ -27,6 +29,9 @@ export default function AppShell() {
   const getFilteredNotes = useNotesStore((s) => s.getFilteredNotes);
   const getActivePropertyDefinitions = useNotesStore((s) => s.getActivePropertyDefinitions);
   const { showSettings, setShowSettings, setShowShortcuts, setShowQuickCapture, showToast, setSelectMode, dragHint } = useUIStore();
+  const showTemplateGallery = useUIStore((s) => s.showTemplateGallery);
+  const setShowTemplateGallery = useUIStore((s) => s.setShowTemplateGallery);
+  const fetchUserTemplates = useTemplateStore((s) => s.fetchUserTemplates);
   const { user } = useAuthStore();
   const [ready, setReady] = useState(false);
 
@@ -38,7 +43,8 @@ export default function AppShell() {
   useEffect(() => {
     fetchAll().then(() => setReady(true));
     fetchPages().then(() => fetchSharedPages().then(() => fetchSectionShares()));
-  }, [fetchAll, fetchPages, fetchSharedPages, fetchSectionShares]);
+    fetchUserTemplates();
+  }, [fetchAll, fetchPages, fetchSharedPages, fetchSectionShares, fetchUserTemplates]);
 
   // Listen for notes created from desktop app (Electron IPC)
   useEffect(() => {
@@ -205,6 +211,7 @@ export default function AppShell() {
       )}
       <ShortcutsPanel />
       {showSettings && <SettingsPanel onClose={() => setShowSettings(false)} />}
+      {showTemplateGallery && <TemplateGalleryModal />}
     </div>
   );
 }
