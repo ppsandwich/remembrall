@@ -168,7 +168,7 @@ function LandingHeader({ onSignIn, isReturning }: { onSignIn: () => void; isRetu
           href="https://github.com/ppsandwich/remembrall/releases"
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm transition-colors"
+          className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors"
           style={{ color: "var(--text-muted)", border: "1px solid var(--border)" }}
           onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--border-strong)"; e.currentTarget.style.color = "var(--text)"; }}
           onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.color = "var(--text-muted)"; }}
@@ -452,7 +452,7 @@ function HeroSection({ onGetStarted, isReturning }: { onGetStarted: () => void; 
         <div className="landing-fade-up landing-fade-up-d3 flex flex-col sm:flex-row items-center justify-center gap-3">
           <button
             onClick={onGetStarted}
-            className="landing-shimmer px-8 py-3.5 rounded-xl text-sm font-semibold transition-all"
+            className="landing-shimmer px-6 py-3.5 rounded-xl text-sm font-medium transition-all"
             style={{
               background: `linear-gradient(135deg, ${GOLD_STOPS[0]}, ${GOLD_STOPS[1]}, ${GOLD_STOPS[2]})`,
               color: "#1a1a1a",
