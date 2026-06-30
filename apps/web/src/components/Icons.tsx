@@ -53,6 +53,12 @@ import {
   Eye as LucideEye,
   Code2 as LucideCode2,
   Sparkles as LucideSparkles,
+  TextQuote as LucideTextQuote,
+  Heading1 as LucideHeading1,
+  Heading2 as LucideHeading2,
+  Heading3 as LucideHeading3,
+  Link as LucideLink,
+  Grid3X3 as LucideGrid3X3,
   type LucideProps,
 } from "lucide-react";
 
@@ -113,3 +119,9 @@ export const Eye = (props: LucideProps) => <LucideEye {...p} {...props} />;
 export const Code2 = (props: LucideProps) => <LucideCode2 {...p} {...props} />;
 export const CheckList = (props: LucideProps) => <LucideListChecks {...p} {...props} />;
 export const Sparkles = (props: LucideProps) => <LucideSparkles {...p} {...props} />;
+export const TextQuote = (props: LucideProps) => <LucideTextQuote {...p} {...props} />;
+export const Heading1 = (props: LucideProps) => <LucideHeading1 {...p} {...props} />;
+export const Heading2 = (props: LucideProps) => <LucideHeading2 {...p} {...props} />;
+export const Heading3 = (props: LucideProps) => <LucideHeading3 {...p} {...props} />;
+export const LinkIcon = (props: LucideProps) => <LucideLink {...p} {...props} />;
+export const Grid3X3 = (props: LucideProps) => <LucideGrid3X3 {...p} {...props} />;
