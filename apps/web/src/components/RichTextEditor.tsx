@@ -1,10 +1,11 @@
 "use client";
 
 import { useRef, useCallback, useEffect, useState } from "react";
-import { Bold, Italic, UnderlineIcon, ListUnordered, ListOrdered, CheckList, Sparkles } from "./Icons";
+import { Bold, Italic, UnderlineIcon, ListUnordered, ListOrdered, CheckList, Sparkles, TextQuote, Code2, Minus, LinkIcon } from "./Icons";
 import { plainTextToHtml, isHtml } from "@/lib/html";
 import { AIActionsDropdown, AIProgressIndicator, useAIActions, SlashCommandMenu } from "./AIActionsMenu";
 import { AIActionId, AI_ACTIONS } from "@/lib/aiActions";
+import { FormattingSlashMenu, FormatActionId } from "./FormattingSlashMenu";
 import { useUIStore } from "@/state/useUIStore";
 
 interface Props {
@@ -78,6 +79,88 @@ function getCurrentChecklistItem(sel: Selection): HTMLDivElement | null {
   return node as HTMLDivElement | null;
 }
 
+function insertHeading(level: number) {
+  document.execCommand("formatBlock", false, `h${level}`);
+}
+
+function insertBlockquote() {
+  document.execCommand("formatBlock", false, "blockquote");
+}
+
+function insertCodeBlock() {
+  const sel = window.getSelection();
+  if (!sel || !sel.rangeCount) return;
+  const range = sel.getRangeAt(0);
+  const pre = document.createElement("pre");
+  const code = document.createElement("code");
+  code.textContent = "\u200B";
+  pre.appendChild(code);
+  range.deleteContents();
+  range.insertNode(pre);
+  const newRange = document.createRange();
+  newRange.setStart(code, 0);
+  newRange.collapse(true);
+  sel.removeAllRanges();
+  sel.addRange(newRange);
+}
+
+function insertDivider() {
+  const sel = window.getSelection();
+  if (!sel || !sel.rangeCount) return;
+  const range = sel.getRangeAt(0);
+  const hr = document.createElement("hr");
+  range.deleteContents();
+  range.insertNode(hr);
+  const spacer = document.createElement("div");
+  spacer.innerHTML = "\u200B";
+  hr.parentNode!.insertBefore(spacer, hr.nextSibling);
+  const newRange = document.createRange();
+  newRange.setStart(spacer, 0);
+  newRange.collapse(true);
+  sel.removeAllRanges();
+  sel.addRange(newRange);
+}
+
+function insertColorBlock() {
+  const sel = window.getSelection();
+  if (!sel || !sel.rangeCount) return;
+  const range = sel.getRangeAt(0);
+  const block = document.createElement("div");
+  block.className = "color-block";
+  block.innerHTML = "\u200B";
+  range.deleteContents();
+  range.insertNode(block);
+  const newRange = document.createRange();
+  newRange.setStart(block, 0);
+  newRange.collapse(true);
+  sel.removeAllRanges();
+  sel.addRange(newRange);
+}
+
+function insertEmbed(url: string) {
+  const sel = window.getSelection();
+  if (!sel || !sel.rangeCount) return;
+  const range = sel.getRangeAt(0);
+  const wrapper = document.createElement("div");
+  wrapper.className = "embed-block";
+  const link = document.createElement("a");
+  link.href = url;
+  link.textContent = url;
+  link.target = "_blank";
+  link.rel = "noopener noreferrer";
+  wrapper.appendChild(link);
+  range.deleteContents();
+  range.insertNode(wrapper);
+  const spacer = document.createElement("div");
+  spacer.innerHTML = "\u200B";
+  wrapper.parentNode!.insertBefore(spacer, wrapper.nextSibling);
+  const newRange = document.createRange();
+  newRange.setStart(spacer, 0);
+  newRange.collapse(true);
+  sel.removeAllRanges();
+  sel.addRange(newRange);
+}
+
 export default function RichTextEditor({ body, onChange, onKeyDown, placeholder, autoFocus, compact }: Props) {
   const editorRef = useRef<HTMLDivElement>(null);
   const initializedRef = useRef(false);
@@ -86,6 +169,7 @@ export default function RichTextEditor({ body, onChange, onKeyDown, placeholder,
 
   const [showAIMenu, setShowAIMenu] = useState(false);
   const [slashState, setSlashState] = useState<{ start: number; filter: string; caretRect: { top: number; left: number } | null } | null>(null);
+  const [formatSlashState, setFormatSlashState] = useState<{ start: number; filter: string; caretRect: { top: number; left: number } | null } | null>(null);
   const { execute, running, cancel } = useAIActions();
 
   useEffect(() => {
@@ -246,6 +330,9 @@ export default function RichTextEditor({ body, onChange, onKeyDown, placeholder,
       if (slashState) {
         setSlashState(null);
       }
+      if (formatSlashState) {
+        setFormatSlashState(null);
+      }
 
       onKeyDown?.(e);
       if (!e.defaultPrevented) {
@@ -266,7 +353,7 @@ export default function RichTextEditor({ body, onChange, onKeyDown, placeholder,
         if (text === "" || text === "\u200B") {
           setTimeout(() => {
             const caretRect = getCaretRect();
-            setSlashState({ start: 0, filter: "", caretRect });
+            setFormatSlashState({ start: 0, filter: "", caretRect });
           }, 0);
         }
         return;
@@ -277,10 +364,39 @@ export default function RichTextEditor({ body, onChange, onKeyDown, placeholder,
       if (linePrefix.trim() === "" || linePrefix === "\u200B") {
         setTimeout(() => {
           const caretRect = getCaretRect();
-          setSlashState({ start: range.startOffset, filter: "", caretRect });
+          setFormatSlashState({ start: range.startOffset, filter: "", caretRect });
         }, 0);
       }
       return;
+    }
+
+    if (formatSlashState) {
+      if (e.key === "Backspace") {
+        const sel = window.getSelection();
+        if (sel && sel.rangeCount) {
+          const textNode = sel.getRangeAt(0).startContainer;
+          const currentText = textNode.textContent || "";
+          const cursorPos = sel.getRangeAt(0).startOffset;
+          const filterLen = cursorPos - formatSlashState.start - 1;
+          if (filterLen <= 0) {
+            setFormatSlashState(null);
+          } else {
+            setFormatSlashState({ ...formatSlashState, filter: currentText.slice(formatSlashState.start + 1, cursorPos - 1) });
+          }
+        }
+        return;
+      }
+      if (e.key.length === 1 && !e.ctrlKey && !e.metaKey) {
+        const sel = window.getSelection();
+        if (sel && sel.rangeCount) {
+          const textNode = sel.getRangeAt(0).startContainer;
+          const currentText = textNode.textContent || "";
+          const cursorPos = sel.getRangeAt(0).startOffset;
+          const newFilter = currentText.slice(formatSlashState.start + 1, cursorPos) + e.key;
+          setFormatSlashState({ ...formatSlashState, filter: newFilter });
+        }
+        return;
+      }
     }
 
     if (slashState) {
@@ -331,7 +447,7 @@ export default function RichTextEditor({ body, onChange, onKeyDown, placeholder,
     }
 
     onKeyDown?.(e);
-  }, [exec, emitChange, onKeyDown, slashState, getCaretRect]);
+  }, [exec, emitChange, onKeyDown, slashState, formatSlashState, getCaretRect]);
 
   const handleSlashSelect = useCallback((actionId: AIActionId) => {
     if (slashState && editorRef.current) {
@@ -359,6 +475,75 @@ export default function RichTextEditor({ body, onChange, onKeyDown, placeholder,
     setSlashState(null);
     handleAIAction(actionId);
   }, [slashState, emitChange, handleAIAction]);
+
+  const removeSlashText = useCallback((state: { start: number }) => {
+    const sel = window.getSelection();
+    if (!sel || !sel.rangeCount || !editorRef.current) return;
+    const range = sel.getRangeAt(0);
+    const textNode = range.startContainer;
+    if (textNode.nodeType === Node.TEXT_NODE) {
+      const text = textNode.textContent || "";
+      const slashIdx = text.lastIndexOf("/");
+      if (slashIdx !== -1) {
+        const before = text.slice(0, slashIdx);
+        const after = text.slice(range.startOffset);
+        textNode.textContent = before + after;
+        const newRange = document.createRange();
+        newRange.setStart(textNode, slashIdx);
+        newRange.collapse(true);
+        sel.removeAllRanges();
+        sel.addRange(newRange);
+        emitChange();
+      }
+    }
+  }, [emitChange]);
+
+  const handleFormatSelect = useCallback((actionId: FormatActionId) => {
+    if (formatSlashState) {
+      removeSlashText(formatSlashState);
+    }
+    setFormatSlashState(null);
+    editorRef.current?.focus();
+
+    switch (actionId) {
+      case "heading1":
+        insertHeading(1);
+        break;
+      case "heading2":
+        insertHeading(2);
+        break;
+      case "heading3":
+        insertHeading(3);
+        break;
+      case "bullet-list":
+        exec("insertUnorderedList");
+        break;
+      case "numbered-list":
+        exec("insertOrderedList");
+        break;
+      case "checklist":
+        insertChecklistItem(false);
+        break;
+      case "quote":
+        insertBlockquote();
+        break;
+      case "code-block":
+        insertCodeBlock();
+        break;
+      case "divider":
+        insertDivider();
+        break;
+      case "color-block":
+        insertColorBlock();
+        break;
+      case "embed": {
+        const url = prompt("Enter URL to embed:");
+        if (url) insertEmbed(url);
+        break;
+      }
+    }
+    emitChange();
+  }, [formatSlashState, removeSlashText, exec, emitChange]);
 
   const handlePaste = useCallback((e: React.ClipboardEvent) => {
     e.preventDefault();
@@ -429,6 +614,24 @@ export default function RichTextEditor({ body, onChange, onKeyDown, placeholder,
         <ToolbarButton onMouseDown={(e) => { e.preventDefault(); insertChecklist(); }} title="Checklist" accent>
           <CheckList />
         </ToolbarButton>
+        <div className="w-px h-4 mx-1" style={{ background: "var(--border)" }} />
+        <ToolbarButton onMouseDown={(e) => { e.preventDefault(); editorRef.current?.focus(); insertBlockquote(); emitChange(); }} title="Quote">
+          <TextQuote />
+        </ToolbarButton>
+        <ToolbarButton onMouseDown={(e) => { e.preventDefault(); editorRef.current?.focus(); insertCodeBlock(); emitChange(); }} title="Code block">
+          <Code2 />
+        </ToolbarButton>
+        <ToolbarButton onMouseDown={(e) => { e.preventDefault(); editorRef.current?.focus(); insertDivider(); emitChange(); }} title="Divider">
+          <Minus />
+        </ToolbarButton>
+        <ToolbarButton onMouseDown={(e) => {
+          e.preventDefault();
+          editorRef.current?.focus();
+          const url = prompt("Enter URL to embed:");
+          if (url) { insertEmbed(url); emitChange(); }
+        }} title="Embed link">
+          <LinkIcon />
+        </ToolbarButton>
 
         <div className="w-px h-4 mx-1" style={{ background: "var(--border)" }} />
         <div className="relative">
@@ -474,6 +677,7 @@ export default function RichTextEditor({ body, onChange, onKeyDown, placeholder,
           setTimeout(() => {
             if (!document.activeElement?.closest("[contenteditable]")) {
               setSlashState(null);
+              setFormatSlashState(null);
             }
           }, 150);
         }}
@@ -500,6 +704,15 @@ export default function RichTextEditor({ body, onChange, onKeyDown, placeholder,
         />
       )}
 
+      {formatSlashState && (
+        <FormattingSlashMenu
+          filter={formatSlashState.filter}
+          onSelect={handleFormatSelect}
+          onClose={() => setFormatSlashState(null)}
+          caretRect={formatSlashState.caretRect}
+        />
+      )}
+
       <style>{`
         [contenteditable]:empty::before {
           content: attr(data-placeholder);
@@ -518,6 +731,77 @@ export default function RichTextEditor({ body, onChange, onKeyDown, placeholder,
         }
         [contenteditable] u {
           text-decoration: underline;
+        }
+        [contenteditable] h1 {
+          font-size: 1.75em;
+          font-weight: 700;
+          margin: 0.5em 0 0.25em;
+        }
+        [contenteditable] h2 {
+          font-size: 1.4em;
+          font-weight: 700;
+          margin: 0.4em 0 0.2em;
+        }
+        [contenteditable] h3 {
+          font-size: 1.15em;
+          font-weight: 700;
+          margin: 0.3em 0 0.15em;
+        }
+        [contenteditable] blockquote {
+          border-left: 3px solid var(--accent);
+          padding-left: 0.75em;
+          margin: 0.5em 0;
+          color: var(--text-secondary);
+          font-style: italic;
+        }
+        [contenteditable] pre {
+          background: var(--surface-subtle);
+          border: 1px solid var(--border);
+          border-radius: 6px;
+          padding: 0.75em 1em;
+          margin: 0.5em 0;
+          overflow-x: auto;
+          font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+          font-size: 0.9em;
+          line-height: 1.5;
+        }
+        [contenteditable] pre code {
+          background: transparent;
+          padding: 0;
+          border: none;
+          font-size: inherit;
+        }
+        [contenteditable] code {
+          background: var(--surface-subtle);
+          border: 1px solid var(--border);
+          border-radius: 3px;
+          padding: 0.1em 0.3em;
+          font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+          font-size: 0.9em;
+        }
+        [contenteditable] hr {
+          border: none;
+          border-top: 2px solid var(--border);
+          margin: 1em 0;
+        }
+        [contenteditable] .color-block {
+          background: var(--surface-subtle);
+          border-left: 4px solid var(--accent);
+          border-radius: 0 6px 6px 0;
+          padding: 0.75em 1em;
+          margin: 0.5em 0;
+        }
+        [contenteditable] .embed-block {
+          background: var(--surface-subtle);
+          border: 1px solid var(--border);
+          border-radius: 6px;
+          padding: 0.5em 0.75em;
+          margin: 0.5em 0;
+        }
+        [contenteditable] .embed-block a {
+          color: var(--accent);
+          text-decoration: underline;
+          word-break: break-all;
         }
         [contenteditable] .checklist-item {
           position: relative;
