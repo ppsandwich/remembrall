@@ -206,6 +206,18 @@ function HeroSection({ onGetStarted, isReturning }: { onGetStarted: () => void; 
         }}
       />
 
+      {/* Background image */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          backgroundImage: "url('/landing_background.png')",
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          opacity: 0.15,
+          mixBlendMode: "luminosity",
+        }}
+      />
+
       {/* Mesh grid overlay */}
       <div
         className="landing-mesh absolute inset-0 pointer-events-none"
