@@ -6,12 +6,13 @@ import { useUIStore } from "@/state/useUIStore";
 import { useVoiceRecording } from "@/lib/useVoiceRecording";
 import { transcribeAudio } from "@/lib/openrouter";
 import { addTag } from "@brall/core";
-import { Plus, Square, AudioLines } from "./Icons";
+import { Square, AudioLines } from "./Icons";
+import NewNoteDropdown from "./NewNoteDropdown";
 
 const MAX_RECORDING_SECONDS = 60;
 
 export default function DesktopFab({ right }: { right: number }) {
-  const { setShowQuickCapture, showToast } = useUIStore();
+  const { showToast } = useUIStore();
   const openrouterKey = useNotesStore((s) => s.openrouterKey);
   const createNote = useNotesStore((s) => s.createNote);
   const pages = useNotesStore((s) => s.pages);
@@ -84,17 +85,12 @@ export default function DesktopFab({ right }: { right: number }) {
   if (!openrouterKey || !isSupported) {
     return (
       <div className="fixed bottom-6 z-40" style={{ right }}>
-        <button
-          onClick={() => setShowQuickCapture(true)}
+        <NewNoteDropdown
+          size={22}
           className="rounded-full flex items-center justify-center transition-all active:scale-95"
           style={{ width: "3rem", height: "3rem", color: "#22C55E", background: "transparent", border: "1px solid #22C55E", backdropFilter: "blur(12px)" }}
           title="New note"
-          aria-label="New note"
-          onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(34,197,94,0.1)"; }}
-          onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
-        >
-          <Plus size={22} />
-        </button>
+        />
       </div>
     );
   }
@@ -139,17 +135,12 @@ export default function DesktopFab({ right }: { right: number }) {
         )}
       </button>
       {!isRecording && !transcribing && (
-        <button
-          onClick={() => setShowQuickCapture(true)}
+        <NewNoteDropdown
+          size={22}
           className="flex items-center justify-center transition-all active:scale-95 rounded-r-full"
           style={{ width: "2.5rem", height: "3rem", color: "#22C55E", background: "transparent" }}
           title="New note"
-          aria-label="New note"
-          onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(34,197,94,0.1)"; }}
-          onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
-        >
-          <Plus size={22} />
-        </button>
+        />
       )}
     </div>
   );

@@ -67,6 +67,24 @@ export const bulkCopySchema = z.object({
   noteIds: z.array(z.string().uuid()).min(1).max(100),
 });
 
+export const createTemplateSchema = z.object({
+  name: z.string().min(1).max(200),
+  body: z.string().max(100_000),
+  color: z.string().max(50).default(""),
+  icon: z.string().max(50).default("file-text"),
+  category: z.string().max(50).default("general"),
+  properties: z.array(propertyDefinitionSchema).max(50).default([]),
+});
+
+export const updateTemplateSchema = z.object({
+  name: z.string().min(1).max(200).optional(),
+  body: z.string().max(100_000).optional(),
+  color: z.string().max(50).optional(),
+  icon: z.string().max(50).optional(),
+  category: z.string().max(50).optional(),
+  properties: z.array(propertyDefinitionSchema).max(50).optional(),
+});
+
 export const MAX_ATTACHMENT_SIZE = 20 * 1024 * 1024; // 20 MB
 export const MAX_USER_STORAGE = 2 * 1024 * 1024 * 1024; // 2 GB
 export const ALLOWED_MIME_PREFIXES = [

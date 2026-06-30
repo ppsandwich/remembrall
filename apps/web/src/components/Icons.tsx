@@ -59,6 +59,18 @@ import {
   Heading3 as LucideHeading3,
   Link as LucideLink,
   Grid3X3 as LucideGrid3X3,
+  Bookmark as LucideBookmark,
+  Users as LucideUsers,
+  BookOpen as LucideBookOpen,
+  Scale as LucideScale,
+  Calendar as LucideCalendar,
+  ClipboardList as LucideClipboardList,
+  Folder as LucideFolder,
+  Rocket as LucideRocket,
+  RefreshCw as LucideRefreshCw,
+  FileText as LucideFileText2,
+  LayoutTemplate as LucideLayoutTemplate,
+  ChevronDown as LucideChevronDown2,
   type LucideProps,
 } from "lucide-react";
 
@@ -125,3 +137,14 @@ export const Heading2 = (props: LucideProps) => <LucideHeading2 {...p} {...props
 export const Heading3 = (props: LucideProps) => <LucideHeading3 {...p} {...props} />;
 export const LinkIcon = (props: LucideProps) => <LucideLink {...p} {...props} />;
 export const Grid3X3 = (props: LucideProps) => <LucideGrid3X3 {...p} {...props} />;
+export const Bookmark = (props: LucideProps) => <LucideBookmark {...p} {...props} />;
+export const Users = (props: LucideProps) => <LucideUsers {...p} {...props} />;
+export const BookOpen = (props: LucideProps) => <LucideBookOpen {...p} {...props} />;
+export const Scale = (props: LucideProps) => <LucideScale {...p} {...props} />;
+export const Calendar = (props: LucideProps) => <LucideCalendar {...p} {...props} />;
+export const ClipboardList = (props: LucideProps) => <LucideClipboardList {...p} {...props} />;
+export const Folder = (props: LucideProps) => <LucideFolder {...p} {...props} />;
+export const Rocket = (props: LucideProps) => <LucideRocket {...p} {...props} />;
+export const RefreshCw = (props: LucideProps) => <LucideRefreshCw {...p} {...props} />;
+export const FileText2 = (props: LucideProps) => <LucideFileText2 {...p} {...props} />;
+export const LayoutTemplate = (props: LucideProps) => <LucideLayoutTemplate {...p} {...props} />;
