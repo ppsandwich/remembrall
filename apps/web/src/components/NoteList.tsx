@@ -9,6 +9,7 @@ import NoteCard from "./NoteCard";
 import EmptyState from "./EmptyState";
 import ShareDialog from "./ShareDialog";
 import EmbedExportButton from "./EmbedExportButton";
+import PropertyManager from "./PropertyManager";
 import { Plus, Share2 } from "./Icons";
 
 const GRID_CLASS = "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 3xl:grid-cols-7 gap-3";
@@ -34,6 +35,7 @@ export default function NoteList() {
   const [newSectionName, setNewSectionName] = useState("");
   const newSectionInputRef = useRef<HTMLInputElement>(null);
   const [sharingSection, setSharingSection] = useState<{ id: string; name: string } | null>(null);
+  const [propertyManagerOpen, setPropertyManagerOpen] = useState(false);
 
   const sections = useMemo(() => {
     const base = showArchived
@@ -319,6 +321,26 @@ export default function NoteList() {
                 ))}
                 {!sectionPermissions.has(section.page.id) && (
                   <button
+                    onClick={() => setPropertyManagerOpen(true)}
+                    className="p-1 rounded transition-colors opacity-0 group-hover:opacity-100"
+                    style={{ color: "var(--text-muted)" }}
+                    title="Manage properties"
+                    aria-label="Manage properties"
+                    onMouseEnter={(e) => { e.currentTarget.style.color = "var(--text-secondary)"; e.currentTarget.style.background = "var(--surface-subtle)"; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.color = "var(--text-muted)"; e.currentTarget.style.background = "transparent"; }}
+                  >
+                    <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                      <line x1="4" y1="2" x2="4" y2="14" />
+                      <line x1="8" y1="2" x2="8" y2="14" />
+                      <line x1="12" y1="2" x2="12" y2="14" />
+                      <circle cx="4" cy="6" r="1.5" fill="currentColor" />
+                      <circle cx="8" cy="10" r="1.5" fill="currentColor" />
+                      <circle cx="12" cy="4" r="1.5" fill="currentColor" />
+                    </svg>
+                  </button>
+                )}
+                {!sectionPermissions.has(section.page.id) && (
+                  <button
                     onClick={() => setSharingSection({ id: section.page.id, name: section.page.name })}
                     className="p-1 rounded transition-colors opacity-0 group-hover:opacity-100"
                     style={{ color: "var(--text-muted)" }}
@@ -426,6 +448,7 @@ export default function NoteList() {
           }}
         />
       )}
+      <PropertyManager open={propertyManagerOpen} onClose={() => setPropertyManagerOpen(false)} />
     </DragProvider>
   );
 }

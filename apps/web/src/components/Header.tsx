@@ -9,7 +9,6 @@ import { useVoiceRecording } from "@/lib/useVoiceRecording";
 import { transcribeAudio } from "@/lib/openrouter";
 import { Sun, Moon, HelpCircle, Settings, LogOut, CheckSquare, Square, Layers, Search, X, Minus, ChevronDown, TableOfContents, Pencil, AudioLines } from "./Icons";
 import TabBar from "./TabBar";
-import PropertyManager from "./PropertyManager";
 import NewNoteDropdown from "./NewNoteDropdown";
 import { useFocusTrap } from "@/lib/useFocusTrap";
 
@@ -32,7 +31,6 @@ export default function Header() {
   const createNote = useNotesStore((s) => s.createNote);
   const setHighlightNoteId = useNotesStore((s) => s.setHighlightNoteId);
 
-  const [propertyManagerOpen, setPropertyManagerOpen] = useState(false);
   const MAX_RECORDING_SECONDS = 60;
   const { isRecording, start, stop, isSupported, getRecordingDurationMs } = useVoiceRecording();
   const [transcribing, setTranscribing] = useState(false);
@@ -423,9 +421,6 @@ export default function Header() {
                 <Layers />
               </HeaderButton>
               <ViewModeSwitcher />
-              <HeaderButton onClick={() => setPropertyManagerOpen(true)} title="Manage properties">
-                <SlidersIcon />
-              </HeaderButton>
               <HeaderButton onClick={() => setShowSettings(true)} title="Settings">
                 <Settings />
               </HeaderButton>
@@ -456,7 +451,6 @@ export default function Header() {
           }}
         />
       )}
-      <PropertyManager open={propertyManagerOpen} onClose={() => setPropertyManagerOpen(false)} />
       {openrouterKey && isSupported ? (
         <div
           className="fixed bottom-6 right-6 z-40 md:hidden flex items-center transition-all rounded-full overflow-hidden"
@@ -601,19 +595,6 @@ function GridIcon() {
       <rect x="9.5" y="1.5" width="5" height="5" rx="1" />
       <rect x="1.5" y="9.5" width="5" height="5" rx="1" />
       <rect x="9.5" y="9.5" width="5" height="5" rx="1" />
-    </svg>
-  );
-}
-
-function SlidersIcon() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-      <line x1="4" y1="2" x2="4" y2="14" />
-      <line x1="8" y1="2" x2="8" y2="14" />
-      <line x1="12" y1="2" x2="12" y2="14" />
-      <circle cx="4" cy="6" r="1.5" fill="currentColor" />
-      <circle cx="8" cy="10" r="1.5" fill="currentColor" />
-      <circle cx="12" cy="4" r="1.5" fill="currentColor" />
     </svg>
   );
 }
