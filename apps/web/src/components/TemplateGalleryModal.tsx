@@ -49,6 +49,7 @@ export default function TemplateGalleryModal() {
   const setShowTemplateGallery = useUIStore((s) => s.setShowTemplateGallery);
   const setShowQuickCapture = useUIStore((s) => s.setShowQuickCapture);
   const showToast = useUIStore((s) => s.showToast);
+  const templateGalleryMode = useUIStore((s) => s.templateGalleryMode);
   const { userTemplates, deleteTemplate, setTemplateToApply } = useTemplateStore();
   const getBuiltinTemplatesFromStore = useTemplateStore((s) => s.getAllTemplates);
 
@@ -86,7 +87,9 @@ export default function TemplateGalleryModal() {
   const handleSelect = (template: TemplateDefinition | NoteTemplate) => {
     setTemplateToApply(template);
     setShowTemplateGallery(false);
-    setShowQuickCapture(true);
+    if (templateGalleryMode === "new") {
+      setShowQuickCapture(true);
+    }
   };
 
   const handleDelete = async (e: React.MouseEvent, templateId: string) => {
@@ -304,7 +307,7 @@ export default function TemplateGalleryModal() {
             {filtered.length} template{filtered.length !== 1 ? "s" : ""}
           </p>
           <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-            Select a template to create a note
+            {templateGalleryMode === "apply" ? "Select a template to apply to this note" : "Select a template to create a note"}
           </p>
         </div>
       </div>

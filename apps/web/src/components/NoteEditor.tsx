@@ -10,7 +10,7 @@ import { exportSingleNote, downloadMarkdown, singleNoteFilename } from "@brall/e
 import { extractTags, addTag } from "@brall/core";
 import type { PropertyDefinition } from "@brall/core";
 import { htmlToPlainText, stripTagsFromHtml } from "@/lib/html";
-import { Copy, Pin, PinOff, Duplicate, Download, Trash, X, Save, Clipboard, Undo, Bookmark } from "./Icons";
+import { Copy, Pin, PinOff, Duplicate, Download, Trash, X, Save, Clipboard, Undo, Bookmark, LayoutTemplate } from "./Icons";
 import TagInput from "./TagInput";
 import RichTextEditor from "./RichTextEditor";
 import AttachmentList, { AttachmentUploadButton } from "./AttachmentList";
@@ -34,7 +34,11 @@ export default function NoteEditor() {
   const showQuickCapture = useUIStore((s) => s.showQuickCapture);
   const setShowQuickCapture = useUIStore((s) => s.setShowQuickCapture);
   const showArchived = useUIStore((s) => s.showArchived);
+  const setShowTemplateGallery = useUIStore((s) => s.setShowTemplateGallery);
+  const templateGalleryMode = useUIStore((s) => s.templateGalleryMode);
+  const setTemplateGalleryMode = useUIStore((s) => s.setTemplateGalleryMode);
   const { templateToApply, setTemplateToApply, saveAsTemplate } = useTemplateStore();
+  const pendingTemplate = useTemplateStore((s) => s.templateToApply);
 
   const isNewNote = showQuickCapture && !editingId;
   const isOpen = isNewNote || !!editingId;
@@ -52,6 +56,7 @@ export default function NoteEditor() {
   const [showTemplateNameInput, setShowTemplateNameInput] = useState(false);
   const [templateNameInput, setTemplateNameInput] = useState("");
   const [templatePropertyDefs, setTemplatePropertyDefs] = useState<PropertyDefinition[]>([]);
+  const [showOverwriteConfirm, setShowOverwriteConfirm] = useState(false);
 
   const notePageId = note?.page_id;
   const propertyDefinitions = notePageId
@@ -305,6 +310,48 @@ export default function NoteEditor() {
     setTemplateNameInput("");
   }, [templateNameInput, bodyHtml, tags, propertyDefinitions, templatePropertyDefs, note, saveAsTemplate, showToast]);
 
+  const handleTemplateGallery = useCallback(() => {
+    setTemplateGalleryMode("apply");
+    setShowTemplateGallery(true);
+  }, [setTemplateGalleryMode, setShowTemplateGallery]);
+
+  const handleApplyTemplate = useCallback(() => {
+    if (!pendingTemplate) return;
+    const templateBody = getTemplateBody(pendingTemplate);
+    const templateName = getTemplateName(pendingTemplate);
+    const templateProps = getTemplateProperties(pendingTemplate);
+    const extractedTags = extractTags(templateBody);
+    const cleanBody = stripTagsFromHtml(templateBody);
+    setTitle(templateName);
+    setBodyHtml(cleanBody);
+    setTags(extractedTags);
+    setTemplatePropertyDefs(templateProps);
+    setTemplateToApply(null);
+    setTemplateGalleryMode("new");
+  }, [pendingTemplate, setTemplateToApply, setTemplateGalleryMode]);
+
+  useEffect(() => {
+    if (!pendingTemplate) return;
+    if (templateGalleryMode !== "apply") return;
+    const hasExistingContent = title.trim() || bodyHtml.trim() || tags.length > 0;
+    if (hasExistingContent) {
+      setShowOverwriteConfirm(true);
+    } else {
+      handleApplyTemplate();
+    }
+  }, [pendingTemplate, templateGalleryMode]);
+
+  const handleConfirmOverwrite = useCallback(() => {
+    setShowOverwriteConfirm(false);
+    handleApplyTemplate();
+  }, [handleApplyTemplate]);
+
+  const handleCancelOverwrite = useCallback(() => {
+    setShowOverwriteConfirm(false);
+    setTemplateToApply(null);
+    setTemplateGalleryMode("new");
+  }, [setTemplateToApply, setTemplateGalleryMode]);
+
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
     const isSmallScreen = typeof window !== "undefined" && window.innerWidth < 768;
     if (!isSmallScreen && enterToSave && e.key === "Enter" && !e.metaKey && !e.ctrlKey && !e.shiftKey) {
@@ -386,11 +433,12 @@ export default function NoteEditor() {
               <EditorButton onClick={handleExport} title="Export" className="hidden md:flex">
                 <Download />
               </EditorButton>
-              {!isNewNote && (
-                <EditorButton onClick={handleSaveAsTemplate} title="Save as template">
-                  <Bookmark />
-                </EditorButton>
-              )}
+              <EditorButton onClick={handleTemplateGallery} title="Templates">
+                <LayoutTemplate />
+              </EditorButton>
+              <EditorButton onClick={handleSaveAsTemplate} title="Save as template">
+                <Bookmark />
+              </EditorButton>
               <div className="w-px h-4 mx-1" style={{ background: "var(--border)" }} />
               {note?.deleted_at ? (
                 <EditorButton onClick={() => { if (note) { restoreNote(note.id); setEditingId(null); } }} title="Restore">
@@ -498,6 +546,24 @@ export default function NoteEditor() {
                   }}
                 >
                   <Clipboard />
+                </button>
+                <button
+                  onClick={handleTemplateGallery}
+                  disabled={saving}
+                  className="p-2 rounded-md transition-colors"
+                  style={{ color: "var(--text-muted)", border: "1px solid var(--border)" }}
+                  title="Templates"
+                  aria-label="Templates"
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = "var(--surface-subtle)";
+                    e.currentTarget.style.color = "var(--text-secondary)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = "transparent";
+                    e.currentTarget.style.color = "var(--text-muted)";
+                  }}
+                >
+                  <LayoutTemplate />
                 </button>
               </div>
               <div className="flex items-center gap-2">
@@ -608,6 +674,43 @@ export default function NoteEditor() {
                 style={{ background: templateNameInput.trim() ? "#22C55E" : "var(--surface-subtle)", color: templateNameInput.trim() ? "white" : "var(--text-muted)" }}
               >
                 Save
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showOverwriteConfirm && (
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center p-4"
+          style={{ background: "rgba(0,0,0,0.3)", backdropFilter: "blur(2px)" }}
+          onClick={handleCancelOverwrite}
+        >
+          <div
+            className="w-full max-w-sm rounded-xl shadow-xl p-4"
+            style={{ background: "var(--surface)", border: "1px solid var(--border)" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-sm font-medium mb-2" style={{ color: "var(--text)" }}>Overwrite note?</h3>
+            <p className="text-xs mb-4" style={{ color: "var(--text-muted)" }}>
+              This note has existing content. Applying a template will replace the current title, body, and tags.
+            </p>
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={handleCancelOverwrite}
+                className="px-3 py-1.5 rounded-md text-xs transition-colors"
+                style={{ color: "var(--text-muted)", border: "1px solid var(--border)" }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = "var(--surface-subtle)"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmOverwrite}
+                className="px-3 py-1.5 rounded-md text-xs transition-colors"
+                style={{ background: "#EF4444", color: "white" }}
+              >
+                Overwrite
               </button>
             </div>
           </div>
