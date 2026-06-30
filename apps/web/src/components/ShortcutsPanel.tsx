@@ -4,7 +4,7 @@ import { useUIStore } from "@/state/useUIStore";
 import { useFocusTrap } from "@/lib/useFocusTrap";
 
 const SHORTCUTS = [
-  { key: "Cmd+K", desc: "Command palette" },
+  { key: "Cmd+K", desc: "Command palette", action: "openCommandPalette" },
   { key: "/", desc: "Focus search" },
   { key: "N", desc: "New note" },
   { key: "Cmd+Shift+V", desc: "Dump clipboard as note" },
@@ -17,7 +17,7 @@ const SHORTCUTS = [
 ];
 
 export default function ShortcutsPanel() {
-  const { showShortcuts, setShowShortcuts } = useUIStore();
+  const { showShortcuts, setShowShortcuts, setShowCommandPalette } = useUIStore();
   const focusTrapRef = useFocusTrap<HTMLDivElement>(() => setShowShortcuts(false));
 
   if (!showShortcuts) return null;
@@ -67,6 +67,22 @@ export default function ShortcutsPanel() {
                     </kbd>
                   </td>
                   <td className="py-2" style={{ color: "var(--text-secondary)" }}>{s.desc}</td>
+                  {s.action === "openCommandPalette" && (
+                    <td className="py-2 pl-4 text-right">
+                      <button
+                        onClick={() => {
+                          setShowShortcuts(false);
+                          setShowCommandPalette(true);
+                        }}
+                        className="text-xs px-3 py-1 rounded transition-colors"
+                        style={{ background: "var(--primary)", color: "var(--primary-fg)" }}
+                        onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.9")}
+                        onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
+                      >
+                        Open
+                      </button>
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>

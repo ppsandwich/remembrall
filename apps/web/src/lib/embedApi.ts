@@ -12,6 +12,7 @@ export async function generateEmbedToken(sectionId: string, colorNames?: Record<
 
 export async function getEmbedData(token: string): Promise<{
   section_name: string;
+  single_note?: boolean;
   notes: {
     id: string;
     title: string;
@@ -70,6 +71,27 @@ export async function getEmbedTokensForPage(
   const { data, error } = await getSupabase().rpc(
     "get_embed_tokens_for_page",
     { p_page_id: pageId }
+  );
+
+  if (error) throw error;
+  return (data as string[]).map((row: any) => row.token ?? row);
+}
+
+export async function generateNoteShareToken(noteId: string): Promise<string> {
+  const { data, error } = await getSupabase().rpc("generate_embed_token", {
+    p_note_id: noteId,
+  });
+
+  if (error) throw error;
+  return data as string;
+}
+
+export async function getShareTokensForNote(
+  noteId: string
+): Promise<string[]> {
+  const { data, error } = await getSupabase().rpc(
+    "get_embed_tokens_for_note",
+    { p_note_id: noteId }
   );
 
   if (error) throw error;

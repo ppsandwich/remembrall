@@ -10,7 +10,8 @@ import { exportSingleNote, downloadMarkdown, singleNoteFilename } from "@brall/e
 import { extractTags, addTag } from "@brall/core";
 import type { PropertyDefinition } from "@brall/core";
 import { htmlToPlainText, stripTagsFromHtml } from "@/lib/html";
-import { Copy, Pin, PinOff, Duplicate, Download, Trash, X, Save, Clipboard, Undo, Bookmark, LayoutTemplate } from "./Icons";
+import { generateNoteShareToken } from "@/lib/embedApi";
+import { Copy, Pin, PinOff, Duplicate, Download, Trash, X, Save, Clipboard, Undo, Bookmark, LayoutTemplate, LinkIcon } from "./Icons";
 import TagInput from "./TagInput";
 import RichTextEditor from "./RichTextEditor";
 import AttachmentList, { AttachmentUploadButton } from "./AttachmentList";
@@ -284,6 +285,19 @@ export default function NoteEditor() {
     downloadMarkdown(md, singleNoteFilename());
   }, [note, bodyHtml, tags]);
 
+  const handleShareLink = useCallback(async () => {
+    if (!note) return;
+    try {
+      const token = await generateNoteShareToken(note.id);
+      const origin = typeof window !== "undefined" ? window.location.origin : "";
+      const url = `${origin}/share?token=${token}`;
+      const ok = await writeClipboard(url);
+      showToast(ok ? "Share link copied to clipboard." : "Could not copy link.");
+    } catch {
+      showToast("Failed to generate share link.");
+    }
+  }, [note, showToast]);
+
   const handleSaveAsTemplate = useCallback(() => {
     const defaultName = title.trim() || "Untitled Template";
     setTemplateNameInput(defaultName);
@@ -433,6 +447,11 @@ export default function NoteEditor() {
               <EditorButton onClick={handleExport} title="Export" className="hidden md:flex">
                 <Download />
               </EditorButton>
+              {note && !note.deleted_at && (
+                <EditorButton onClick={handleShareLink} title="Share link" className="hidden md:flex">
+                  <LinkIcon />
+                </EditorButton>
+              )}
               <EditorButton onClick={handleTemplateGallery} title="Templates">
                 <LayoutTemplate />
               </EditorButton>
