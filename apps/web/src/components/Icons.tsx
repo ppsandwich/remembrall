@@ -72,6 +72,7 @@ import {
   LayoutTemplate as LucideLayoutTemplate,
   ChevronDown as LucideChevronDown2,
   Command as LucideCommand,
+  GitCommitHorizontal as LucideGitCommitHorizontal,
   type LucideProps,
 } from "lucide-react";
 
@@ -150,3 +151,4 @@ export const RefreshCw = (props: LucideProps) => <LucideRefreshCw {...p} {...pro
 export const FileText2 = (props: LucideProps) => <LucideFileText2 {...p} {...props} />;
 export const LayoutTemplate = (props: LucideProps) => <LucideLayoutTemplate {...p} {...props} />;
 export const Command = (props: LucideProps) => <LucideCommand {...p} {...props} />;
+export const GitCommitHorizontal = (props: LucideProps) => <LucideGitCommitHorizontal {...p} {...props} />;
