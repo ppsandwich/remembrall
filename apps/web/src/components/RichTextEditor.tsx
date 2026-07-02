@@ -169,6 +169,7 @@ export default function RichTextEditor({ body, onChange, onKeyDown, placeholder,
   const bodyRef = useRef(body);
   bodyRef.current = body;
 
+  const [hasContent, setHasContent] = useState(false);
   const [showAIMenu, setShowAIMenu] = useState(false);
   const [slashState, setSlashState] = useState<{ start: number; filter: string; caretRect: { top: number; left: number } | null } | null>(null);
   const [formatSlashState, setFormatSlashState] = useState<{ start: number; filter: string; caretRect: { top: number; left: number } | null } | null>(null);
@@ -180,11 +181,27 @@ export default function RichTextEditor({ body, onChange, onKeyDown, placeholder,
     if (editorRef.current.innerHTML !== html) {
       editorRef.current.innerHTML = html;
     }
+    const text = editorRef.current.innerText || "";
+    const isEmpty = !text.trim() && !editorRef.current.querySelector("hr, img, .embed-block, .color-block, .checklist-item");
+    setHasContent(!isEmpty);
+    if (isEmpty) {
+      editorRef.current.removeAttribute("data-has-content");
+    } else {
+      editorRef.current.setAttribute("data-has-content", "");
+    }
   }, [body]);
 
   const emitChange = useCallback(() => {
     if (editorRef.current) {
       onChange(editorRef.current.innerHTML);
+      const text = editorRef.current.innerText || "";
+      const isEmpty = !text.trim() && !editorRef.current.querySelector("hr, img, .embed-block, .color-block, .checklist-item");
+      setHasContent(!isEmpty);
+      if (isEmpty) {
+        editorRef.current.removeAttribute("data-has-content");
+      } else {
+        editorRef.current.setAttribute("data-has-content", "");
+      }
     }
   }, [onChange]);
 
@@ -583,6 +600,14 @@ export default function RichTextEditor({ body, onChange, onKeyDown, placeholder,
       node.innerHTML = html;
       initializedRef.current = true;
     }
+    const text = node.innerText || "";
+    const isEmpty = !text.trim() && !node.querySelector("hr, img, .embed-block, .color-block, .checklist-item");
+    setHasContent(!isEmpty);
+    if (isEmpty) {
+      node.removeAttribute("data-has-content");
+    } else {
+      node.setAttribute("data-has-content", "");
+    }
     if (autoFocus) {
       node.focus();
     }
@@ -732,7 +757,7 @@ export default function RichTextEditor({ body, onChange, onKeyDown, placeholder,
       )}
 
       <style>{`
-        [contenteditable]:empty::before {
+        [contenteditable]:not([data-has-content])::before {
           content: attr(data-placeholder);
           color: var(--text-muted);
           pointer-events: none;
